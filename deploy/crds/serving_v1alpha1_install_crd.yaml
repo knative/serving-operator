@@ -9,6 +9,8 @@ spec:
     listKind: InstallList
     plural: installs
     singular: install
+    shortNames:
+    - ksi
   scope: Namespaced
   subresources:
     status: {}
