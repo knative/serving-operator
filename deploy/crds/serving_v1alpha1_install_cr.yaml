@@ -1,0 +1,7 @@
+apiVersion: serving.knative.dev/v1alpha1
+kind: Install
+metadata:
+  name: example-install
+spec:
+  # Add fields here
+  size: 3
