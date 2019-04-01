@@ -566,7 +566,7 @@ metadata:
   name: queue-proxy
   namespace: knative-serving
 spec:
-  image: gcr.io/knative-releases/github.com/knative/serving/cmd/queue@sha256:1c2e317a857517b33c7658464043af58d715bab84c6d4afbb803d2f730fac60c
+  image: quay.io/openshift-knative/knative-serving-queue:v0.4.1
 
 ---
 apiVersion: apps/v1
@@ -603,7 +603,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: gcr.io/knative-releases/github.com/knative/serving/cmd/activator@sha256:87f6e58e16efbaa954e15d432232d0709afe20030e4b432b2209112569d92ca9
+        image: quay.io/openshift-knative/knative-serving-activator:v0.4.1
         name: activator
         ports:
         - containerPort: 8080
@@ -681,7 +681,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: gcr.io/knative-releases/github.com/knative/serving/cmd/autoscaler@sha256:e15ecb349116055dc67deb95b7c5adf83b0dfc892aaea1f78d15f09e4824eb0d
+        image: quay.io/openshift-knative/knative-serving-autoscaler:v0.4.1
         name: autoscaler
         ports:
         - containerPort: 8080
@@ -803,7 +803,7 @@ data:
 
     # List of repositories for which tag to digest resolving should be skipped
     registriesSkippingTagResolving: "ko.local,dev.local"
-  queueSidecarImage: gcr.io/knative-releases/github.com/knative/serving/cmd/queue@sha256:1c2e317a857517b33c7658464043af58d715bab84c6d4afbb803d2f730fac60c
+  queueSidecarImage: quay.io/openshift-knative/knative-serving-queue:v0.4.1
 kind: ConfigMap
 metadata:
   labels:
@@ -1185,7 +1185,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: gcr.io/knative-releases/github.com/knative/serving/cmd/controller@sha256:51b580569684fbd4b8e7824b3ebd7b88e1414d1e3a38955b7a8819ecbac1b22b
+        image: quay.io/openshift-knative/knative-serving-controller:v0.4.1
         name: controller
         ports:
         - containerPort: 9090
@@ -1234,7 +1234,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: gcr.io/knative-releases/github.com/knative/serving/cmd/webhook@sha256:e1a762e1d4f07d3a8420f8e3b014c1213e93cc8f1d3fecb25219091e2f3650e2
+        image: quay.io/openshift-knative/knative-serving-webhook:v0.4.1
         name: webhook
         resources:
           limits:
