@@ -5,7 +5,7 @@ If you don't already have it, install
 
 ## Create a release
 
-Update the files beneath [deploy/resources/] with the proper
+Update [the resource files](deploy/resources/) with the proper
 [quay.io](https://quay.io/organization/openshift-knative) images, and
 then run these commands:
 
