@@ -9,19 +9,23 @@ Before doing anything else, grab your dependencies:
 
 ## Run the Operator
 
-The operator watches for an 'Install' custom resource, so you'll need
+The operator watches for an `Install` custom resource, so you'll need
 to register it:
 
     $ kubectl apply -f deploy/crds/serving_v1alpha1_install_crd.yaml
 
 Once the operator is up (see next sections), trigger the installation
-by creating an 'Install' CR. There are currently no fields expected in
-its 'spec' but its 'status' should contain a list of the installed
+by creating an `Install` CR. There are currently no fields expected in
+its `spec` but its `status` should contain a list of the installed
 resources and their version.
 
     $ kubectl apply -f deploy/crds/serving_v1alpha1_install_cr.yaml
     $ kubectl get install -oyaml
 
+To uninstall,
+
+    $ kubectl delete -f deploy/crds/serving_v1alpha1_install_cr.yaml
+    
 ### Outside Cluster
 
     $ operator-sdk up local
@@ -32,8 +36,8 @@ To see the flags supported by the operator,
 
 ### Inside Cluster
 
-We give the operator's service account cluster-admin privileges in the
-default namespace.
+We give the operator's service account `cluster-admin` privileges in
+the default namespace.
 
     $ kubectl apply -f deploy/
 
