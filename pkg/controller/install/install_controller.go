@@ -99,7 +99,7 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
-	if instance.Status.Resources != nil {
+	if instance.Status.Version == getResourceVersion() {
 		// we've already successfully applied our YAML
 		return reconcile.Result{}, nil
 	}
