@@ -93,30 +93,35 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			r.config.Delete()
+			r.config.DeleteAll()
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
+	if err := r.install(instance); err != nil {
+		return reconcile.Result{}, err
+	}
+	return reconcile.Result{}, nil
+}
+
+// Apply the embedded resources
+func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	if instance.Status.Version == getResourceVersion() {
 		// we've already successfully applied our YAML
-		return reconcile.Result{}, nil
+		return nil
 	}
 	// Apply the resources in the YAML file
-	err = r.config.Apply(instance)
-	if err != nil {
-		return reconcile.Result{}, err
+	if err := r.config.Filter(yaml.ByOwner(instance)).ApplyAll(); err != nil {
+		return err
 	}
 	// Update status
 	instance.Status.Resources = r.config.ResourceNames()
 	instance.Status.Version = getResourceVersion()
-	err = r.client.Status().Update(context.TODO(), instance)
-	if err != nil {
-		reqLogger.Error(err, "Failed to update status")
-		return reconcile.Result{}, err
+	if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+		return err
 	}
-	return reconcile.Result{}, nil
+	return nil
 }
 
 func getResourceVersion() string {
