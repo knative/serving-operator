@@ -11,6 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -102,6 +103,9 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 	if err := r.install(instance); err != nil {
 		return reconcile.Result{}, err
 	}
+	if err := r.deleteObsoleteResources(); err != nil {
+		return reconcile.Result{}, err
+	}
 	return reconcile.Result{}, nil
 }
 
@@ -122,6 +126,26 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 		return err
 	}
 	return nil
+}
+
+// Delete obsolete istio-system resources, if any
+func (r *ReconcileInstall) deleteObsoleteResources() error {
+	resource := &unstructured.Unstructured{}
+	resource.SetNamespace("istio-system")
+	resource.SetName("knative-ingressgateway")
+	resource.SetAPIVersion("v1")
+	resource.SetKind("Service")
+	if err := r.config.Delete(resource); err != nil {
+		return err
+	}
+	resource.SetAPIVersion("apps/v1")
+	resource.SetKind("Deployment")
+	if err := r.config.Delete(resource); err != nil {
+		return err
+	}
+	resource.SetAPIVersion("autoscaling/v1")
+	resource.SetKind("HorizontalPodAutoscaler")
+	return r.config.Delete(resource)
 }
 
 func getResourceVersion() string {

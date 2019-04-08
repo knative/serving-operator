@@ -246,11 +246,11 @@
 
 [[projects]]
   branch = "taketwo"
-  digest = "1:bf06f77c5a50c33cb56d32fec85e3f24b16a527e99d380eb1314bcdc4a4f4284"
+  digest = "1:a0d1fd5687699b2746a0a869477b66d4e2a26caa349f3261e8d358d80a37f7bf"
   name = "github.com/jcrossley3/manifestival"
   packages = ["yaml"]
   pruneopts = "NT"
-  revision = "ebb5c2103dc46e69f51cc3ce6de8c7f2a2fc384c"
+  revision = "75b93cb54bcbcd0c5033e9cb6eef6d3df4758b98"
 
 [[projects]]
   digest = "1:f5b9328966ccea0970b1d15075698eff0ddb3e75889560aad2e9f76b289b536a"
@@ -923,6 +923,7 @@
     "github.com/spf13/pflag",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
+    "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
