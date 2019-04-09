@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/go-logr/logr"
 	"github.com/jcrossley3/manifestival/yaml"
 
 	kscheme "k8s.io/client-go/kubernetes/scheme"
@@ -38,9 +39,6 @@ const (
 
 	// ConfigMap name for config-domain
 	domainConfigMapName = "config-domain"
-
-	// Key name for example config in config map
-	exampleKey = "_example"
 
 	// cluster object name to retrieve network/domain info
 	clusterObjectName = "cluster"
@@ -142,26 +140,6 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, nil
 	}
 
-	// retrieve service networks for configuring egress traffic
-	networkConfig := &configv1.Network{}
-	serviceNetwork := ""
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: clusterObjectName}, networkConfig); err != nil {
-		reqLogger.Info("Network Config is not available.")
-	} else if len(networkConfig.Spec.ServiceNetwork) > 0 {
-		serviceNetwork = strings.Join(networkConfig.Spec.ServiceNetwork, ",")
-		reqLogger.Info("Network Config is available", "Service Network", serviceNetwork)
-	}
-
-	// retrieve domain for configuring for ingress traffic
-	ingressConfig := &configv1.Ingress{}
-	domain := ""
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: clusterObjectName}, ingressConfig); err != nil {
-		reqLogger.Info("Ingress Config is not available.")
-	} else {
-		domain = ingressConfig.Spec.Domain
-		reqLogger.Info("Ingress Config is available", "Domain", domain)
-	}
-
 	// Apply the resources in the YAML file
 	err = r.config.Apply(instance)
 	if err != nil {
@@ -176,37 +154,78 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
+	updateDomain(r.client, reqLogger)
+	updateServiceNetwork(r.client, reqLogger)
+
+	return reconcile.Result{}, nil
+}
+
+func getServiceNetwork(client client.Client, logger logr.Logger) string {
+
+	networkConfig := &configv1.Network{}
+
+	serviceNetwork := ""
+	if err := client.Get(context.TODO(), types.NamespacedName{Name: clusterObjectName}, networkConfig); err != nil {
+		logger.Info("Network Config is not available.")
+	} else if len(networkConfig.Spec.ServiceNetwork) > 0 {
+		serviceNetwork = strings.Join(networkConfig.Spec.ServiceNetwork, ",")
+		logger.Info("Network Config is available", "Service Network", serviceNetwork)
+	}
+
+	return serviceNetwork
+}
+
+func getDomain(client client.Client, logger logr.Logger) string {
+	ingressConfig := &configv1.Ingress{}
+	domain := ""
+	if err := client.Get(context.TODO(), types.NamespacedName{Name: clusterObjectName}, ingressConfig); err != nil {
+		logger.Info("Ingress Config is not available.")
+	} else {
+		domain = ingressConfig.Spec.Domain
+		logger.Info("Ingress Config is available", "Domain", domain)
+	}
+
+	return domain
+}
+
+func updateDomain(client client.Client, logger logr.Logger) {
+
+	// retrieve domain for configuring for ingress traffic
+	domain := getDomain(client, logger)
+
 	// If domain is available, update config-domain config map
 	if len(domain) > 0 {
 		configMap := &corev1.ConfigMap{}
-		if err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: knativeServingNamespace,
+		if err := client.Get(context.TODO(), types.NamespacedName{Namespace: knativeServingNamespace,
 			Name: domainConfigMapName}, configMap); err != nil {
-			reqLogger.Error(err, "Failed to get configmap for config-domain")
+			logger.Error(err, "Failed to get configmap for config-domain")
 		} else {
-			delete(configMap.Data, exampleKey)
 			configMap.Data[domain] = ""
-			if err := r.client.Update(context.TODO(), configMap); err != nil {
-				reqLogger.Error(err, "Failed to update configmap for config-domain")
+			if err := client.Update(context.TODO(), configMap); err != nil {
+				logger.Error(err, "Failed to update configmap for config-domain")
 			}
 		}
 	}
+}
+
+func updateServiceNetwork(client client.Client, logger logr.Logger) {
+
+	// retrieve service networks for configuring egress traffic
+	serviceNetwork := getServiceNetwork(client, logger)
 
 	// If service network is available, update config-network config map
 	if len(serviceNetwork) > 0 {
 		configMap := &corev1.ConfigMap{}
-		if err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: knativeServingNamespace,
+		if err := client.Get(context.TODO(), types.NamespacedName{Namespace: knativeServingNamespace,
 			Name: networkConfigMapName}, configMap); err != nil {
-			reqLogger.Error(err, "Failed to get configmap for config-network")
+			logger.Error(err, "Failed to get configmap for config-network")
 		} else {
-			delete(configMap.Data, exampleKey)
 			configMap.Data[istioSideCarIncludeOutboundIPRangesProp] = serviceNetwork
-			if err := r.client.Update(context.TODO(), configMap); err != nil {
-				reqLogger.Error(err, "Failed to update configmap for config-network")
+			if err := client.Update(context.TODO(), configMap); err != nil {
+				logger.Error(err, "Failed to update configmap for config-network")
 			}
 		}
 	}
-
-	return reconcile.Result{}, nil
 }
 
 func getResourceVersion() string {
