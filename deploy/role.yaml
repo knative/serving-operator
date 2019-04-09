@@ -97,3 +97,35 @@ rules:
   - apiGroups: ["networking.istio.io"]
     resources: ["virtualservices"]
     verbs: ["get", "list", "create", "update", "delete", "patch", "watch"]
+
+  # The above rules are from upstream. The remaining are
+  # required for OpenShift
+
+  - apiGroups:
+    - security.openshift.io
+    resources:
+    - securitycontextconstraints
+    verbs:
+    - use
+    resourceNames:
+    - privileged
+    - anyuid
+  - apiGroups:
+    - extensions
+    resources:
+    - deployments/finalizers
+    verbs:
+    - update
+  - apiGroups:
+    - serving.knative.dev
+    - networking.internal.knative.dev
+    resources:
+    - '*/finalizers'
+    verbs:
+    - update
+  - apiGroups:
+    - serving.knative.dev
+    resources:
+    - '*'
+    verbs:
+    - '*'

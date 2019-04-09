@@ -181,6 +181,34 @@ spec:
           - delete
           - patch
           - watch
+        - apiGroups:
+          - security.openshift.io
+          resourceNames:
+          - privileged
+          - anyuid
+          resources:
+          - securitycontextconstraints
+          verbs:
+          - use
+        - apiGroups:
+          - extensions
+          resources:
+          - deployments/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - serving.knative.dev
+          - networking.internal.knative.dev
+          resources:
+          - '*/finalizers'
+          verbs:
+          - update
+        - apiGroups:
+          - serving.knative.dev
+          resources:
+          - '*'
+          verbs:
+          - '*'
         serviceAccountName: knative-serving-operator
       deployments:
       - name: knative-serving-operator
