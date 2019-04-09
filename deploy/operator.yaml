@@ -15,8 +15,7 @@ spec:
       serviceAccountName: knative-serving-operator
       containers:
         - name: knative-serving-operator
-          # Replace this with the built image name
-          image: REPLACE_IMAGE
+          image: quay.io/openshift-knative/knative-serving-operator:v0.4.1
           command:
           - knative-serving-operator
           imagePullPolicy: Always

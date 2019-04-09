@@ -6,19 +6,16 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-logr/logr"
-	"github.com/jcrossley3/manifestival/yaml"
-
-	kscheme "k8s.io/client-go/kubernetes/scheme"
-
+	mf "github.com/jcrossley3/manifestival"
 	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	kscheme "k8s.io/client-go/kubernetes/scheme"
 
-	corev1 "k8s.io/api/core/v1"
-
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,28 +27,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-const (
-	// Namespace of Knative Serving
-	knativeServingNamespace = "knative-serving"
-
-	// ConfigMap name for config-network
-	networkConfigMapName = "config-network"
-
-	// ConfigMap name for config-domain
-	domainConfigMapName = "config-domain"
-
-	// cluster object name to retrieve network/domain info
-	clusterObjectName = "cluster"
-
-	// istio.sidecar.includeOutboundIPRanges property name
-	istioSideCarIncludeOutboundIPRangesProp = "istio.sidecar.includeOutboundIPRanges"
-)
-
 var (
 	filename = flag.String("filename", "deploy/resources",
 		"The filename containing the YAML resources to apply")
+	recursive = flag.Bool("recursive", false,
+		"If filename is a directory, process all manifests recursively")
 	autoinstall = flag.Bool("install", false,
 		"Automatically creates an Install resource if none exist")
+	olm = flag.Bool("olm", false,
+		"Ignores resources managed by the Operator Lifecycle Manager")
+	namespace = flag.String("namespace", "",
+		"Overrides the hard-coded namespace references in the manifest")
 	log = logf.Log.WithName("controller_install")
 
 	scheme *runtime.Scheme
@@ -76,7 +62,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileInstall{
 		client: mgr.GetClient(),
 		scheme: mgr.GetScheme(),
-		config: yaml.NewYamlManifest(*filename, mgr.GetConfig())}
+		config: mf.NewYamlManifest(*filename, *recursive, mgr.GetConfig())}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -109,7 +95,7 @@ type ReconcileInstall struct {
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
-	config *yaml.YamlManifest
+	config mf.Manifest
 }
 
 // Reconcile reads that state of the cluster for a Install object and makes changes based on the state read
@@ -126,106 +112,183 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			r.config.Delete()
+			r.config.DeleteAll()
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
-	if instance.Status.Resources != nil {
-		// we've already successfully applied our YAML
-		return reconcile.Result{}, nil
-	}
-
-	// Apply the resources in the YAML file
-	err = r.config.Apply(instance)
-	if err != nil {
+	if err := r.install(instance); err != nil {
 		return reconcile.Result{}, err
 	}
-	// Update status
-	instance.Status.Resources = r.config.ResourceNames()
-	instance.Status.Version = getResourceVersion()
-	err = r.client.Status().Update(context.TODO(), instance)
-	if err != nil {
-		reqLogger.Error(err, "Failed to update status")
+	if err := r.deleteObsoleteResources(); err != nil {
 		return reconcile.Result{}, err
 	}
-
-	updateDomain(r.client, reqLogger)
-	updateServiceNetwork(r.client, reqLogger)
-
+	if err := r.checkForMinikube(); err != nil {
+		return reconcile.Result{}, err
+	}
 	return reconcile.Result{}, nil
 }
 
-func getServiceNetwork(client client.Client, logger logr.Logger) string {
-
-	networkConfig := &configv1.Network{}
-
-	serviceNetwork := ""
-	if err := client.Get(context.TODO(), types.NamespacedName{Name: clusterObjectName}, networkConfig); err != nil {
-		logger.Info("Network Config is not available.")
-	} else if len(networkConfig.Spec.ServiceNetwork) > 0 {
-		serviceNetwork = strings.Join(networkConfig.Spec.ServiceNetwork, ",")
-		logger.Info("Network Config is available", "Service Network", serviceNetwork)
+// Apply the embedded resources
+func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
+	if instance.Status.Version == getResourceVersion() {
+		// we've already successfully applied our YAML
+		return nil
+	}
+	// Filter resources as appropriate
+	filters := []mf.FilterFn{mf.ByOwner(instance)}
+	switch {
+	case *olm:
+		filters = append(filters, mf.ByOLM, mf.ByNamespace(instance.GetNamespace()))
+	case len(*namespace) > 0:
+		filters = append(filters, mf.ByNamespace(*namespace))
 	}
 
+	// Apply the resources in the YAML file
+	if err := r.config.Filter(filters...).ApplyAll(); err != nil {
+		return err
+	}
+
+	// set any additional values after yaml has been applied
+	if err := r.postApply(); err != nil {
+		return err
+	}
+
+	// Update status
+	instance.Status.Resources = r.config.ResourceNames()
+	instance.Status.Version = getResourceVersion()
+	if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Delete obsolete istio-system resources, if any
+func (r *ReconcileInstall) deleteObsoleteResources() error {
+	resource := &unstructured.Unstructured{}
+	resource.SetNamespace("istio-system")
+	resource.SetName("knative-ingressgateway")
+	resource.SetAPIVersion("v1")
+	resource.SetKind("Service")
+	if err := r.config.Delete(resource); err != nil {
+		return err
+	}
+	resource.SetAPIVersion("apps/v1")
+	resource.SetKind("Deployment")
+	if err := r.config.Delete(resource); err != nil {
+		return err
+	}
+	resource.SetAPIVersion("autoscaling/v1")
+	resource.SetKind("HorizontalPodAutoscaler")
+	return r.config.Delete(resource)
+}
+
+// Configure minikube if we're soaking in it
+func (r *ReconcileInstall) checkForMinikube() error {
+	node := &v1.Node{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "minikube"}, node)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil // not running on minikube!
+		}
+		return err
+	}
+
+	cm := &v1.ConfigMap{}
+	u := r.config.Find("v1", "ConfigMap", "config-network") // 4 the ns
+	key := types.NamespacedName{Namespace: u.GetNamespace(), Name: u.GetName()}
+	if err := r.client.Get(context.TODO(), key, cm); err != nil {
+		return err
+	}
+	cm.Data["istio.sidecar.includeOutboundIPRanges"] = "10.0.0.1/24"
+	return r.client.Update(context.TODO(), cm)
+
+}
+
+// Set additional properties after applying yaml.
+func (r *ReconcileInstall) postApply() error {
+
+	if err := r.updateDomainConfigMap(); err != nil {
+		return err
+	}
+
+	if err := r.updateNetworkConfigMap(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Get Service Network from cluster resource
+func (r *ReconcileInstall) getServiceNetwork() string {
+	networkConfig := &configv1.Network{}
+	serviceNetwork := ""
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, networkConfig); err != nil {
+		log.Info("Network Config is not available.")
+	} else if len(networkConfig.Spec.ServiceNetwork) > 0 {
+		serviceNetwork = strings.Join(networkConfig.Spec.ServiceNetwork, ",")
+		log.Info("Network Config is available", "Service Network", serviceNetwork)
+	}
 	return serviceNetwork
 }
 
-func getDomain(client client.Client, logger logr.Logger) string {
+func (r *ReconcileInstall) getDomain() string {
 	ingressConfig := &configv1.Ingress{}
 	domain := ""
-	if err := client.Get(context.TODO(), types.NamespacedName{Name: clusterObjectName}, ingressConfig); err != nil {
-		logger.Info("Ingress Config is not available.")
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, ingressConfig); err != nil {
+		log.Info("Ingress Config is not available.")
 	} else {
 		domain = ingressConfig.Spec.Domain
-		logger.Info("Ingress Config is available", "Domain", domain)
+		log.Info("Ingress Config is available", "Domain", domain)
 	}
 
 	return domain
 }
 
-func updateDomain(client client.Client, logger logr.Logger) {
+// Set domain in the Config Map
+func (r *ReconcileInstall) updateDomainConfigMap() error {
 
 	// retrieve domain for configuring for ingress traffic
-	domain := getDomain(client, logger)
+	domain := r.getDomain()
 
 	// If domain is available, update config-domain config map
 	if len(domain) > 0 {
-		configMap := &corev1.ConfigMap{}
-		if err := client.Get(context.TODO(), types.NamespacedName{Namespace: knativeServingNamespace,
-			Name: domainConfigMapName}, configMap); err != nil {
-			logger.Error(err, "Failed to get configmap for config-domain")
-		} else {
-			configMap.Data[domain] = ""
-			if err := client.Update(context.TODO(), configMap); err != nil {
-				logger.Error(err, "Failed to update configmap for config-domain")
-			}
+
+		cm := &v1.ConfigMap{}
+		u := r.config.Find("v1", "ConfigMap", "config-domain")
+		key := types.NamespacedName{Namespace: u.GetNamespace(), Name: u.GetName()}
+		if err := r.client.Get(context.TODO(), key, cm); err != nil {
+			return err
 		}
+		cm.Data[domain] = ""
+		return r.client.Update(context.TODO(), cm)
 	}
+
+	return nil
 }
 
-func updateServiceNetwork(client client.Client, logger logr.Logger) {
+// Set istio.sidecar.includeOutboundIPRanges property with service network
+func (r *ReconcileInstall) updateNetworkConfigMap() error {
 
 	// retrieve service networks for configuring egress traffic
-	serviceNetwork := getServiceNetwork(client, logger)
+	serviceNetwork := r.getServiceNetwork()
 
 	// If service network is available, update config-network config map
 	if len(serviceNetwork) > 0 {
-		configMap := &corev1.ConfigMap{}
-		if err := client.Get(context.TODO(), types.NamespacedName{Namespace: knativeServingNamespace,
-			Name: networkConfigMapName}, configMap); err != nil {
-			logger.Error(err, "Failed to get configmap for config-network")
-		} else {
-			configMap.Data[istioSideCarIncludeOutboundIPRangesProp] = serviceNetwork
-			if err := client.Update(context.TODO(), configMap); err != nil {
-				logger.Error(err, "Failed to update configmap for config-network")
-			}
+
+		cm := &v1.ConfigMap{}
+		u := r.config.Find("v1", "ConfigMap", "config-network")
+		key := types.NamespacedName{Namespace: u.GetNamespace(), Name: u.GetName()}
+		if err := r.client.Get(context.TODO(), key, cm); err != nil {
+			return err
 		}
+		cm.Data["istio.sidecar.includeOutboundIPRanges"] = serviceNetwork
+		return r.client.Update(context.TODO(), cm)
+
 	}
+
+	return nil
 }
 
 func getResourceVersion() string {

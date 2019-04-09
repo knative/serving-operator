@@ -246,11 +246,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a6bf1689470f489ac0d4109cdaaf421121decaf304ccdc4172afbc326fd65625"
+  digest = "1:33ebb6e7d555376a0df26a576c22b921aed11faa37a23c24436d0fca5112f0e0"
   name = "github.com/jcrossley3/manifestival"
-  packages = ["yaml"]
+  packages = ["."]
   pruneopts = "NT"
-  revision = "f5dbe9f91641e3a25027414af373b4171bd84f4f"
+  revision = "8f133cb9c6c9d11ce74eeee056d3fc76d5e756ca"
 
 [[projects]]
   digest = "1:f5b9328966ccea0970b1d15075698eff0ddb3e75889560aad2e9f76b289b536a"
@@ -921,8 +921,9 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/go-logr/logr",
     "github.com/go-openapi/spec",
-    "github.com/jcrossley3/manifestival/yaml",
+    "github.com/jcrossley3/manifestival",
     "github.com/openshift/api/config/v1",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/leader",
@@ -933,6 +934,7 @@
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
+    "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/apimachinery/pkg/types",
