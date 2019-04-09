@@ -9,10 +9,12 @@ import (
 	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -25,8 +27,14 @@ import (
 var (
 	filename = flag.String("filename", "deploy/resources",
 		"The filename containing the YAML resources to apply")
+	recursive = flag.Bool("recursive", false,
+		"If filename is a directory, process all manifests recursively")
 	autoinstall = flag.Bool("install", false,
 		"Automatically creates an Install resource if none exist")
+	olm = flag.Bool("olm", false,
+		"Ignores resources managed by the Operator Lifecycle Manager")
+	namespace = flag.String("namespace", "",
+		"Overrides the hard-coded namespace references in the manifest")
 	log = logf.Log.WithName("controller_install")
 )
 
@@ -41,7 +49,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileInstall{
 		client: mgr.GetClient(),
 		scheme: mgr.GetScheme(),
-		config: yaml.NewYamlManifest(*filename, mgr.GetConfig())}
+		config: yaml.NewYamlManifest(*filename, *recursive, mgr.GetConfig())}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -91,9 +99,6 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
 			r.config.DeleteAll()
 			return reconcile.Result{}, nil
 		}
@@ -106,6 +111,9 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 	if err := r.deleteObsoleteResources(); err != nil {
 		return reconcile.Result{}, err
 	}
+	if err := r.checkForMinikube(); err != nil {
+		return reconcile.Result{}, err
+	}
 	return reconcile.Result{}, nil
 }
 
@@ -115,8 +123,16 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 		// we've already successfully applied our YAML
 		return nil
 	}
+	// Filter resources as appropriate
+	filters := []yaml.FilterFn{yaml.ByOwner(instance)}
+	switch {
+	case *olm:
+		filters = append(filters, yaml.ByOLM, yaml.ByNamespace(instance.GetNamespace()))
+	case len(*namespace) > 0:
+		filters = append(filters, yaml.ByNamespace(*namespace))
+	}
 	// Apply the resources in the YAML file
-	if err := r.config.Filter(yaml.ByOwner(instance)).ApplyAll(); err != nil {
+	if err := r.config.Filter(filters...).ApplyAll(); err != nil {
 		return err
 	}
 	// Update status
@@ -146,6 +162,26 @@ func (r *ReconcileInstall) deleteObsoleteResources() error {
 	resource.SetAPIVersion("autoscaling/v1")
 	resource.SetKind("HorizontalPodAutoscaler")
 	return r.config.Delete(resource)
+}
+
+// Configure minikube if we're soaking in it
+func (r *ReconcileInstall) checkForMinikube() error {
+	node := &v1.Node{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "minikube"}, node)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil // not running on minikube!
+		}
+		return err
+	}
+	cm := &v1.ConfigMap{}
+	u := r.config.Find("v1", "ConfigMap", "config-network") // 4 the ns
+	key := types.NamespacedName{Namespace: u.GetNamespace(), Name: u.GetName()}
+	if err := r.client.Get(context.TODO(), key, cm); err != nil {
+		return err
+	}
+	cm.Data["istio.sidecar.includeOutboundIPRanges"] = "10.0.0.1/24"
+	return r.client.Update(context.TODO(), cm)
 }
 
 func getResourceVersion() string {
