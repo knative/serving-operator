@@ -245,7 +245,7 @@
   version = "v0.3.7"
 
 [[projects]]
-  branch = "taketwo"
+  branch = "master"
   digest = "1:33ebb6e7d555376a0df26a576c22b921aed11faa37a23c24436d0fca5112f0e0"
   name = "github.com/jcrossley3/manifestival"
   packages = ["."]
