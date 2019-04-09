@@ -314,6 +314,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:f67490120d0901f6675471d2a73b0e54ecb3b3255ba320f6d05efb9342b5e404"
+  name = "github.com/openshift/api"
+  packages = ["config/v1"]
+  pruneopts = "NT"
+  revision = "4706c46ddae58211c6602e6e7f3486df3f21687a"
+
+[[projects]]
+  branch = "master"
   digest = "1:afbc22826491c47d59cc85d27be704fb82a479064d774d3ce58a131bf2426141"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
@@ -915,16 +923,20 @@
   input-imports = [
     "github.com/go-openapi/spec",
     "github.com/jcrossley3/manifestival/yaml",
+    "github.com/openshift/api/config/v1",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/leader",
     "github.com/operator-framework/operator-sdk/pkg/log/zap",
     "github.com/operator-framework/operator-sdk/pkg/metrics",
     "github.com/operator-framework/operator-sdk/version",
     "github.com/spf13/pflag",
+    "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
+    "k8s.io/apimachinery/pkg/types",
+    "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/code-generator/cmd/client-gen",
     "k8s.io/code-generator/cmd/conversion-gen",
