@@ -10,14 +10,13 @@ import (
 	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	kscheme "k8s.io/client-go/kubernetes/scheme"
-
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	kscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -121,6 +120,12 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 	if err := r.install(instance); err != nil {
 		return reconcile.Result{}, err
 	}
+
+	// set any additional values after yaml has been applied
+	if err := r.postInstall(); err != nil {
+		return reconcile.Result{}, err
+	}
+
 	if err := r.deleteObsoleteResources(); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -147,11 +152,6 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 
 	// Apply the resources in the YAML file
 	if err := r.config.Filter(filters...).ApplyAll(); err != nil {
-		return err
-	}
-
-	// set any additional values after yaml has been applied
-	if err := r.postApply(); err != nil {
 		return err
 	}
 
@@ -207,7 +207,7 @@ func (r *ReconcileInstall) checkForMinikube() error {
 }
 
 // Set additional properties after applying yaml.
-func (r *ReconcileInstall) postApply() error {
+func (r *ReconcileInstall) postInstall() error {
 
 	if err := r.updateDomainConfigMap(); err != nil {
 		return err
