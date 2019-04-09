@@ -121,17 +121,22 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	// set any additional values after yaml has been applied
-	if err := r.postInstall(); err != nil {
-		return reconcile.Result{}, err
-	}
-
 	if err := r.deleteObsoleteResources(); err != nil {
 		return reconcile.Result{}, err
 	}
+
 	if err := r.checkForMinikube(); err != nil {
 		return reconcile.Result{}, err
 	}
+
+	if err := r.updateServiceNetwork(); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	if err := r.updateDomain(); err != nil {
+		return reconcile.Result{}, err
+	}
+
 	return reconcile.Result{}, nil
 }
 
@@ -206,20 +211,6 @@ func (r *ReconcileInstall) checkForMinikube() error {
 
 }
 
-// Set additional properties after applying yaml.
-func (r *ReconcileInstall) postInstall() error {
-
-	if err := r.updateDomainConfigMap(); err != nil {
-		return err
-	}
-
-	if err := r.updateNetworkConfigMap(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Get Service Network from cluster resource
 func (r *ReconcileInstall) getServiceNetwork() string {
 	networkConfig := &configv1.Network{}
@@ -247,7 +238,7 @@ func (r *ReconcileInstall) getDomain() string {
 }
 
 // Set domain in the Config Map
-func (r *ReconcileInstall) updateDomainConfigMap() error {
+func (r *ReconcileInstall) updateDomain() error {
 
 	// retrieve domain for configuring for ingress traffic
 	domain := r.getDomain()
@@ -269,7 +260,7 @@ func (r *ReconcileInstall) updateDomainConfigMap() error {
 }
 
 // Set istio.sidecar.includeOutboundIPRanges property with service network
-func (r *ReconcileInstall) updateNetworkConfigMap() error {
+func (r *ReconcileInstall) updateServiceNetwork() error {
 
 	// retrieve service networks for configuring egress traffic
 	serviceNetwork := r.getServiceNetwork()
