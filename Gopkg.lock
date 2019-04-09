@@ -246,11 +246,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a680a37a79ab8ad1581049b77902c0ab73765c66ae277aa3304284f8d2081782"
+  digest = "1:33ebb6e7d555376a0df26a576c22b921aed11faa37a23c24436d0fca5112f0e0"
   name = "github.com/jcrossley3/manifestival"
-  packages = ["yaml"]
+  packages = ["."]
   pruneopts = "NT"
-  revision = "536180d6adf330ccfec4bfda44d590ed8fdc3f68"
+  revision = "8f133cb9c6c9d11ce74eeee056d3fc76d5e756ca"
 
 [[projects]]
   digest = "1:f5b9328966ccea0970b1d15075698eff0ddb3e75889560aad2e9f76b289b536a"
@@ -914,17 +914,20 @@
   analyzer-version = 1
   input-imports = [
     "github.com/go-openapi/spec",
-    "github.com/jcrossley3/manifestival/yaml",
+    "github.com/jcrossley3/manifestival",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/leader",
     "github.com/operator-framework/operator-sdk/pkg/log/zap",
     "github.com/operator-framework/operator-sdk/pkg/metrics",
     "github.com/operator-framework/operator-sdk/version",
     "github.com/spf13/pflag",
+    "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
+    "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
+    "k8s.io/apimachinery/pkg/types",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/code-generator/cmd/client-gen",
     "k8s.io/code-generator/cmd/conversion-gen",
