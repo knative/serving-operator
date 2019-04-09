@@ -5,7 +5,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/jcrossley3/manifestival/yaml"
+	mf "github.com/jcrossley3/manifestival"
 	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
@@ -49,7 +49,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileInstall{
 		client: mgr.GetClient(),
 		scheme: mgr.GetScheme(),
-		config: yaml.NewYamlManifest(*filename, *recursive, mgr.GetConfig())}
+		config: mf.NewYamlManifest(*filename, *recursive, mgr.GetConfig())}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -82,7 +82,7 @@ type ReconcileInstall struct {
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
-	config *yaml.YamlManifest
+	config mf.Manifest
 }
 
 // Reconcile reads that state of the cluster for a Install object and makes changes based on the state read
@@ -124,12 +124,12 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 		return nil
 	}
 	// Filter resources as appropriate
-	filters := []yaml.FilterFn{yaml.ByOwner(instance)}
+	filters := []mf.FilterFn{mf.ByOwner(instance)}
 	switch {
 	case *olm:
-		filters = append(filters, yaml.ByOLM, yaml.ByNamespace(instance.GetNamespace()))
+		filters = append(filters, mf.ByOLM, mf.ByNamespace(instance.GetNamespace()))
 	case len(*namespace) > 0:
-		filters = append(filters, yaml.ByNamespace(*namespace))
+		filters = append(filters, mf.ByNamespace(*namespace))
 	}
 	// Apply the resources in the YAML file
 	if err := r.config.Filter(filters...).ApplyAll(); err != nil {

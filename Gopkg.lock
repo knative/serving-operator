@@ -246,11 +246,11 @@
 
 [[projects]]
   branch = "taketwo"
-  digest = "1:c870ad24d85bfc156ab5a7bb6ce250e4aec9043ab2618694e13732d079458439"
+  digest = "1:33ebb6e7d555376a0df26a576c22b921aed11faa37a23c24436d0fca5112f0e0"
   name = "github.com/jcrossley3/manifestival"
-  packages = ["yaml"]
+  packages = ["."]
   pruneopts = "NT"
-  revision = "4444243fa4a614f5e051792e90db5eb8c20ea759"
+  revision = "8f133cb9c6c9d11ce74eeee056d3fc76d5e756ca"
 
 [[projects]]
   digest = "1:f5b9328966ccea0970b1d15075698eff0ddb3e75889560aad2e9f76b289b536a"
@@ -914,7 +914,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/go-openapi/spec",
-    "github.com/jcrossley3/manifestival/yaml",
+    "github.com/jcrossley3/manifestival",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/leader",
     "github.com/operator-framework/operator-sdk/pkg/log/zap",
