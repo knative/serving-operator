@@ -303,6 +303,15 @@ spec:
     type: MultiNamespace
   - supported: true
     type: AllNamespaces
+  keywords:
+  - serverless
+  - FaaS
+  - microservices
+  - scale to zero
+  maintainers:
+  - email: jcrossley@redhat.com
+    name: Jim Crossley
   maturity: alpha
-  provider: {}
+  provider:
+    name: Knative Community
   version: 0.4.1
