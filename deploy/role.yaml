@@ -129,3 +129,20 @@ rules:
     - '*'
     verbs:
     - '*'
+
+  # required for the Operator
+
+  - apiGroups:
+    - config.openshift.io
+    resources:
+    - networks
+    verbs:
+    - list
+    - watch
+  - apiGroups:
+    - ""
+    resources:
+    - nodes
+    verbs:
+    - list
+    - watch
