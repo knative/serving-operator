@@ -7,14 +7,16 @@ import (
 	mf "github.com/jcrossley3/manifestival"
 	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
 	"github.com/openshift-knative/knative-serving-operator/version"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	configv1 "github.com/openshift/api/config/v1"
 
+  "github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	kscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -36,7 +38,17 @@ var (
 	namespace = flag.String("namespace", "",
 		"Overrides the hard-coded namespace references in the manifest")
 	log = logf.Log.WithName("controller_install")
+
+	scheme *runtime.Scheme
 )
+
+func init() {
+	// register openshift api scheme
+	scheme = kscheme.Scheme
+	if err := configv1.Install(scheme); err != nil {
+		panic(err)
+	}
+}
 
 // Add creates a new Install Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -108,12 +120,23 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 	if err := r.install(instance); err != nil {
 		return reconcile.Result{}, err
 	}
+
 	if err := r.deleteObsoleteResources(); err != nil {
 		return reconcile.Result{}, err
 	}
+
 	if err := r.checkForMinikube(); err != nil {
 		return reconcile.Result{}, err
 	}
+
+	if err := r.updateServiceNetwork(); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	if err := r.updateDomain(); err != nil {
+		return reconcile.Result{}, err
+	}
+
 	return reconcile.Result{}, nil
 }
 
@@ -137,6 +160,7 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	if err := r.config.ApplyAll(); err != nil {
 		return err
 	}
+
 	// Update status
 	instance.Status.Resources = r.config.ResourceNames()
 	instance.Status.Version = version.Version
@@ -176,6 +200,7 @@ func (r *ReconcileInstall) checkForMinikube() error {
 		}
 		return err
 	}
+
 	cm := &v1.ConfigMap{}
 	u := r.config.Find("v1", "ConfigMap", "config-network") // 4 the ns
 	key := types.NamespacedName{Namespace: u.GetNamespace(), Name: u.GetName()}
@@ -188,6 +213,78 @@ func (r *ReconcileInstall) checkForMinikube() error {
 	}
 	cm.Data["istio.sidecar.includeOutboundIPRanges"] = "10.0.0.1/24"
 	return r.client.Update(context.TODO(), cm)
+
+}
+
+// Get Service Network from cluster resource
+func (r *ReconcileInstall) getServiceNetwork() string {
+	networkConfig := &configv1.Network{}
+	serviceNetwork := ""
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, networkConfig); err != nil {
+		log.Info("Network Config is not available.")
+	} else if len(networkConfig.Spec.ServiceNetwork) > 0 {
+		serviceNetwork = strings.Join(networkConfig.Spec.ServiceNetwork, ",")
+		log.Info("Network Config is available", "Service Network", serviceNetwork)
+	}
+	return serviceNetwork
+}
+
+func (r *ReconcileInstall) getDomain() string {
+	ingressConfig := &configv1.Ingress{}
+	domain := ""
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, ingressConfig); err != nil {
+		log.Info("Ingress Config is not available.")
+	} else {
+		domain = ingressConfig.Spec.Domain
+		log.Info("Ingress Config is available", "Domain", domain)
+	}
+
+	return domain
+}
+
+// Set domain in the Config Map
+func (r *ReconcileInstall) updateDomain() error {
+
+	// retrieve domain for configuring for ingress traffic
+	domain := r.getDomain()
+
+	// If domain is available, update config-domain config map
+	if len(domain) > 0 {
+
+		cm := &v1.ConfigMap{}
+		u := r.config.Find("v1", "ConfigMap", "config-domain")
+		key := types.NamespacedName{Namespace: u.GetNamespace(), Name: u.GetName()}
+		if err := r.client.Get(context.TODO(), key, cm); err != nil {
+			return err
+		}
+		cm.Data[domain] = ""
+		return r.client.Update(context.TODO(), cm)
+	}
+
+	return nil
+}
+
+// Set istio.sidecar.includeOutboundIPRanges property with service network
+func (r *ReconcileInstall) updateServiceNetwork() error {
+
+	// retrieve service networks for configuring egress traffic
+	serviceNetwork := r.getServiceNetwork()
+
+	// If service network is available, update config-network config map
+	if len(serviceNetwork) > 0 {
+
+		cm := &v1.ConfigMap{}
+		u := r.config.Find("v1", "ConfigMap", "config-network")
+		key := types.NamespacedName{Namespace: u.GetNamespace(), Name: u.GetName()}
+		if err := r.client.Get(context.TODO(), key, cm); err != nil {
+			return err
+		}
+		cm.Data["istio.sidecar.includeOutboundIPRanges"] = serviceNetwork
+		return r.client.Update(context.TODO(), cm)
+
+	}
+
+	return nil
 }
 
 func autoInstall(c client.Client, ns string) error {
