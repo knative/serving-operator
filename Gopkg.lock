@@ -313,6 +313,14 @@
   version = "1.0.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:90a590e4c2b93010d18ca8dfcfc24cfc261d46a7cc55c9c054b502d6f55e34dd"
+  name = "github.com/openshift/api"
+  packages = ["config/v1"]
+  pruneopts = "NT"
+  revision = "275768afc8f66b79aeb12debf94ffc85255104ad"
+
+[[projects]]
   digest = "1:674610d54812d3c36ab7861fc826176bf581a9426cc09abec0107414c17f89cd"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
@@ -913,7 +921,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/go-logr/logr",
     "github.com/go-openapi/spec",
     "github.com/jcrossley3/manifestival",
     "github.com/openshift/api/config/v1",

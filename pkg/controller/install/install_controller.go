@@ -3,20 +3,20 @@ package install
 import (
 	"context"
 	"flag"
+	"strings"
 
 	mf "github.com/jcrossley3/manifestival"
 	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
 	"github.com/openshift-knative/knative-serving-operator/version"
 	configv1 "github.com/openshift/api/config/v1"
 
-  "github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	kscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -38,17 +38,7 @@ var (
 	namespace = flag.String("namespace", "",
 		"Overrides the hard-coded namespace references in the manifest")
 	log = logf.Log.WithName("controller_install")
-
-	scheme *runtime.Scheme
 )
-
-func init() {
-	// register openshift api scheme
-	scheme = kscheme.Scheme
-	if err := configv1.Install(scheme); err != nil {
-		panic(err)
-	}
-}
 
 // Add creates a new Install Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -66,6 +56,11 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
+	// Register scheme
+	if err := configv1.Install(mgr.GetScheme()); err != nil {
+		log.Error(err, "Unable to register scheme")
+	}
+
 	// Create a new controller
 	c, err := controller.New("install-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -120,23 +115,18 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 	if err := r.install(instance); err != nil {
 		return reconcile.Result{}, err
 	}
-
 	if err := r.deleteObsoleteResources(); err != nil {
 		return reconcile.Result{}, err
 	}
-
 	if err := r.checkForMinikube(); err != nil {
 		return reconcile.Result{}, err
 	}
-
 	if err := r.updateServiceNetwork(); err != nil {
 		return reconcile.Result{}, err
 	}
-
 	if err := r.updateDomain(); err != nil {
 		return reconcile.Result{}, err
 	}
-
 	return reconcile.Result{}, nil
 }
 
@@ -221,10 +211,10 @@ func (r *ReconcileInstall) getServiceNetwork() string {
 	networkConfig := &configv1.Network{}
 	serviceNetwork := ""
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, networkConfig); err != nil {
-		log.Info("Network Config is not available.")
+		log.Info("OpenShift Network Config is not available.")
 	} else if len(networkConfig.Spec.ServiceNetwork) > 0 {
 		serviceNetwork = strings.Join(networkConfig.Spec.ServiceNetwork, ",")
-		log.Info("Network Config is available", "Service Network", serviceNetwork)
+		log.Info("OpenShift Network Config is available", "Service Network", serviceNetwork)
 	}
 	return serviceNetwork
 }
@@ -233,10 +223,10 @@ func (r *ReconcileInstall) getDomain() string {
 	ingressConfig := &configv1.Ingress{}
 	domain := ""
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, ingressConfig); err != nil {
-		log.Info("Ingress Config is not available.")
+		log.Info("OpenShift Ingress Config is not available.")
 	} else {
 		domain = ingressConfig.Spec.Domain
-		log.Info("Ingress Config is available", "Domain", domain)
+		log.Info("OpenShift Ingress Config is available", "Domain", domain)
 	}
 
 	return domain
