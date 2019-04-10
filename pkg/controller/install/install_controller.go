@@ -3,13 +3,13 @@ package install
 import (
 	"context"
 	"flag"
-	"os"
-	"strings"
 
 	mf "github.com/jcrossley3/manifestival"
 	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
+	"github.com/openshift-knative/knative-serving-operator/version"
 	configv1 "github.com/openshift/api/config/v1"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+
+  "github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -142,10 +142,6 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 
 // Apply the embedded resources
 func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
-	if instance.Status.Version == getResourceVersion() {
-		// we've already successfully applied our YAML
-		return nil
-	}
 	// Filter resources as appropriate
 	filters := []mf.FilterFn{mf.ByOwner(instance)}
 	switch {
@@ -154,15 +150,20 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	case len(*namespace) > 0:
 		filters = append(filters, mf.ByNamespace(*namespace))
 	}
+	r.config.Filter(filters...)
 
+	if instance.Status.Version == version.Version {
+		// we've already successfully applied our YAML
+		return nil
+	}
 	// Apply the resources in the YAML file
-	if err := r.config.Filter(filters...).ApplyAll(); err != nil {
+	if err := r.config.ApplyAll(); err != nil {
 		return err
 	}
 
 	// Update status
 	instance.Status.Resources = r.config.ResourceNames()
-	instance.Status.Version = getResourceVersion()
+	instance.Status.Version = version.Version
 	if err := r.client.Status().Update(context.TODO(), instance); err != nil {
 		return err
 	}
@@ -204,6 +205,10 @@ func (r *ReconcileInstall) checkForMinikube() error {
 	u := r.config.Find("v1", "ConfigMap", "config-network") // 4 the ns
 	key := types.NamespacedName{Namespace: u.GetNamespace(), Name: u.GetName()}
 	if err := r.client.Get(context.TODO(), key, cm); err != nil {
+		if errors.IsNotFound(err) {
+			log.Error(err, "Unable to configure egress", "namespace", u.GetNamespace())
+			return nil // no sense in trying if the CM is gone
+		}
 		return err
 	}
 	cm.Data["istio.sidecar.includeOutboundIPRanges"] = "10.0.0.1/24"
@@ -280,14 +285,6 @@ func (r *ReconcileInstall) updateServiceNetwork() error {
 	}
 
 	return nil
-}
-
-func getResourceVersion() string {
-	v, found := os.LookupEnv("RESOURCE_VERSION")
-	if !found {
-		return "UNKNOWN"
-	}
-	return v
 }
 
 func autoInstall(c client.Client, ns string) error {

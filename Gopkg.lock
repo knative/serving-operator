@@ -313,16 +313,7 @@
   version = "1.0.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:f67490120d0901f6675471d2a73b0e54ecb3b3255ba320f6d05efb9342b5e404"
-  name = "github.com/openshift/api"
-  packages = ["config/v1"]
-  pruneopts = "NT"
-  revision = "4706c46ddae58211c6602e6e7f3486df3f21687a"
-
-[[projects]]
-  branch = "master"
-  digest = "1:afbc22826491c47d59cc85d27be704fb82a479064d774d3ce58a131bf2426141"
+  digest = "1:674610d54812d3c36ab7861fc826176bf581a9426cc09abec0107414c17f89cd"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
     "pkg/k8sutil",
@@ -332,7 +323,8 @@
     "version",
   ]
   pruneopts = "NT"
-  revision = "b7dd8232e32c2a25c10ad37e4b28fd3bf90717dd"
+  revision = "7e07b20c9e22560fb22a3295b612eae7652b8b14"
+  version = "v0.7.0"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
