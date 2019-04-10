@@ -7,6 +7,10 @@ Before doing anything else, grab your dependencies:
 
     $ dep ensure -v
 
+Version 0.4.1 of knative-serving refers to Istio CRD's:
+
+    $ kubectl apply -f https://github.com/knative/serving/releases/download/v0.4.1/istio-crds.yaml
+
 ## Run the Operator
 
 The operator watches for an `Install` custom resource, so you'll need
