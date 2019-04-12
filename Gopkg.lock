@@ -246,11 +246,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:33ebb6e7d555376a0df26a576c22b921aed11faa37a23c24436d0fca5112f0e0"
+  digest = "1:1199bd58791f136728a8112bdec9b10ab2e2fbdb6700f93e42ccbfb1e7ae5fe9"
   name = "github.com/jcrossley3/manifestival"
   packages = ["."]
   pruneopts = "NT"
-  revision = "8f133cb9c6c9d11ce74eeee056d3fc76d5e756ca"
+  revision = "10b04b95857e2ffb73a97d0670e2adde6add281c"
 
 [[projects]]
   digest = "1:f5b9328966ccea0970b1d15075698eff0ddb3e75889560aad2e9f76b289b536a"
@@ -937,7 +937,6 @@
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/apimachinery/pkg/types",
-    "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/code-generator/cmd/client-gen",
     "k8s.io/code-generator/cmd/conversion-gen",

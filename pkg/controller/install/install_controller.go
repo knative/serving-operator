@@ -51,7 +51,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileInstall{
 		client: mgr.GetClient(),
 		scheme: mgr.GetScheme(),
-		config: mf.NewYamlManifest(*filename, *recursive, mgr.GetConfig())}
+		config: mf.NewYamlManifest(*filename, *recursive, mgr.GetClient())}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
