@@ -191,17 +191,21 @@ func (r *ReconcileInstall) checkForMinikube() error {
 		return err
 	}
 
-	cm := &v1.ConfigMap{}
-	u := r.config.Find("v1", "ConfigMap", "config-network") // 4 the ns
-	key := types.NamespacedName{Namespace: u.GetNamespace(), Name: u.GetName()}
+	cm := r.config.Find("v1", "ConfigMap", "config-network")
+	key := client.ObjectKey{Namespace: cm.GetNamespace(), Name: cm.GetName()}
 	if err := r.client.Get(context.TODO(), key, cm); err != nil {
 		if errors.IsNotFound(err) {
-			log.Error(err, "Unable to configure egress", "namespace", u.GetNamespace())
+			log.Error(err, "Unable to configure egress", "namespace", key.Namespace, "name", key.Name)
 			return nil // no sense in trying if the CM is gone
 		}
 		return err
 	}
-	cm.Data["istio.sidecar.includeOutboundIPRanges"] = "10.0.0.1/24"
+	const k, v = "istio.sidecar.includeOutboundIPRanges", "10.0.0.1/24"
+	if _, found, _ := unstructured.NestedString(cm.Object, "data", k); found {
+		return nil // already set
+	}
+	log.Info("Detected minikube; configuring egress", k, v)
+	unstructured.SetNestedField(cm.Object, v, "data", k)
 	return r.client.Update(context.TODO(), cm)
 
 }
@@ -211,7 +215,7 @@ func (r *ReconcileInstall) getServiceNetwork() string {
 	networkConfig := &configv1.Network{}
 	serviceNetwork := ""
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, networkConfig); err != nil {
-		log.Info("OpenShift Network Config is not available.")
+		log.V(1).Info("OpenShift Network Config is not available.")
 	} else if len(networkConfig.Spec.ServiceNetwork) > 0 {
 		serviceNetwork = strings.Join(networkConfig.Spec.ServiceNetwork, ",")
 		log.Info("OpenShift Network Config is available", "Service Network", serviceNetwork)
@@ -223,7 +227,7 @@ func (r *ReconcileInstall) getDomain() string {
 	ingressConfig := &configv1.Ingress{}
 	domain := ""
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, ingressConfig); err != nil {
-		log.Info("OpenShift Ingress Config is not available.")
+		log.V(1).Info("OpenShift Ingress Config is not available.")
 	} else {
 		domain = ingressConfig.Spec.Domain
 		log.Info("OpenShift Ingress Config is available", "Domain", domain)
