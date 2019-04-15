@@ -10,6 +10,7 @@ import (
 	"github.com/openshift-knative/knative-serving-operator/pkg/apis"
 	"github.com/openshift-knative/knative-serving-operator/pkg/controller"
 
+	cnoHack "github.com/openshift/cluster-network-operator/pkg/util/k8s"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
@@ -84,6 +85,7 @@ func main() {
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
+		MapperProvider:     cnoHack.NewDynamicRESTMapper,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 	})
 	if err != nil {
