@@ -112,21 +112,21 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
-	if err := r.install(instance); err != nil {
-		return reconcile.Result{}, err
+
+	stages := []func(*servingv1alpha1.Install) error{
+		r.install,
+		r.deleteObsoleteResources,
+		r.checkForMinikube,
+		r.updateServiceNetwork,
+		r.updateDomain,
 	}
-	if err := r.deleteObsoleteResources(); err != nil {
-		return reconcile.Result{}, err
+
+	for _, stage := range stages {
+		if err := stage(instance); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
-	if err := r.checkForMinikube(); err != nil {
-		return reconcile.Result{}, err
-	}
-	if err := r.updateServiceNetwork(); err != nil {
-		return reconcile.Result{}, err
-	}
-	if err := r.updateDomain(); err != nil {
-		return reconcile.Result{}, err
-	}
+
 	return reconcile.Result{}, nil
 }
 
@@ -161,7 +161,7 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 }
 
 // Delete obsolete istio-system resources, if any
-func (r *ReconcileInstall) deleteObsoleteResources() error {
+func (r *ReconcileInstall) deleteObsoleteResources(instance *servingv1alpha1.Install) error {
 	resource := &unstructured.Unstructured{}
 	resource.SetNamespace("istio-system")
 	resource.SetName("knative-ingressgateway")
@@ -181,7 +181,7 @@ func (r *ReconcileInstall) deleteObsoleteResources() error {
 }
 
 // Configure minikube if we're soaking in it
-func (r *ReconcileInstall) checkForMinikube() error {
+func (r *ReconcileInstall) checkForMinikube(instance *servingv1alpha1.Install) error {
 	node := &v1.Node{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "minikube"}, node)
 	if err != nil {
@@ -237,7 +237,7 @@ func (r *ReconcileInstall) getDomain() string {
 }
 
 // Set domain in the Config Map
-func (r *ReconcileInstall) updateDomain() error {
+func (r *ReconcileInstall) updateDomain(instance *servingv1alpha1.Install) error {
 
 	// retrieve domain for configuring for ingress traffic
 	domain := r.getDomain()
@@ -259,7 +259,7 @@ func (r *ReconcileInstall) updateDomain() error {
 }
 
 // Set istio.sidecar.includeOutboundIPRanges property with service network
-func (r *ReconcileInstall) updateServiceNetwork() error {
+func (r *ReconcileInstall) updateServiceNetwork(instance *servingv1alpha1.Install) error {
 
 	// retrieve service networks for configuring egress traffic
 	serviceNetwork := r.getServiceNetwork()
