@@ -7,7 +7,6 @@ import (
 
 	mf "github.com/jcrossley3/manifestival"
 	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
-	"github.com/openshift-knative/knative-serving-operator/pkg/reconciler"
 	"github.com/openshift-knative/knative-serving-operator/version"
 	configv1 "github.com/openshift/api/config/v1"
 
@@ -114,53 +113,55 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	if err := reconciler.ExecuteStages(
-		r.install(instance),
+	stages := []func(*servingv1alpha1.Install) error{
+		r.install,
 		r.deleteObsoleteResources,
 		r.checkForMinikube,
 		r.updateServiceNetwork,
 		r.updateDomain,
-	); err != nil {
-		return reconcile.Result{}, err
+	}
+
+	for _, stage := range stages {
+		if err := stage(instance); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	return reconcile.Result{}, nil
 }
 
 // Apply the embedded resources
-func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) reconciler.ReconcileStageFunc {
-	return func() error {
-		// Filter resources as appropriate
-		filters := []mf.FilterFn{mf.ByOwner(instance)}
-		switch {
-		case *olm:
-			filters = append(filters, mf.ByOLM, mf.ByNamespace(instance.GetNamespace()))
-		case len(*namespace) > 0:
-			filters = append(filters, mf.ByNamespace(*namespace))
-		}
-		r.config.Filter(filters...)
+func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
+	// Filter resources as appropriate
+	filters := []mf.FilterFn{mf.ByOwner(instance)}
+	switch {
+	case *olm:
+		filters = append(filters, mf.ByOLM, mf.ByNamespace(instance.GetNamespace()))
+	case len(*namespace) > 0:
+		filters = append(filters, mf.ByNamespace(*namespace))
+	}
+	r.config.Filter(filters...)
 
-		if instance.Status.Version == version.Version {
-			// we've already successfully applied our YAML
-			return nil
-		}
-		// Apply the resources in the YAML file
-		if err := r.config.ApplyAll(); err != nil {
-			return err
-		}
-
-		// Update status
-		instance.Status.Resources = r.config.ResourceNames()
-		instance.Status.Version = version.Version
-		if err := r.client.Status().Update(context.TODO(), instance); err != nil {
-			return err
-		}
+	if instance.Status.Version == version.Version {
+		// we've already successfully applied our YAML
 		return nil
 	}
+	// Apply the resources in the YAML file
+	if err := r.config.ApplyAll(); err != nil {
+		return err
+	}
+
+	// Update status
+	instance.Status.Resources = r.config.ResourceNames()
+	instance.Status.Version = version.Version
+	if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Delete obsolete istio-system resources, if any
-func (r *ReconcileInstall) deleteObsoleteResources() error {
+func (r *ReconcileInstall) deleteObsoleteResources(instance *servingv1alpha1.Install) error {
 	resource := &unstructured.Unstructured{}
 	resource.SetNamespace("istio-system")
 	resource.SetName("knative-ingressgateway")
@@ -180,7 +181,7 @@ func (r *ReconcileInstall) deleteObsoleteResources() error {
 }
 
 // Configure minikube if we're soaking in it
-func (r *ReconcileInstall) checkForMinikube() error {
+func (r *ReconcileInstall) checkForMinikube(instance *servingv1alpha1.Install) error {
 	node := &v1.Node{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "minikube"}, node)
 	if err != nil {
@@ -236,7 +237,7 @@ func (r *ReconcileInstall) getDomain() string {
 }
 
 // Set domain in the Config Map
-func (r *ReconcileInstall) updateDomain() error {
+func (r *ReconcileInstall) updateDomain(instance *servingv1alpha1.Install) error {
 
 	// retrieve domain for configuring for ingress traffic
 	domain := r.getDomain()
@@ -258,7 +259,7 @@ func (r *ReconcileInstall) updateDomain() error {
 }
 
 // Set istio.sidecar.includeOutboundIPRanges property with service network
-func (r *ReconcileInstall) updateServiceNetwork() error {
+func (r *ReconcileInstall) updateServiceNetwork(instance *servingv1alpha1.Install) error {
 
 	// retrieve service networks for configuring egress traffic
 	serviceNetwork := r.getServiceNetwork()
