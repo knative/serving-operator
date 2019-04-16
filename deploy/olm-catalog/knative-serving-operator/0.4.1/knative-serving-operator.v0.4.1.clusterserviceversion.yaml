@@ -2,6 +2,7 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   annotations:
+    alm-examples: '[{"apiVersion":"serving.knative.dev/v1alpha1","kind":"Install","metadata":{"name":"example-install"},"spec":{"size":3}}]'
     capabilities: Basic Install
   name: knative-serving-operator.v0.4.1
   namespace: placeholder
@@ -182,6 +183,34 @@ spec:
           - patch
           - watch
         - apiGroups:
+          - build.knative.dev
+          resources:
+          - builds
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - pipeline.knative.dev
+          resources:
+          - pipelines
+          - tasks
+          - pipelineresources
+          - pipelineruns
+          - taskruns
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
           - security.openshift.io
           resourceNames:
           - privileged
@@ -209,6 +238,28 @@ spec:
           - '*'
           verbs:
           - '*'
+        - apiGroups:
+          - config.openshift.io
+          resources:
+          - networks
+          - ingresses
+          verbs:
+          - list
+          - watch
+        - apiGroups:
+          - ingresses.config.openshift.io
+          resources:
+          - ingresses
+          verbs:
+          - list
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - nodes
+          verbs:
+          - list
+          - watch
         serviceAccountName: knative-serving-operator
       deployments:
       - name: knative-serving-operator

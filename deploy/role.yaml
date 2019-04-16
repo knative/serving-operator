@@ -98,6 +98,37 @@ rules:
     resources: ["virtualservices"]
     verbs: ["get", "list", "create", "update", "delete", "patch", "watch"]
 
+  # Rules handled by aggregation labels upstream
+
+  - apiGroups:
+    - build.knative.dev
+    resources:
+    - builds
+    verbs:
+    - get
+    - list
+    - create
+    - update
+    - delete
+    - patch
+    - watch
+  - apiGroups:
+    - pipeline.knative.dev
+    resources:
+    - pipelines
+    - tasks
+    - pipelineresources
+    - pipelineruns
+    - taskruns
+    verbs:
+    - get
+    - list
+    - create
+    - update
+    - delete
+    - patch
+    - watch
+
   # The above rules are from upstream. The remaining are
   # required for OpenShift
 
@@ -130,12 +161,20 @@ rules:
     verbs:
     - '*'
 
-  # required for the Operator
+  # required for the Operator's "feature checks"
 
   - apiGroups:
     - config.openshift.io
     resources:
     - networks
+    - ingresses
+    verbs:
+    - list
+    - watch
+  - apiGroups:
+    - ingresses.config.openshift.io
+    resources:
+    - ingresses
     verbs:
     - list
     - watch
