@@ -43,15 +43,16 @@ var (
 // Add creates a new Install Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
+	manifest, err := mf.NewYamlManifest(*filename, *recursive, mgr.GetClient())
+	if err != nil {
+		return err
+	}
+	return add(mgr, newReconciler(mgr, manifest))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileInstall{
-		client: mgr.GetClient(),
-		scheme: mgr.GetScheme(),
-		config: mf.NewYamlManifest(*filename, *recursive, mgr.GetClient())}
+func newReconciler(mgr manager.Manager, man mf.Manifest) reconcile.Reconciler {
+	return &ReconcileInstall{client: mgr.GetClient(), scheme: mgr.GetScheme(), config: man}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
