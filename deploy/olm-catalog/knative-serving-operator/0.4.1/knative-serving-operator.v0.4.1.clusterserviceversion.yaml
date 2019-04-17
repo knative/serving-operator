@@ -13,6 +13,8 @@ spec:
     - kind: Install
       name: installs.serving.knative.dev
       version: v1alpha1
+      displayName: Knative Serving Installation
+      description: Represents an installation of a particular version of Knative Serving
   description: Placeholder description
   displayName: Knative Serving Operator
   install:

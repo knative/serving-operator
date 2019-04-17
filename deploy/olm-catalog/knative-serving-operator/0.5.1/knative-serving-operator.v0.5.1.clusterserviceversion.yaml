@@ -10,7 +10,54 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - kind: Install
+    - kind: Certificate
+      name: certificates.networking.internal.knative.dev
+      version: v1alpha1
+      description: Certificate
+      displayName: Certificate
+    - kind: ClusterIngress
+      name: clusteringresses.networking.internal.knative.dev
+      version: v1alpha1
+      displayName: ClusterIngress
+      description: ClusterIngress
+    - kind: Configuration
+      name: configurations.serving.knative.dev
+      version: v1alpha1
+      displayName: Configuration
+      description: Configuration
+    - kind: Image
+      name: images.caching.internal.knative.dev
+      version: v1alpha1
+      displayName: Image
+      description: Image
+    - kind: PodAutoscaler
+      name: podautoscalers.autoscaling.internal.knative.dev
+      version: v1alpha1
+      displayName: PodAutoscaler
+      description: PodAutoscaler
+    - kind: Revision
+      name: revisions.serving.knative.dev
+      version: v1alpha1
+      displayName: Revision
+      description: Revision
+    - kind: Route
+      name: routes.serving.knative.dev
+      version: v1alpha1
+      displayName: Route
+      description: Route
+    - kind: Service
+      name: services.serving.knative.dev
+      version: v1alpha1
+      displayName: Service
+      description: Service
+    - kind: ServerlessService
+      name: serverlessservices.networking.internal.knative.dev
+      version: v1alpha1
+      displayName: ServerlessService
+      description: ServerlessService
+    - description: Represents an installation of a particular version of Knative Serving
+      displayName: Knative Serving Installation
+      kind: Install
       name: installs.serving.knative.dev
       version: v1alpha1
   description: Placeholder description
@@ -292,6 +339,9 @@ spec:
                 - name: OPERATOR_NAME
                   value: knative-serving-operator
                 image: quay.io/jcrossley3/knative-serving-operator:v0.5.1
+                args:
+                  - --olm
+                  - --install
                 imagePullPolicy: Always
                 name: knative-serving-operator
                 resources: {}
@@ -368,5 +418,5 @@ spec:
   maturity: alpha
   provider:
     name: Knative Community
-  version: 0.5.1
   replaces: knative-serving-operator.v0.4.1
+  version: 0.5.1
