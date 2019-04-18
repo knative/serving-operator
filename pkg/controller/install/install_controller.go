@@ -137,7 +137,14 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	filters := []mf.FilterFn{mf.ByOwner(instance)}
 	switch {
 	case *olm:
-		filters = append(filters, mf.ByOLM, mf.ByNamespace(instance.GetNamespace()))
+		sa, err := k8sutil.GetOperatorName()
+		if err != nil {
+			return err
+		}
+		filters = append(filters,
+			mf.ByOLM,
+			mf.ByNamespace(instance.GetNamespace()),
+			mf.ByServiceAccount(sa))
 	case len(*namespace) > 0:
 		filters = append(filters, mf.ByNamespace(*namespace))
 	}
