@@ -65,7 +65,7 @@ contained within [deploy/resources](deploy/resources/):
 Update [deploy/role.yaml](deploy/role.yaml/) to match the RBAC
 policies in the upstream manifest[s].
 
-And then generate a basic ClusterServiceVersion passing in a version
+And then generate a basic `ClusterServiceVersion` passing in a version
 that corresponds to those manifests:
 
     operator-sdk olm-catalog gen-csv --csv-version 0.5.1
@@ -74,7 +74,8 @@ Some post-editing of the file it generates is required:
 
 * Add fields to address any warnings it reports
 * Add `description` and `displayName` fields for all owned CRD's
-* Add `args: ["--olm"]` to the `knative-serving-operator` container.
+* Add `args: ["--olm", "--install"]` to the operator's container spec.
+* Add a `replaces` field referencing the previous CSV
 
 With the above in place, the [catalog.sh](hack/catalog.sh) script
 should yield a valid `CatalogSource` for you to publish.
