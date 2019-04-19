@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 DIR=${DIR:-$(cd $(dirname "$0")/.. && pwd)}
-NAME=${NAME:-$(ls deploy/olm-catalog)}
+NAME=${NAME:-$(ls $DIR/deploy/olm-catalog)}
 
 x=( $(echo $NAME | tr '-' ' ') )
 DISPLAYNAME=${DISPLAYNAME:=${x[*]^}}
