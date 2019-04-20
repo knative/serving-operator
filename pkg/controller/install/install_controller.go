@@ -3,6 +3,7 @@ package install
 import (
 	"context"
 	"flag"
+	"fmt"
 	"strings"
 
 	mf "github.com/jcrossley3/manifestival"
@@ -120,6 +121,7 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 		r.checkForMinikube,
 		r.updateServiceNetwork,
 		r.updateDomain,
+		r.configure,
 	}
 
 	for _, stage := range stages {
@@ -164,6 +166,25 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	instance.Status.Version = version.Version
 	if err := r.client.Status().Update(context.TODO(), instance); err != nil {
 		return err
+	}
+	return nil
+}
+
+// Set ConfigMap values from Install spec
+func (r *ReconcileInstall) configure(instance *servingv1alpha1.Install) error {
+	for suffix, config := range instance.Spec.Config {
+		name := "config-" + suffix
+		cm := r.config.Find("v1", "ConfigMap", name)
+		if cm == nil {
+			log.Error(fmt.Errorf("ConfigMap '%s' not found", name), "Invalid Install spec")
+			continue
+		}
+		for k, v := range config {
+			unstructured.SetNestedField(cm.Object, v, "data", k)
+		}
+		if err := r.config.Apply(cm); err != nil {
+			return err
+		}
 	}
 	return nil
 }
