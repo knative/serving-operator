@@ -220,17 +220,17 @@ func (r *ReconcileInstall) checkForMinikube(instance *servingv1alpha1.Install) e
 		return err
 	}
 
-	cm := r.config.Find("v1", "ConfigMap", "config-network")
-	key := client.ObjectKey{Namespace: cm.GetNamespace(), Name: cm.GetName()}
-	if err := r.client.Get(context.TODO(), key, cm); err != nil {
-		if errors.IsNotFound(err) {
-			log.Error(err, "Unable to configure egress", "namespace", key.Namespace, "name", key.Name)
-			return nil // no sense in trying if the CM is gone
-		}
+	cm, err := r.config.Get(r.config.Find("v1", "ConfigMap", "config-network"))
+	if err != nil {
 		return err
+	}
+	if cm == nil {
+		log.Error(err, "Missing ConfigMap", "name", "config-network")
+		return nil // no sense in trying if the CM is gone
 	}
 	const k, v = "istio.sidecar.includeOutboundIPRanges", "10.0.0.1/24"
 	if _, found, _ := unstructured.NestedString(cm.Object, "data", k); found {
+		log.V(1).Info("Detected minikube; egress already configured", k, v)
 		return nil // already set
 	}
 	log.Info("Detected minikube; configuring egress", k, v)
