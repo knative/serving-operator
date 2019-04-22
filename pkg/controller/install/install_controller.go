@@ -75,10 +75,11 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Auto-create Install
+	// Make an attempt to auto-create an Install CR
 	if *autoinstall {
 		ns, _ := k8sutil.GetWatchNamespace()
-		go autoInstall(mgr.GetClient(), ns)
+		c, _ := client.New(mgr.GetConfig(), client.Options{})
+		go autoInstall(c, ns)
 	}
 	return nil
 }
