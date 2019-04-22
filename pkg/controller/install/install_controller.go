@@ -230,8 +230,8 @@ func (r *ReconcileInstall) checkForMinikube(instance *servingv1alpha1.Install) e
 		return nil // no sense in trying if the CM is gone
 	}
 	const k, v = "istio.sidecar.includeOutboundIPRanges", "10.0.0.1/24"
-	if _, found, _ := unstructured.NestedString(cm.Object, "data", k); found {
-		log.V(1).Info("Detected minikube; egress already configured", k, v)
+	if x, found, _ := unstructured.NestedString(cm.Object, "data", k); found {
+		log.V(1).Info("Detected minikube; egress already configured", k, x)
 		return nil // already set
 	}
 	log.Info("Detected minikube; configuring egress", k, v)
