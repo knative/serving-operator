@@ -6,7 +6,7 @@ NAME=${NAME:-$(ls $DIR/deploy/olm-catalog)}
 x=( $(echo $NAME | tr '-' ' ') )
 DISPLAYNAME=${DISPLAYNAME:=${x[*]^}}
 
-LATEST=$(find $DIR/deploy/olm-catalog -name '*version.yaml' | sed "s/^.*\/\([^/]..*\).clusterserviceversion.yaml$/\1/" | tail -1)
+LATEST=$(find $DIR/deploy/olm-catalog -name '*version.yaml' | sort -n | sed "s/^.*\/\([^/]..*\).clusterserviceversion.yaml$/\1/" | tail -1)
 
 indent() {
   INDENT="      "
