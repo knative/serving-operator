@@ -147,7 +147,7 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 		filters = append(filters,
 			mf.ByOLM,
 			mf.ByNamespace(instance.GetNamespace()),
-			mf.ByServiceAccount(sa))
+			mf.ByServiceAccount(sa)) // TODO: maybe not this?
 	case len(*namespace) > 0:
 		filters = append(filters, mf.ByNamespace(*namespace))
 	}
@@ -175,15 +175,15 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 func (r *ReconcileInstall) configure(instance *servingv1alpha1.Install) error {
 	for suffix, config := range instance.Spec.Config {
 		name := "config-" + suffix
-		cm := r.config.Find("v1", "ConfigMap", name)
+		cm, err := r.config.Get(r.config.Find("v1", "ConfigMap", name))
+		if err != nil {
+			return err
+		}
 		if cm == nil {
 			log.Error(fmt.Errorf("ConfigMap '%s' not found", name), "Invalid Install spec")
 			continue
 		}
-		for k, v := range config {
-			unstructured.SetNestedField(cm.Object, v, "data", k)
-		}
-		if err := r.config.Apply(cm); err != nil {
+		if err := r.updateConfigMap(cm, config); err != nil {
 			return err
 		}
 	}
@@ -229,17 +229,26 @@ func (r *ReconcileInstall) checkForMinikube(instance *servingv1alpha1.Install) e
 		log.Error(err, "Missing ConfigMap", "name", "config-network")
 		return nil // no sense in trying if the CM is gone
 	}
-	const k, v = "istio.sidecar.includeOutboundIPRanges", "10.0.0.1/24"
-	values := []interface{}{k, v}
-	if x, found, _ := unstructured.NestedString(cm.Object, "data", k); found {
-		if v == x {
-			return nil // already set
+
+	log.Info("Detected minikube; checking egress")
+	data := map[string]string{"istio.sidecar.includeOutboundIPRanges": "10.0.0.1/24"}
+	return r.updateConfigMap(cm, data)
+}
+
+// Set some data in a configmap, only overwriting common keys
+func (r *ReconcileInstall) updateConfigMap(cm *unstructured.Unstructured, data map[string]string) error {
+	for k, v := range data {
+		values := []interface{}{"map", cm.GetName(), k, v}
+		if x, found, _ := unstructured.NestedString(cm.Object, "data", k); found {
+			if v == x {
+				continue
+			}
+			values = append(values, "previous", x)
 		}
-		values = append(values, "previous", x)
+		log.Info("Setting", values...)
+		unstructured.SetNestedField(cm.Object, v, "data", k)
 	}
-	log.Info("Detected minikube; configuring egress", values...)
-	unstructured.SetNestedField(cm.Object, v, "data", k)
-	return r.client.Update(context.TODO(), cm)
+	return r.config.Apply(cm)
 
 }
 
