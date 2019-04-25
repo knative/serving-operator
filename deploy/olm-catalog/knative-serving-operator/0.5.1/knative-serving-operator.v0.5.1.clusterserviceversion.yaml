@@ -10,51 +10,51 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - kind: Certificate
+    - description: Certificate
+      displayName: Certificate
+      kind: Certificate
       name: certificates.networking.internal.knative.dev
       version: v1alpha1
-      description: Certificate
-      displayName: Certificate
-    - kind: ClusterIngress
+    - description: ClusterIngress
+      displayName: ClusterIngress
+      kind: ClusterIngress
       name: clusteringresses.networking.internal.knative.dev
       version: v1alpha1
-      displayName: ClusterIngress
-      description: ClusterIngress
-    - kind: Configuration
+    - description: Configuration
+      displayName: Configuration
+      kind: Configuration
       name: configurations.serving.knative.dev
       version: v1alpha1
-      displayName: Configuration
-      description: Configuration
-    - kind: Image
+    - description: Image
+      displayName: Image
+      kind: Image
       name: images.caching.internal.knative.dev
       version: v1alpha1
-      displayName: Image
-      description: Image
-    - kind: PodAutoscaler
+    - description: PodAutoscaler
+      displayName: PodAutoscaler
+      kind: PodAutoscaler
       name: podautoscalers.autoscaling.internal.knative.dev
       version: v1alpha1
-      displayName: PodAutoscaler
-      description: PodAutoscaler
-    - kind: Revision
+    - description: Revision
+      displayName: Revision
+      kind: Revision
       name: revisions.serving.knative.dev
       version: v1alpha1
-      displayName: Revision
-      description: Revision
-    - kind: Route
+    - description: Route
+      displayName: Route
+      kind: Route
       name: routes.serving.knative.dev
       version: v1alpha1
-      displayName: Route
-      description: Route
-    - kind: Service
+    - description: Service
+      displayName: Service
+      kind: Service
       name: services.serving.knative.dev
       version: v1alpha1
-      displayName: Service
-      description: Service
-    - kind: ServerlessService
+    - description: ServerlessService
+      displayName: ServerlessService
+      kind: ServerlessService
       name: serverlessservices.networking.internal.knative.dev
       version: v1alpha1
-      displayName: ServerlessService
-      description: ServerlessService
     - description: Represents an installation of a particular version of Knative Serving
       displayName: Installation
       kind: Install
@@ -271,6 +271,7 @@ spec:
           - use
         - apiGroups:
           - extensions
+          - apps
           resources:
           - deployments/finalizers
           verbs:

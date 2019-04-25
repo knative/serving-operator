@@ -143,6 +143,7 @@ rules:
     - anyuid
   - apiGroups:
     - extensions
+    - apps
     resources:
     - deployments/finalizers
     verbs:
