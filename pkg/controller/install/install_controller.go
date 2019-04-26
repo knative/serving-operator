@@ -34,10 +34,8 @@ var (
 		"If filename is a directory, process all manifests recursively")
 	autoinstall = flag.Bool("install", false,
 		"Automatically creates an Install resource if none exist")
-	olm = flag.Bool("olm", false,
-		"Ignores resources managed by the Operator Lifecycle Manager")
 	namespace = flag.String("namespace", "",
-		"Overrides the hard-coded namespace references in the manifest")
+		"Overrides namespace in manifest (env vars resolved in-container)")
 	log = logf.Log.WithName("controller_install")
 )
 
@@ -138,17 +136,7 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	// Filter resources as appropriate
 	filters := []mf.FilterFn{mf.ByOwner(instance)}
-	switch {
-	case *olm:
-		sa, err := k8sutil.GetOperatorName()
-		if err != nil {
-			return err
-		}
-		filters = append(filters,
-			mf.ByOLM,
-			mf.ByNamespace(instance.GetNamespace()),
-			mf.ByServiceAccount(sa)) // TODO: maybe not this?
-	case len(*namespace) > 0:
+	if len(*namespace) > 0 {
 		filters = append(filters, mf.ByNamespace(*namespace))
 	}
 	r.config.Filter(filters...)

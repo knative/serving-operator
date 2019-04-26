@@ -57,28 +57,24 @@ build and push an image for the operator to
 ## Create a CatalogSource for [OLM](https://github.com/operator-framework/operator-lifecycle-manager)
 
 The OLM requires special manifests that the operator-sdk can help
-generate. First we extract the CRD's from the upstream manifest[s]
-contained within [deploy/resources](deploy/resources/):
+generate.
 
-    ./hack/extract-crds.sh
+Create a `ClusterServiceVersion` for the version that corresponds to
+those manifest[s] beneath [deploy/resources](deploy/resources/). The
+`$PREVIOUS_VERSION` is the CSV yours will replace.
 
-Update [deploy/role.yaml](deploy/role.yaml/) to match the RBAC
-policies in the upstream manifest[s].
+    operator-sdk olm-catalog gen-csv \
+        --csv-version $VERSION \
+        --from-version $PREVIOUS_VERSION
 
-And then generate a basic `ClusterServiceVersion` passing in a version
-that corresponds to those manifests:
-
-    operator-sdk olm-catalog gen-csv --csv-version 0.5.1
-
-Some post-editing of the file it generates is required:
+Most values should carry over, but if you're starting from scratch,
+some post-editing of the file it generates will be required:
 
 * Add fields to address any warnings it reports
-* Add `description` and `displayName` fields for all owned CRD's
-* Add `args: ["--olm", "--install"]` to the operator's container spec.
-* Add a `replaces` field referencing the previous CSV
+* Verify `description` and `displayName` fields for all owned CRD's
 
-With the above in place, the [catalog.sh](hack/catalog.sh) script
-should yield a valid `CatalogSource` for you to publish.
+The [catalog.sh](hack/catalog.sh) script should yield a valid
+`CatalogSource` for you to publish.
 
 ### Using OLM on Minikube
 
