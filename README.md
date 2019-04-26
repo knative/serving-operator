@@ -56,7 +56,8 @@ those manifest[s] beneath [deploy/resources](deploy/resources/). The
 
     operator-sdk olm-catalog gen-csv \
         --csv-version $VERSION \
-        --from-version $PREVIOUS_VERSION
+        --from-version $PREVIOUS_VERSION \
+        --update-crds
 
 Most values should carry over, but if you're starting from scratch,
 some post-editing of the file it generates will be required:

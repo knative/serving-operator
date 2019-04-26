@@ -45,6 +45,7 @@ spec:
               - args:
                 - --install
                 - --namespace=$WATCH_NAMESPACE
+                - --filename=https://raw.githubusercontent.com/openshift/knative-serving/release-v0.5.2/openshift/release/knative-serving-v0.5.2.yaml
                 command:
                 - knative-serving-operator
                 env:

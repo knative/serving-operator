@@ -10,6 +10,51 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+    - description: Certificate
+      displayName: Certificate
+      kind: Certificate
+      name: certificates.networking.internal.knative.dev
+      version: v1alpha1
+    - description: ClusterIngress
+      displayName: ClusterIngress
+      kind: ClusterIngress
+      name: clusteringresses.networking.internal.knative.dev
+      version: v1alpha1
+    - description: Configuration
+      displayName: Configuration
+      kind: Configuration
+      name: configurations.serving.knative.dev
+      version: v1alpha1
+    - description: Image
+      displayName: Image
+      kind: Image
+      name: images.caching.internal.knative.dev
+      version: v1alpha1
+    - description: PodAutoscaler
+      displayName: PodAutoscaler
+      kind: PodAutoscaler
+      name: podautoscalers.autoscaling.internal.knative.dev
+      version: v1alpha1
+    - description: Revision
+      displayName: Revision
+      kind: Revision
+      name: revisions.serving.knative.dev
+      version: v1alpha1
+    - description: Route
+      displayName: Route
+      kind: Route
+      name: routes.serving.knative.dev
+      version: v1alpha1
+    - description: Service
+      displayName: Service
+      kind: Service
+      name: services.serving.knative.dev
+      version: v1alpha1
+    - description: ServerlessService
+      displayName: ServerlessService
+      kind: ServerlessService
+      name: serverlessservices.networking.internal.knative.dev
+      version: v1alpha1
     - description: Represents an installation of a particular version of Knative Serving
       displayName: Installation
       kind: Install
@@ -22,15 +67,249 @@ spec:
       clusterPermissions:
       - rules:
         - apiGroups:
-          - '*'
+          - ""
+          resources:
+          - pods
+          - namespaces
+          - secrets
+          - configmaps
+          - endpoints
+          - services
+          - events
+          - serviceaccounts
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - extensions
+          resources:
+          - ingresses
+          - deployments
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          - deployments/scale
+          - statefulsets
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - admissionregistration.k8s.io
+          resources:
+          - mutatingwebhookconfigurations
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - apiextensions.k8s.io
+          resources:
+          - customresourcedefinitions
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - serving.knative.dev
+          resources:
+          - configurations
+          - routes
+          - revisions
+          - services
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - serving.knative.dev
+          resources:
+          - configurations/status
+          - routes/status
+          - revisions/status
+          - services/status
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - autoscaling.internal.knative.dev
+          resources:
+          - podautoscalers
+          - podautoscalers/status
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - autoscaling
+          resources:
+          - horizontalpodautoscalers
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - caching.internal.knative.dev
+          resources:
+          - images
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - networking.internal.knative.dev
+          resources:
+          - clusteringresses
+          - clusteringresses/status
+          - serverlessservices
+          - serverlessservices/status
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - deletecollection
+          - patch
+          - watch
+        - apiGroups:
+          - networking.istio.io
+          resources:
+          - virtualservices
+          - gateways
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - build.knative.dev
+          resources:
+          - builds
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - pipeline.knative.dev
+          resources:
+          - pipelines
+          - tasks
+          - pipelineresources
+          - pipelineruns
+          - taskruns
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - patch
+          - watch
+        - apiGroups:
+          - security.openshift.io
+          resourceNames:
+          - privileged
+          - anyuid
+          resources:
+          - securitycontextconstraints
+          verbs:
+          - use
+        - apiGroups:
+          - extensions
+          resources:
+          - deployments/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - serving.knative.dev
+          - networking.internal.knative.dev
+          resources:
+          - '*/finalizers'
+          verbs:
+          - update
+        - apiGroups:
+          - serving.knative.dev
           resources:
           - '*'
           verbs:
           - '*'
-        - nonResourceURLs:
-          - '*'
+        - apiGroups:
+          - config.openshift.io
+          resources:
+          - networks
+          - ingresses
           verbs:
-          - '*'
+          - list
+          - watch
+        - apiGroups:
+          - ingresses.config.openshift.io
+          resources:
+          - ingresses
+          verbs:
+          - list
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - nodes
+          verbs:
+          - list
+          - watch
         serviceAccountName: knative-serving-operator
       deployments:
       - name: knative-serving-operator
@@ -46,10 +325,7 @@ spec:
                 name: knative-serving-operator
             spec:
               containers:
-              - args:
-                - --install
-                - --namespace=$WATCH_NAMESPACE
-                command:
+              - command:
                 - knative-serving-operator
                 env:
                 - name: WATCH_NAMESPACE
@@ -63,6 +339,10 @@ spec:
                 - name: OPERATOR_NAME
                   value: knative-serving-operator
                 image: quay.io/openshift-knative/knative-serving-operator:v0.5.1
+                args:
+                  - --olm
+                  - --install
+                  - --filename=https://raw.githubusercontent.com/openshift/knative-serving/release-v0.5.1/openshift/release/knative-serving-v0.5.1.yaml
                 imagePullPolicy: Always
                 name: knative-serving-operator
                 resources: {}
