@@ -646,7 +646,7 @@ metadata:
   name: queue-proxy
   namespace: knative-serving
 spec:
-  image: gcr.io/knative-releases/github.com/knative/serving/cmd/queue@sha256:16ebc9eac3c9107ff5b4da75ee40adcefdf703dabf02f36d7d000737a57bf64e
+  image: gcr.io/knative-releases/github.com/knative/serving/cmd/queue@sha256:cae33dcb4477f87815dfae6fa8e2b1ec850562accb77b7bc36bb3ac12bafead1
 
 ---
 apiVersion: apps/v1
@@ -685,7 +685,7 @@ spec:
               fieldPath: metadata.namespace
         - name: CONFIG_LOGGING_NAME
           value: config-logging
-        image: gcr.io/knative-releases/github.com/knative/serving/cmd/activator@sha256:bc61131f2d3f48fb97a1a98a3be8a34bb65905428dbbedeabe24eb949d6b53bc
+        image: gcr.io/knative-releases/github.com/knative/serving/cmd/activator@sha256:c75dc977b2a4d16f01f89a1741d6895990b7404b03ffb45725a63104d267b74a
         livenessProbe:
           httpGet:
             path: /healthz
@@ -773,7 +773,7 @@ spec:
               fieldPath: metadata.namespace
         - name: CONFIG_LOGGING_NAME
           value: config-logging
-        image: gcr.io/knative-releases/github.com/knative/serving/cmd/autoscaler@sha256:a885e63a4df39886c9b9147bc431869cf3b4168df4ea31dba369bcff6dd70b9e
+        image: gcr.io/knative-releases/github.com/knative/serving/cmd/autoscaler@sha256:90f1199b3557242d46c4347d101e6767c388387e7cc30d8e6748dbfb10cefaef
         name: autoscaler
         ports:
         - containerPort: 8080
@@ -898,7 +898,7 @@ data:
 
     # List of repositories for which tag to digest resolving should be skipped
     registriesSkippingTagResolving: "ko.local,dev.local"
-  queueSidecarImage: gcr.io/knative-releases/github.com/knative/serving/cmd/queue@sha256:16ebc9eac3c9107ff5b4da75ee40adcefdf703dabf02f36d7d000737a57bf64e
+  queueSidecarImage: gcr.io/knative-releases/github.com/knative/serving/cmd/queue@sha256:cae33dcb4477f87815dfae6fa8e2b1ec850562accb77b7bc36bb3ac12bafead1
 kind: ConfigMap
 metadata:
   labels:
@@ -1357,7 +1357,7 @@ spec:
               fieldPath: metadata.namespace
         - name: CONFIG_LOGGING_NAME
           value: config-logging
-        image: gcr.io/knative-releases/github.com/knative/serving/cmd/controller@sha256:1b98ae2d1351055befe33c3ad87555844e7a23889c15df3fd6f988a9851bcae6
+        image: gcr.io/knative-releases/github.com/knative/serving/cmd/controller@sha256:df02e462373a3e4a408356d8d6240222bfe31f6aebbac804d28a6982532fb45f
         name: controller
         ports:
         - containerPort: 9090
@@ -1408,7 +1408,7 @@ spec:
               fieldPath: metadata.namespace
         - name: CONFIG_LOGGING_NAME
           value: config-logging
-        image: gcr.io/knative-releases/github.com/knative/serving/cmd/webhook@sha256:2c4e383e731537d3c26216af270cbabe91c80f04e8ed2193f644d9ec9cd09d12
+        image: gcr.io/knative-releases/github.com/knative/serving/cmd/webhook@sha256:72189c6a5610e13794836a49bd2d6269206f434ab881b817d23e31f61493152e
         name: webhook
         resources:
           limits:

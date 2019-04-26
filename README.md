@@ -7,9 +7,9 @@ Before doing anything else, grab your dependencies:
 
     $ dep ensure -v
 
-Version 0.5.1 of knative-serving refers to Istio CRD's:
+Version 0.5.2 of knative-serving refers to Istio CRD's:
 
-    $ kubectl apply -f https://github.com/knative/serving/releases/download/v0.5.1/istio-crds.yaml
+    $ kubectl apply -f https://github.com/knative/serving/releases/download/v0.5.2/istio-crds.yaml
 
 ## Run the Operator
 
@@ -45,15 +45,6 @@ the default namespace.
 
     $ kubectl apply -f deploy/
 
-## Create a Release
-
-Verify that [version.go](version/version.go) matches the contents of
-[deploy/resources](deploy/resources/) and then run the following to
-build and push an image for the operator to
-[quay.io](https://quay.io/repository/openshift-knative/knative-serving-operator).
-
-    ./hack/release.sh
-
 ## Create a CatalogSource for [OLM](https://github.com/operator-framework/operator-lifecycle-manager)
 
 The OLM requires special manifests that the operator-sdk can help
@@ -75,6 +66,15 @@ some post-editing of the file it generates will be required:
 
 The [catalog.sh](hack/catalog.sh) script should yield a valid
 `CatalogSource` for you to publish.
+
+## Create a Release
+
+Verify that [version.go](version/version.go) matches the contents of
+[deploy/resources](deploy/resources/) and then run the following to
+build and push an image for the operator to
+[quay.io](https://quay.io/repository/openshift-knative/knative-serving-operator).
+
+    ./hack/release.sh
 
 ### Using OLM on Minikube
 

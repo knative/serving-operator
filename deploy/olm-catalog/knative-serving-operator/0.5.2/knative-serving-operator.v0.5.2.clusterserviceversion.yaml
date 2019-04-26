@@ -4,7 +4,7 @@ metadata:
   annotations:
     alm-examples: '[{"apiVersion":"serving.knative.dev/v1alpha1","kind":"Install","metadata":{"name":"example-install"},"spec":{"config":{"autoscaler":{"container-concurrency-target-default":"100","container-concurrency-target-percentage":"1.0","enable-scale-to-zero":"true","max-scale-up-rate":"10","panic-window":"6s","scale-to-zero-grace-period":"30s","stable-window":"60s","tick-interval":"2s"},"controller":{"registriesSkippingTagResolving":"ko.local,dev.local"},"defaults":{"revision-cpu-request":"400m","revision-timeout-seconds":"300"},"gc":{"stale-revision-create-delay":"24h","stale-revision-lastpinned-debounce":"5h","stale-revision-minimum-generations":"1","stale-revision-timeout":"15h"},"logging":{"loglevel.activator":"info","loglevel.autoscaler":"info","loglevel.controller":"info","loglevel.queueproxy":"info","loglevel.webhook":"info"}}}}]'
     capabilities: Basic Install
-  name: knative-serving-operator.v0.5.1
+  name: knative-serving-operator.v0.5.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -24,10 +24,6 @@ spec:
         - apiGroups:
           - '*'
           resources:
-          - '*'
-          verbs:
-          - '*'
-        - nonResourceURLs:
           - '*'
           verbs:
           - '*'
@@ -62,7 +58,7 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: knative-serving-operator
-                image: quay.io/openshift-knative/knative-serving-operator:v0.5.1
+                image: quay.io/openshift-knative/knative-serving-operator:v0.5.2
                 imagePullPolicy: Always
                 name: knative-serving-operator
                 resources: {}
@@ -139,5 +135,5 @@ spec:
   maturity: alpha
   provider:
     name: Knative Community
-  replaces: knative-serving-operator.v0.4.1
-  version: 0.5.1
+  replaces: knative-serving-operator.v0.5.1
+  version: 0.5.2
