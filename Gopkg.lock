@@ -245,12 +245,12 @@
   version = "v0.3.7"
 
 [[projects]]
-  branch = "lessolm"
+  branch = "master"
   digest = "1:cf6f9a2c3c57a58dd42791e9a8942c1994f5e4c5972efed06f32be9fb6048698"
   name = "github.com/jcrossley3/manifestival"
   packages = ["."]
   pruneopts = "NT"
-  revision = "9a32feed48cb974a47b87410c33f3b1898434532"
+  revision = "5bb14668b6d3d7b09b4d6b2dcba367472eaad31b"
 
 [[projects]]
   digest = "1:f5b9328966ccea0970b1d15075698eff0ddb3e75889560aad2e9f76b289b536a"
