@@ -1,57 +1,91 @@
-# knative-serving-operator
+# Knative Serving Operator
 
-If you don't already have it, install the latest
-[operator-sdk](https://github.com/operator-framework/operator-sdk/)
+The following will install Knative Serving in the `default` namespace:
 
-Before doing anything else, grab your dependencies:
+    kubectl apply -f deploy/crds/serving_v1alpha1_install_crd.yaml
+    kubectl apply -f deploy/
 
-    $ dep ensure -v
+The operator will install Knative Serving and configure it
+appropriately for your cluster.
 
-Version 0.5.2 of knative-serving refers to Istio CRD's:
+## Requirements
 
-    $ kubectl apply -f https://github.com/knative/serving/releases/download/v0.5.2/istio-crds.yaml
+Version 0.5.x of Knative Serving requires Istio CRD's:
 
-## Run the Operator
+    kubectl apply -f https://github.com/knative/serving/releases/download/v0.5.2/istio-crds.yaml
 
-The operator watches for an `Install` custom resource, so you'll need
-to register it:
+This operator was created with the
+[operator-sdk](https://github.com/operator-framework/operator-sdk/).
+It's not strictly required but does provide some handy tooling.
 
-    $ kubectl apply -f deploy/crds/serving_v1alpha1_install_crd.yaml
+## The Install Custom Resource
 
-Once the operator is up (see next sections), trigger the installation
-by creating an `Install` CR. There are currently no fields expected in
-its `spec` but its `status` should contain a list of the installed
-resources and their version.
+The installation of Knative Serving is triggered by the creation of
+[an `Install` custom
+resource](deploy/crds/serving_v1alpha1_install_cr.yaml), and if the
+operator's `--install` option is passed, it'll create one in its
+target namespace if none exist.
 
-    $ kubectl apply -f deploy/crds/serving_v1alpha1_install_cr.yaml
-    $ kubectl get install -oyaml
+The fields in its `spec` will override the corresponding entries in
+the Knative Serving ConfigMaps, and its `status` will contain a list
+of the resources the operator installs and their version.
 
-To uninstall,
+The following are all equivalent, but the latter may suffer from name
+conflicts.
 
-    $ kubectl delete -f deploy/crds/serving_v1alpha1_install_cr.yaml
+    kubectl get installs.serving.knative.dev -oyaml
+    kubectl get ksi -oyaml
+    kubectl get install -oyaml
+
+To uninstall Knative Serving, simply delete the `Install` resource.
+
+    kubectl delete ksi --all
     
-### Outside Cluster
+## Development
 
-    $ operator-sdk up local
+It can be convenient to run the operator outside of the cluster to
+test changes. The following command will build the operator and use
+your current kube config to connect to the cluster:
 
-To see the flags supported by the operator,
+    operator-sdk up local
 
-    $ operator-sdk up local --operator-flags "--help"
+Pass `--help` for further details on the various `operator-sdk`
+subcommands, and pass `--help` to the operator itself to see its
+available options:
 
-### Inside Cluster
+    operator-sdk up local --operator-flags "--help"
 
-We give the operator's service account `cluster-admin` privileges in
-the default namespace.
+### Building the Operator Image
 
-    $ kubectl apply -f deploy/
+To build the operator,
 
-## Create a CatalogSource for [OLM](https://github.com/operator-framework/operator-lifecycle-manager)
+    operator-sdk build quay.io/$REPO/$NAME:$VERSION
+
+The image name should match what's in
+[deploy/operator.yaml](deploy/operator.yaml) and the `$VERSION` should
+match [version.go](version/version.go) and correspond to the contents
+of [deploy/resources](deploy/resources/).
+
+There is a handy script that will build and push an image for the
+operator to
+[quay.io](https://quay.io/repository/openshift-knative/knative-serving-operator)
+and tag the source:
+
+    ./hack/release.sh
+
+## Operator Framework
+
+The remaining sections only apply if you wish to create the metadata
+required by the [Operator Lifecycle
+Manager](https://github.com/operator-framework/operator-lifecycle-manager)
+
+### Create a CatalogSource
 
 The OLM requires special manifests that the operator-sdk can help
 generate.
 
 Create a `ClusterServiceVersion` for the version that corresponds to
-those manifest[s] beneath [deploy/resources](deploy/resources/). The
+the manifest[s] beneath [deploy/resources](deploy/resources/). The
 `$PREVIOUS_VERSION` is the CSV yours will replace.
 
     operator-sdk olm-catalog gen-csv \
@@ -67,15 +101,6 @@ some post-editing of the file it generates will be required:
 
 The [catalog.sh](hack/catalog.sh) script should yield a valid
 `CatalogSource` for you to publish.
-
-## Create a Release
-
-Verify that [version.go](version/version.go) matches the contents of
-[deploy/resources](deploy/resources/) and then run the following to
-build and push an image for the operator to
-[quay.io](https://quay.io/repository/openshift-knative/knative-serving-operator).
-
-    ./hack/release.sh
 
 ### Using OLM on Minikube
 
