@@ -14,7 +14,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -311,24 +310,25 @@ func (r *ReconcileInstall) updateServiceNetwork(instance *servingv1alpha1.Instal
 	return nil
 }
 
-func autoInstall(c client.Client, ns string) error {
+func autoInstall(c client.Client, ns string) (err error) {
+	const path = "deploy/crds/serving_v1alpha1_install_cr.yaml"
+	log.Info("Automatic Install requested", "namespace", ns)
 	installList := &servingv1alpha1.InstallList{}
-	err := c.List(context.TODO(), &client.ListOptions{Namespace: ns}, installList)
+	err = c.List(context.TODO(), &client.ListOptions{Namespace: ns}, installList)
 	if err != nil {
 		log.Error(err, "Unable to list Installs")
 		return err
 	}
 	if len(installList.Items) == 0 {
-		install := &servingv1alpha1.Install{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "auto-install",
-				Namespace: ns,
-			},
+		if manifest, err := mf.NewYamlManifest(path, false, c); err == nil {
+			if err = manifest.Filter(mf.ByNamespace(ns)).ApplyAll(); err != nil {
+				log.Error(err, "Unable to create Install")
+			}
+		} else {
+			log.Error(err, "Unable to create Install manifest")
 		}
-		err = c.Create(context.TODO(), install)
-		if err != nil {
-			log.Error(err, "Unable to create Install")
-		}
+	} else {
+		log.Info("Install found", "name", installList.Items[0].Name)
 	}
-	return nil
+	return err
 }

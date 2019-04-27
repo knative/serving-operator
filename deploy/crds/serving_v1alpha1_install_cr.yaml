@@ -1,7 +1,7 @@
 apiVersion: serving.knative.dev/v1alpha1
 kind: Install
 metadata:
-  name: example-install
+  name: knative-serving
 spec:
   config:
     defaults:
