@@ -1,20 +1,23 @@
 # Knative Serving Operator
 
-The following will install Knative Serving in the `default` namespace:
+The following will install [Knative
+Serving](https://github.com/knative/serving) and configure it
+appropriately for your cluster in the `default` namespace:
 
     kubectl apply -f deploy/crds/serving_v1alpha1_install_crd.yaml
     kubectl apply -f deploy/
 
-The operator will install Knative Serving and configure it
-appropriately for your cluster.
-
 ## Requirements
+
+### Istio
 
 Version 0.5.x of Knative Serving requires Istio CRD's:
 
     kubectl apply -f https://github.com/knative/serving/releases/download/v0.5.2/istio-crds.yaml
 
-This operator was created with the
+### Operator SDK
+
+This operator was created using the
 [operator-sdk](https://github.com/operator-framework/operator-sdk/).
 It's not strictly required but does provide some handy tooling.
 
@@ -45,7 +48,7 @@ To uninstall Knative Serving, simply delete the `Install` resource.
 
 It can be convenient to run the operator outside of the cluster to
 test changes. The following command will build the operator and use
-your current kube config to connect to the cluster:
+your current "kube config" to connect to the cluster:
 
     operator-sdk up local
 
@@ -59,15 +62,14 @@ available options:
 
 To build the operator,
 
-    operator-sdk build quay.io/$REPO/$NAME:$VERSION
+    operator-sdk build quay.io/$REPO/knative-serving-operator:$VERSION
 
-The image name should match what's in
+The image should match what's in
 [deploy/operator.yaml](deploy/operator.yaml) and the `$VERSION` should
 match [version.go](version/version.go) and correspond to the contents
 of [deploy/resources](deploy/resources/).
 
-There is a handy script that will build and push an image for the
-operator to
+There is a handy script that will build and push an image to
 [quay.io](https://quay.io/repository/openshift-knative/knative-serving-operator)
 and tag the source:
 
@@ -94,7 +96,7 @@ the manifest[s] beneath [deploy/resources](deploy/resources/). The
         --update-crds
 
 Most values should carry over, but if you're starting from scratch,
-some post-editing of the file it generates will be required:
+some post-editing of the file it generates may be required:
 
 * Add fields to address any warnings it reports
 * Verify `description` and `displayName` fields for all owned CRD's
