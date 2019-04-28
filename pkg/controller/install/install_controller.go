@@ -41,7 +41,7 @@ var (
 // Add creates a new Install Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
-	manifest, err := mf.NewYamlManifest(*filename, *recursive, mgr.GetClient())
+	manifest, err := mf.NewManifest(*filename, *recursive, mgr.GetClient())
 	if err != nil {
 		return err
 	}
@@ -133,12 +133,12 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 
 // Apply the embedded resources
 func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
-	// Filter resources as appropriate
-	filters := []mf.FilterFn{mf.ByOwner(instance)}
+	// Transform resources as appropriate
+	fns := []mf.Transformer{mf.InjectOwner(instance)}
 	if len(*namespace) > 0 {
-		filters = append(filters, mf.ByNamespace(*namespace))
+		fns = append(fns, mf.InjectNamespace(*namespace))
 	}
-	r.config.Filter(filters...)
+	r.config.Transform(fns...)
 
 	if instance.Status.Version == version.Version {
 		// we've already successfully applied our YAML
@@ -150,7 +150,7 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	}
 
 	// Update status
-	instance.Status.Resources = r.config.ResourceNames()
+	instance.Status.Resources = r.config.Resources
 	instance.Status.Version = version.Version
 	if err := r.client.Status().Update(context.TODO(), instance); err != nil {
 		return err
@@ -320,8 +320,8 @@ func autoInstall(c client.Client, ns string) (err error) {
 		return err
 	}
 	if len(installList.Items) == 0 {
-		if manifest, err := mf.NewYamlManifest(path, false, c); err == nil {
-			if err = manifest.Filter(mf.ByNamespace(ns)).ApplyAll(); err != nil {
+		if manifest, err := mf.NewManifest(path, false, c); err == nil {
+			if err = manifest.Transform(mf.InjectNamespace(ns)).ApplyAll(); err != nil {
 				log.Error(err, "Unable to create Install")
 			}
 		} else {

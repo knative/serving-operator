@@ -5,6 +5,7 @@
 package v1alpha1
 
 import (
+	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -107,8 +108,10 @@ func (in *InstallStatus) DeepCopyInto(out *InstallStatus) {
 	*out = *in
 	if in.Resources != nil {
 		in, out := &in.Resources, &out.Resources
-		*out = make([]string, len(*in))
-		copy(*out, *in)
+		*out = make([]unstructured.Unstructured, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	return
 }
