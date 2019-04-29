@@ -10,6 +10,6 @@ eval VERSION=v$(grep Version version/version.go | awk '{print $3}')
 operator-sdk build quay.io/openshift-knative/$IMAGE:$VERSION
 docker push quay.io/openshift-knative/$IMAGE:$VERSION
 git tag -f $VERSION
-git push -f origin refs/tags/$VERSION:refs/tags/$VERSION
+git push --tags --force
 
 popd
