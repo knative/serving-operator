@@ -16,7 +16,7 @@ spec:
       containers:
         - name: knative-serving-operator
           image: quay.io/openshift-knative/knative-serving-operator:v0.5.2
-          args: ["--install", "--namespace=$WATCH_NAMESPACE"]
+          args: ["--namespace=$WATCH_NAMESPACE"]
           command:
           - knative-serving-operator
           imagePullPolicy: Always
