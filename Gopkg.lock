@@ -329,13 +329,14 @@
   revision = "6883bb6a4f4cbb5c7fd7c7b0d40484cfaf7f74be"
 
 [[projects]]
-  digest = "1:5373f6dd47bf27173efa92ca499df1537a1df738193a55e1287a656354692c00"
+  digest = "1:4def1b31cd1fc334f56b6e50be587d7fefb1f2ca180613b5531a3ddc9ed59b33"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
     "pkg/k8sutil",
     "pkg/leader",
     "pkg/log/zap",
     "pkg/metrics",
+    "pkg/predicate",
     "version",
   ]
   pruneopts = "NUT"
@@ -938,6 +939,7 @@
     "github.com/operator-framework/operator-sdk/pkg/leader",
     "github.com/operator-framework/operator-sdk/pkg/log/zap",
     "github.com/operator-framework/operator-sdk/pkg/metrics",
+    "github.com/operator-framework/operator-sdk/pkg/predicate",
     "github.com/operator-framework/operator-sdk/version",
     "github.com/spf13/pflag",
     "k8s.io/api/core/v1",
