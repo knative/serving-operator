@@ -341,7 +341,6 @@ spec:
                 image: quay.io/openshift-knative/knative-serving-operator:v0.5.1
                 args:
                   - --olm
-                  - --install
                   - --filename=https://raw.githubusercontent.com/openshift/knative-serving/release-v0.5.1/openshift/release/knative-serving-v0.5.1.yaml
                 imagePullPolicy: Always
                 name: knative-serving-operator
