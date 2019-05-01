@@ -14,6 +14,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/predicate"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -53,11 +54,6 @@ func newReconciler(mgr manager.Manager, man mf.Manifest) reconcile.Reconciler {
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
-	// Register scheme
-	if err := configv1.Install(mgr.GetScheme()); err != nil {
-		log.Error(err, "Unable to register scheme")
-	}
-
 	// Create a new controller
 	c, err := controller.New("install-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -241,7 +237,11 @@ func (r *ReconcileInstall) getServiceNetwork() string {
 	networkConfig := &configv1.Network{}
 	serviceNetwork := ""
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, networkConfig); err != nil {
-		log.V(1).Info("OpenShift Network Config is not available.")
+		if meta.IsNoMatchError(err) {
+			log.V(1).Info("OpenShift Network Config is not available.")
+		} else {
+			log.Error(err, "Unexpected error querying Network")
+		}
 	} else if len(networkConfig.Spec.ServiceNetwork) > 0 {
 		serviceNetwork = strings.Join(networkConfig.Spec.ServiceNetwork, ",")
 		log.Info("OpenShift Network Config is available", "Service Network", serviceNetwork)
@@ -253,7 +253,11 @@ func (r *ReconcileInstall) getDomain() string {
 	ingressConfig := &configv1.Ingress{}
 	domain := ""
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, ingressConfig); err != nil {
-		log.V(1).Info("OpenShift Ingress Config is not available.")
+		if meta.IsNoMatchError(err) {
+			log.V(1).Info("OpenShift Ingress Config is not available.")
+		} else {
+			log.Error(err, "Unexpected error querying Ingress")
+		}
 	} else {
 		domain = ingressConfig.Spec.Domain
 		log.Info("OpenShift Ingress Config is available", "Domain", domain)
