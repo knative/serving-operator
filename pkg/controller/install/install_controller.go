@@ -34,8 +34,6 @@ var (
 		"If filename is a directory, process all manifests recursively")
 	autoinstall = flag.Bool("install", false,
 		"Automatically creates an Install resource if none exist")
-	namespace = flag.String("namespace", "",
-		"Overrides namespace in manifest (env vars resolved in-container)")
 	log = logf.Log.WithName("controller_install")
 )
 
@@ -136,8 +134,8 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	// Transform resources as appropriate
 	fns := []mf.Transformer{mf.InjectOwner(instance)}
-	if len(*namespace) > 0 {
-		fns = append(fns, mf.InjectNamespace(*namespace))
+	if len(instance.Spec.Namespace) > 0 {
+		fns = append(fns, mf.InjectNamespace(instance.Spec.Namespace))
 	}
 	r.config.Transform(fns...)
 

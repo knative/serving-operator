@@ -28,9 +28,11 @@ The installation of Knative Serving is triggered by the creation of
 [an `Install` custom
 resource](deploy/crds/serving_v1alpha1_install_cr.yaml).
 
-The fields in its `spec` will override the corresponding entries in
-the Knative Serving ConfigMaps, and its `status` will contain a list
-of the resources the operator installs and their version.
+The optional `spec.namespace` field denotes the target namespace for
+the installation, and the optional `spec.config` field can be used to
+set the corresponding entries in the Knative Serving ConfigMaps. The
+`status` field will contain a list of the resources the operator
+installs and their version.
 
 The following are all equivalent, but the latter may suffer from name
 conflicts.
