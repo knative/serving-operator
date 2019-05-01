@@ -11,7 +11,6 @@ import (
 	"github.com/openshift-knative/knative-serving-operator/version"
 	configv1 "github.com/openshift/api/config/v1"
 
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/predicate"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -32,8 +31,8 @@ var (
 		"The filename containing the YAML resources to apply")
 	recursive = flag.Bool("recursive", false,
 		"If filename is a directory, process all manifests recursively")
-	autoinstall = flag.Bool("install", false,
-		"Automatically creates an Install resource if none exist")
+	installNs = flag.String("install-ns", "",
+		"The namespace in which to create an Install resource, if none exist")
 	log = logf.Log.WithName("controller_install")
 )
 
@@ -71,11 +70,10 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Make an attempt to auto-create an Install CR
-	if *autoinstall {
-		ns, _ := k8sutil.GetWatchNamespace()
+	// Make an attempt to create an Install CR, if necessary
+	if len(*installNs) > 0 {
 		c, _ := client.New(mgr.GetConfig(), client.Options{})
-		go autoInstall(c, ns)
+		go autoInstall(c, *installNs)
 	}
 	return nil
 }
