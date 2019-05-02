@@ -14,8 +14,11 @@ type InstallSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
-	Namespace string                       `json:"namespace,omitempty"`
-	Config    map[string]map[string]string `json:"config,omitempty"`
+
+	// The target namespace in which to install the upstream resources
+	Namespace string `json:"namespace,omitempty"`
+	// A means to override the corresponding entries in the upstream configmaps
+	Config map[string]map[string]string `json:"config,omitempty"`
 }
 
 // InstallStatus defines the observed state of Install
@@ -26,9 +29,10 @@ type InstallStatus struct {
 	// Add custom validation using kubebuilder tags:
 	// https://book.kubebuilder.io/beyond_basics/generating_crd.html
 
-	// The resources applied
+	// The resources applied by the operator
 	Resources []unstructured.Unstructured `json:"resources"`
-	Version   string                      `json:"version"`
+	// The version of the installed release
+	Version string `json:"version"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

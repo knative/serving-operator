@@ -23,6 +23,43 @@ spec:
       kind: Install
       name: installs.serving.knative.dev
       version: v1alpha1
+      resources:
+        - kind: Namespace
+          version: v1
+        - kind: CustomResourceDefinition
+          version: apiextensions.k8s.io/v1beta1
+        - kind: Service
+          version: v1
+        - kind: Deployment
+          version: apps/v1
+        - kind: ConfigMap
+          version: v1
+      specDescriptors:
+        - description: The target namespace into which Knative Serving will be installed
+          path: namespace
+          displayName: Namespace
+          x-descriptors:
+            - 'urn:alm:descriptor:com.tectonic.ui:namespaceSelector'
+        - description: Entries corresponding to Knative Serving ConfigMaps
+          path: config
+          displayName: Config
+          x-descriptors:
+            - 'urn:alm:descriptor:com.tectonic.ui:selector:core:v1:ConfigMap'
+      statusDescriptors:
+        - description: The actual Knative Serving resources installed by the operator
+          path: resources
+          displayName: Resources
+        - description: The version of Knative Serving installed
+          path: version
+          displayName: Version
+          x-descriptors:
+            - 'urn:alm:descriptor:com.tectonic.ui:label'
+    required:
+      - name: gateways.networking.istio.io
+        version: v1alpha3
+        kind: Gateway
+        description: An Istio ingress gateway
+        displayName: Istio Gateway
   description: |
     Knative Serving builds on Kubernetes to support deploying and
     serving of serverless applications and functions. Serving is easy
