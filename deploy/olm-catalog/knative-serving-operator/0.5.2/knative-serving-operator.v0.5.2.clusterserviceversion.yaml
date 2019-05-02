@@ -54,12 +54,12 @@ spec:
           displayName: Version
           x-descriptors:
             - 'urn:alm:descriptor:com.tectonic.ui:label'
-    required:
-      - name: gateways.networking.istio.io
-        version: v1alpha3
-        kind: Gateway
-        description: An Istio ingress gateway
-        displayName: Istio Gateway
+    # required:
+    #   - name: gateways.networking.istio.io
+    #     version: v1alpha3
+    #     kind: Gateway
+    #     description: An Istio ingress gateway
+    #     displayName: Istio Gateway
   description: |
     Knative Serving builds on Kubernetes to support deploying and
     serving of serverless applications and functions. Serving is easy
