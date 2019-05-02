@@ -19,6 +19,7 @@ find $DIR/deploy/olm-catalog -name '*_crd.yaml' | sort -n | xargs -I{} cp {} $DI
 
 CRD=$(cat $(ls $DIR/.crds/*) | grep -v -- "---" | indent apiVersion)
 CSV=$(cat $(find $DIR/deploy/olm-catalog -name '*version.yaml' | sort -n) | indent apiVersion)
+PKG=$(cat $DIR/deploy/olm-catalog/$NAME/*package.yaml | indent packageName)
 
 cat <<EOF | sed 's/^  *$//'
 kind: ConfigMap
@@ -32,10 +33,7 @@ $CRD
   clusterServiceVersions: |-
 $CSV
   packages: |-
-    - packageName: $NAME
-      channels:
-      - name: alpha
-        currentCSV: $LATEST
+$PKG
 ---
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
