@@ -5,13 +5,14 @@ metadata:
     alm-examples: '[{"apiVersion":"serving.knative.dev/v1alpha1","kind":"Install","metadata":{"name":"knative-serving"},"spec":{"config":{"autoscaler":{"container-concurrency-target-default":"100","container-concurrency-target-percentage":"1.0","enable-scale-to-zero":"true","max-scale-up-rate":"10","panic-window":"6s","scale-to-zero-grace-period":"30s","stable-window":"60s","tick-interval":"2s"},"controller":{"registriesSkippingTagResolving":"ko.local,dev.local"},"defaults":{"revision-cpu-request":"400m","revision-timeout-seconds":"300"},"gc":{"stale-revision-create-delay":"24h","stale-revision-lastpinned-debounce":"5h","stale-revision-minimum-generations":"1","stale-revision-timeout":"15h"},"logging":{"loglevel.activator":"info","loglevel.autoscaler":"info","loglevel.controller":"info","loglevel.queueproxy":"info","loglevel.webhook":"info"}}}}]'
     capabilities: Seamless Upgrades
     categories: Networking,Integration & Delivery,Cloud Provider,Developer Tools
+    certified: "false"
     containerImage: quay.io/openshift-knative/knative-serving-operator:v0.5.2
-    createdAt: 2019-05-01
-    support: Red Hat
-    repository: https://github.com/openshift-knative/knative-serving-operator
+    createdAt: "2019-05-03T17:00:00Z"
     description: |-
       Knative Serving builds on Kubernetes to support deploying and
       serving of serverless applications and functions.
+    repository: https://github.com/openshift-knative/knative-serving-operator
+    support: Red Hat
   name: knative-serving-operator.v0.5.2
   namespace: placeholder
 spec:
@@ -22,46 +23,52 @@ spec:
       displayName: Knative Serving
       kind: Install
       name: installs.serving.knative.dev
-      version: v1alpha1
       resources:
-        - kind: Namespace
-          version: v1
-        - kind: CustomResourceDefinition
-          version: v1beta1
-        - kind: Service
-          version: v1
-        - kind: Deployment
-          version: v1
-        - kind: Pod
-          version: v1
-        - kind: ConfigMap
-          version: v1
+      - kind: Namespace
+        name: ""
+        version: v1
+      - kind: CustomResourceDefinition
+        name: ""
+        version: v1beta1
+      - kind: Service
+        name: ""
+        version: v1
+      - kind: Deployment
+        name: ""
+        version: v1
+      - kind: Pod
+        name: ""
+        version: v1
+      - kind: ConfigMap
+        name: ""
+        version: v1
       specDescriptors:
-        - description: The target namespace into which Knative Serving will be installed
-          path: namespace
-          displayName: Namespace
-          x-descriptors:
-            - 'urn:alm:descriptor:com.tectonic.ui:namespaceSelector'
-        - description: Entries corresponding to Knative Serving ConfigMaps
-          path: config
-          displayName: Config
-          x-descriptors:
-            - 'urn:alm:descriptor:com.tectonic.ui:selector:core:v1:ConfigMap'
+      - description: The target namespace into which Knative Serving will be installed
+        displayName: Namespace
+        path: namespace
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:namespaceSelector
+      - description: Entries corresponding to Knative Serving ConfigMaps
+        displayName: Config
+        path: config
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:selector:core:v1:ConfigMap
       statusDescriptors:
-        - description: The actual Knative Serving resources installed by the operator
-          path: resources
-          displayName: Resources
-        - description: The version of Knative Serving installed
-          path: version
-          displayName: Version
-          x-descriptors:
-            - 'urn:alm:descriptor:com.tectonic.ui:label'
+      - description: The actual Knative Serving resources installed by the operator
+        displayName: Resources
+        path: resources
+      - description: The version of Knative Serving installed
+        displayName: Version
+        path: version
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:label
+      version: v1alpha1
     # required:
-    #   - name: gateways.networking.istio.io
-    #     version: v1alpha3
-    #     kind: Gateway
-    #     description: An Istio ingress gateway
-    #     displayName: Istio Gateway
+    # - name: gateways.networking.istio.io
+    #   version: v1alpha3
+    #   kind: Gateway
+    #   description: An Istio ingress gateway
+    #   displayName: Istio Gateway
   description: |
     Knative Serving builds on Kubernetes to support deploying and
     serving of serverless applications and functions. Serving is easy
