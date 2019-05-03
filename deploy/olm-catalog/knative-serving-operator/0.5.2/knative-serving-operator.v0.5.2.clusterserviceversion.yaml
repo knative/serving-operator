@@ -27,11 +27,13 @@ spec:
         - kind: Namespace
           version: v1
         - kind: CustomResourceDefinition
-          version: apiextensions.k8s.io/v1beta1
+          version: v1beta1
         - kind: Service
           version: v1
         - kind: Deployment
-          version: apps/v1
+          version: v1
+        - kind: Pod
+          version: v1
         - kind: ConfigMap
           version: v1
       specDescriptors:
@@ -118,6 +120,8 @@ spec:
                 - name: OPERATOR_NAME
                   value: knative-serving-operator
                 image: quay.io/openshift-knative/knative-serving-operator:v0.5.2
+                args:
+                  - --filename=https://raw.githubusercontent.com/openshift/knative-serving/release-v0.5.2/openshift/release/knative-serving-v0.5.2.yaml
                 imagePullPolicy: Always
                 name: knative-serving-operator
                 resources: {}
