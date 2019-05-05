@@ -127,7 +127,7 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 // Apply the embedded resources
 func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	// Transform resources as appropriate
-	fns := []mf.Transformer{mf.InjectOwner(instance)}
+	fns := []mf.Transformer{mf.InjectOwner(instance), addPolicyRules}
 	if len(instance.Spec.Namespace) > 0 {
 		fns = append(fns, mf.InjectNamespace(instance.Spec.Namespace))
 	}
@@ -332,4 +332,28 @@ func autoInstall(c client.Client, ns string) (err error) {
 		log.Info("Install found", "name", installList.Items[0].Name)
 	}
 	return err
+}
+
+// TODO: These are addressed in master and shouldn't be required for 0.6.0
+func addPolicyRules(u *unstructured.Unstructured) *unstructured.Unstructured {
+	if u.GetKind() == "ClusterRole" && u.GetName() == "knative-serving-core" {
+		field, _, _ := unstructured.NestedFieldNoCopy(u.Object, "rules")
+		var rules []interface{} = field.([]interface{})
+		for _, rule := range rules {
+			m := rule.(map[string]interface{})
+			for _, group := range m["apiGroups"].([]interface{}) {
+				if group == "apps" {
+					m["resources"] = append(m["resources"].([]interface{}), "deployments/finalizers")
+				}
+			}
+		}
+		// Required to open privileged ports in OpenShift
+		unstructured.SetNestedField(u.Object, append(rules, map[string]interface{}{
+			"apiGroups":     []interface{}{"security.openshift.io"},
+			"verbs":         []interface{}{"use"},
+			"resources":     []interface{}{"securitycontextconstraints"},
+			"resourceNames": []interface{}{"privileged", "anyuid"},
+		}), "rules")
+	}
+	return u
 }
