@@ -110,8 +110,7 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 		r.install,
 		r.deleteObsoleteResources,
 		r.checkForMinikube,
-		r.updateServiceNetwork,
-		r.updateDomain,
+		r.checkForOpenShift,
 		r.configure,
 	}
 
@@ -190,31 +189,6 @@ func (r *ReconcileInstall) deleteObsoleteResources(instance *servingv1alpha1.Ins
 	return r.config.Delete(resource)
 }
 
-// Configure minikube if we're soaking in it
-func (r *ReconcileInstall) checkForMinikube(instance *servingv1alpha1.Install) error {
-	node := &v1.Node{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "minikube"}, node)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil // not running on minikube!
-		}
-		return err
-	}
-
-	cm, err := r.config.Get(r.config.Find("v1", "ConfigMap", "config-network"))
-	if err != nil {
-		return err
-	}
-	if cm == nil {
-		log.Error(err, "Missing ConfigMap", "name", "config-network")
-		return nil // no sense in trying if the CM is gone
-	}
-
-	log.Info("Detected minikube; checking egress")
-	data := map[string]string{"istio.sidecar.includeOutboundIPRanges": "10.0.0.1/24"}
-	return r.updateConfigMap(cm, data)
-}
-
 // Set some data in a configmap, only overwriting common keys
 func (r *ReconcileInstall) updateConfigMap(cm *unstructured.Unstructured, data map[string]string) error {
 	for k, v := range data {
@@ -232,82 +206,81 @@ func (r *ReconcileInstall) updateConfigMap(cm *unstructured.Unstructured, data m
 
 }
 
-// Get Service Network from cluster resource
-func (r *ReconcileInstall) getServiceNetwork() string {
-	networkConfig := &configv1.Network{}
-	serviceNetwork := ""
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, networkConfig); err != nil {
-		if meta.IsNoMatchError(err) {
-			log.V(1).Info("OpenShift Network Config is not available.")
-		} else {
-			log.Error(err, "Unexpected error querying Network")
+// Configure minikube if we're soaking in it
+func (r *ReconcileInstall) checkForMinikube(instance *servingv1alpha1.Install) error {
+	node := &v1.Node{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "minikube"}, node)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil // not running on minikube!
 		}
-	} else if len(networkConfig.Spec.ServiceNetwork) > 0 {
-		serviceNetwork = strings.Join(networkConfig.Spec.ServiceNetwork, ",")
-		log.Info("OpenShift Network Config is available", "Service Network", serviceNetwork)
+		return err
 	}
-	return serviceNetwork
+	cm, err := r.config.Get(r.config.Find("v1", "ConfigMap", "config-network"))
+	if err != nil {
+		return err
+	}
+	if cm == nil {
+		log.Error(err, "Missing ConfigMap", "name", "config-network")
+		return nil // no sense in trying if the CM is gone
+	}
+	log.Info("Detected minikube; checking egress")
+	data := map[string]string{"istio.sidecar.includeOutboundIPRanges": "10.0.0.1/24"}
+	return r.updateConfigMap(cm, data)
 }
 
-func (r *ReconcileInstall) getDomain() string {
+// Configure OpenShift if we're soaking in it
+func (r *ReconcileInstall) checkForOpenShift(instance *servingv1alpha1.Install) error {
+	tasks := []func(*servingv1alpha1.Install) error{
+		r.configureIngressForOpenShift,
+		r.configureEgressForOpenShift,
+	}
+	for _, task := range tasks {
+		if err := task(instance); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *ReconcileInstall) configureIngressForOpenShift(instance *servingv1alpha1.Install) error {
 	ingressConfig := &configv1.Ingress{}
-	domain := ""
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, ingressConfig); err != nil {
 		if meta.IsNoMatchError(err) {
 			log.V(1).Info("OpenShift Ingress Config is not available.")
-		} else {
-			log.Error(err, "Unexpected error querying Ingress")
+			return nil // not on OpenShift
 		}
-	} else {
-		domain = ingressConfig.Spec.Domain
-		log.Info("OpenShift Ingress Config is available", "Domain", domain)
+		return err
 	}
-
-	return domain
-}
-
-// Set domain in the Config Map
-func (r *ReconcileInstall) updateDomain(instance *servingv1alpha1.Install) error {
-
-	// retrieve domain for configuring for ingress traffic
-	domain := r.getDomain()
-
+	domain := ingressConfig.Spec.Domain
 	// If domain is available, update config-domain config map
 	if len(domain) > 0 {
-
-		cm := &v1.ConfigMap{}
-		u := r.config.Find("v1", "ConfigMap", "config-domain")
-		key := types.NamespacedName{Namespace: u.GetNamespace(), Name: u.GetName()}
-		if err := r.client.Get(context.TODO(), key, cm); err != nil {
-			return err
-		}
-		cm.Data[domain] = ""
-		return r.client.Update(context.TODO(), cm)
+		log.Info("OpenShift Ingress Config is available", "Domain", domain)
+		cm := r.config.Find("v1", "ConfigMap", "config-domain")
+		data := map[string]string{domain: ""}
+		return r.updateConfigMap(cm, data)
 	}
-
 	return nil
 }
 
 // Set istio.sidecar.includeOutboundIPRanges property with service network
-func (r *ReconcileInstall) updateServiceNetwork(instance *servingv1alpha1.Install) error {
-
-	// retrieve service networks for configuring egress traffic
-	serviceNetwork := r.getServiceNetwork()
-
+func (r *ReconcileInstall) configureEgressForOpenShift(instance *servingv1alpha1.Install) error {
+	networkConfig := &configv1.Network{}
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, networkConfig); err != nil {
+		if meta.IsNoMatchError(err) {
+			log.V(1).Info("OpenShift Network Config is not available.")
+			return nil // not on OpenShift
+		}
+		return err
+	}
+	serviceNetwork := strings.Join(networkConfig.Spec.ServiceNetwork, ",")
 	// If service network is available, update config-network config map
 	if len(serviceNetwork) > 0 {
-
-		cm := &v1.ConfigMap{}
-		u := r.config.Find("v1", "ConfigMap", "config-network")
-		key := types.NamespacedName{Namespace: u.GetNamespace(), Name: u.GetName()}
-		if err := r.client.Get(context.TODO(), key, cm); err != nil {
-			return err
-		}
-		cm.Data["istio.sidecar.includeOutboundIPRanges"] = serviceNetwork
-		return r.client.Update(context.TODO(), cm)
-
+		log.Info("OpenShift Network Config is available", "ServiceNetwork", serviceNetwork)
+		cm := r.config.Find("v1", "ConfigMap", "config-network")
+		data := map[string]string{"istio.sidecar.includeOutboundIPRanges": serviceNetwork}
+		return r.updateConfigMap(cm, data)
 	}
-
 	return nil
 }
 
