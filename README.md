@@ -82,7 +82,7 @@ The remaining sections only apply if you wish to create the metadata
 required by the [Operator Lifecycle
 Manager](https://github.com/operator-framework/operator-lifecycle-manager)
 
-### Create a CatalogSource
+### Create a ClusterServiceVersion
 
 The OLM requires special manifests that the operator-sdk can help
 generate.
@@ -102,8 +102,17 @@ some post-editing of the file it generates may be required:
 * Add fields to address any warnings it reports
 * Verify `description` and `displayName` fields for all owned CRD's
 
+### Create a CatalogSource
+
 The [catalog.sh](hack/catalog.sh) script should yield a valid
-`CatalogSource` for you to publish.
+`ConfigMap` and `CatalogSource` comprised of the
+`ClusterServiceVersions`, `CustomResourceDefinitions`, and package
+manifest in the bundle beneath
+[deploy/olm-catalog](deploy/olm-catalog/). You should apply its output
+in the OLM namespace:
+
+    OLM=$(kubectl get pods --all-namespaces | grep olm-operator | head -1 | awk '{print $1}')
+    ./hack/catalog.sh | kubectl apply -n $OLM -f -
 
 ### Using OLM on Minikube
 
@@ -159,6 +168,8 @@ apiVersion: serving.knative.dev/v1alpha1
 kind: Install
 metadata:
   name: knative-serving
+  namespace: knative-serving
+spec:
   namespace: knative-serving
 EOF
 ```
