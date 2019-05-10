@@ -59,6 +59,15 @@ available options:
 
     operator-sdk up local --operator-flags "--help"
 
+### Testing
+
+To run end-to-end tests against your cluster:
+
+    operator-sdk test local ./test/e2e --namespace default
+
+The `--namespace` parameter must match that of the `ServiceAccount`
+subject in the [role_binding.yaml](deploy/role_binding.yaml).
+
 ### Building the Operator Image
 
 To build the operator,
