@@ -167,7 +167,7 @@ func (r *ReconcileInstall) transform(instance *servingv1alpha1.Install) error {
 
 // Apply the embedded resources
 func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
-	if instance.Status.Version == version.Version {
+	if instance.Status.IsInstalled() && instance.Status.Version == version.Version {
 		// we've already successfully applied our YAML
 		return nil
 	}

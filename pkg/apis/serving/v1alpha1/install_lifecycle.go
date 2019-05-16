@@ -23,6 +23,10 @@ func (is *InstallStatus) IsReady() bool {
 	return installCondSet.Manage(is).IsHappy()
 }
 
+func (is *InstallStatus) IsInstalled() bool {
+	return is.GetCondition(InstallSucceeded).IsTrue()
+}
+
 func (is *InstallStatus) GetCondition(t apis.ConditionType) *apis.Condition {
 	return installCondSet.Manage(is).GetCondition(t)
 }
