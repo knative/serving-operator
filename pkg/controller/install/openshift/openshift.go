@@ -4,10 +4,11 @@ import (
 	"context"
 	"strings"
 
+	"github.com/openshift-knative/knative-serving-operator/pkg/controller/install/common"
 	configv1 "github.com/openshift/api/config/v1"
 
 	mf "github.com/jcrossley3/manifestival"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -201,9 +202,8 @@ func ingress(c client.Client) mf.Transformer {
 	}
 	return func(u *unstructured.Unstructured) *unstructured.Unstructured {
 		if u.GetKind() == "ConfigMap" && u.GetName() == "config-domain" {
-			k, v := domain, ""
-			log.Info("Setting ingress", k, v)
-			unstructured.SetNestedField(u.Object, v, "data", k)
+			data := map[string]string{domain: ""}
+			common.UpdateConfigMap(u, data, log)
 		}
 		return u
 	}
@@ -223,9 +223,8 @@ func egress(c client.Client) mf.Transformer {
 	}
 	return func(u *unstructured.Unstructured) *unstructured.Unstructured {
 		if u.GetKind() == "ConfigMap" && u.GetName() == "config-network" {
-			k, v := "istio.sidecar.includeOutboundIPRanges", network
-			log.Info("Setting egress", k, v)
-			unstructured.SetNestedField(u.Object, v, "data", k)
+			data := map[string]string{"istio.sidecar.includeOutboundIPRanges": network}
+			common.UpdateConfigMap(u, data, log)
 		}
 		return u
 	}

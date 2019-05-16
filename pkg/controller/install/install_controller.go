@@ -3,10 +3,10 @@ package install
 import (
 	"context"
 	"flag"
-	"fmt"
 
 	mf "github.com/jcrossley3/manifestival"
 	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
+	"github.com/openshift-knative/knative-serving-operator/pkg/controller/install/common"
 	"github.com/openshift-knative/knative-serving-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/predicate"
@@ -125,7 +125,6 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 		r.transform,
 		r.install,
 		r.deleteObsoleteResources,
-		r.configure, // TODO: move to transform?
 		r.checkDeployments,
 	}
 
@@ -161,16 +160,15 @@ func (r *ReconcileInstall) transform(instance *servingv1alpha1.Install) error {
 	for _, f := range platformTransformFuncs {
 		fns = append(fns, f(r.client, r.scheme)...)
 	}
+	// Let any config in instance override everything else
+	fns = append(fns, configure(instance))
+
 	r.config.Transform(fns...)
 	return nil
 }
 
 // Apply the embedded resources
 func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
-	if instance.Status.IsInstalled() && instance.Status.Version == version.Version {
-		// we've already successfully applied our YAML
-		return nil
-	}
 	// Ensure needed prerequisites are installed
 	for _, f := range platformPreInstallFuncs {
 		if err := f(r.client, r.scheme, instance.Spec.Namespace); err != nil {
@@ -229,41 +227,6 @@ func (r *ReconcileInstall) checkDeployments(instance *servingv1alpha1.Install) e
 	return nil
 }
 
-// Set ConfigMap values from Install spec
-func (r *ReconcileInstall) configure(instance *servingv1alpha1.Install) error {
-	for suffix, config := range instance.Spec.Config {
-		name := "config-" + suffix
-		cm, err := r.config.Get(r.config.Find("v1", "ConfigMap", name))
-		if err != nil {
-			return err
-		}
-		if cm == nil {
-			log.Error(fmt.Errorf("ConfigMap '%s' not found", name), "Invalid Install spec")
-			continue
-		}
-		if err := r.updateConfigMap(cm, config); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Set some data in a configmap, only overwriting common keys
-func (r *ReconcileInstall) updateConfigMap(cm *unstructured.Unstructured, data map[string]string) error {
-	for k, v := range data {
-		message := []interface{}{"map", cm.GetName(), k, v}
-		if x, found, _ := unstructured.NestedString(cm.Object, "data", k); found {
-			if v == x {
-				continue
-			}
-			message = append(message, "previous", x)
-		}
-		log.Info("Setting", message...)
-		unstructured.SetNestedField(cm.Object, v, "data", k)
-	}
-	return r.config.Apply(cm)
-}
-
 // Delete obsolete istio-system resources, if any
 func (r *ReconcileInstall) deleteObsoleteResources(instance *servingv1alpha1.Install) error {
 	resource := &unstructured.Unstructured{}
@@ -306,4 +269,16 @@ func autoInstall(c client.Client, ns string) (err error) {
 		log.Info("Install found", "name", installList.Items[0].Name)
 	}
 	return err
+}
+
+// Set ConfigMap values from Install spec
+func configure(instance *servingv1alpha1.Install) mf.Transformer {
+	return func(u *unstructured.Unstructured) *unstructured.Unstructured {
+		if u.GetKind() == "ConfigMap" {
+			if data, ok := instance.Spec.Config[u.GetName()[7:]]; ok {
+				common.UpdateConfigMap(u, data, log)
+			}
+		}
+		return u
+	}
 }
