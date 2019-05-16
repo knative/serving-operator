@@ -31,11 +31,11 @@ The installation of Knative Serving is triggered by the creation of
 [an `Install` custom
 resource](deploy/crds/serving_v1alpha1_install_cr.yaml).
 
-The optional `spec.namespace` field denotes the target namespace for
-the installation, and the optional `spec.config` field can be used to
-set the corresponding entries in the Knative Serving ConfigMaps. The
-`status` field will contain a list of the resources the operator
-installs and their version.
+The optional `spec.config` field can be used to set the corresponding
+entries in the Knative Serving ConfigMaps. Conditions for a successful
+install and available deployments will be updated in the `status`
+field, along with a list of the resources the operator installs and
+their version when its `Ready` condition becomes "True".
 
 The following are all equivalent, but the latter may suffer from name
 conflicts.
@@ -180,8 +180,6 @@ apiVersion: serving.knative.dev/v1alpha1
 kind: Install
 metadata:
   name: knative-serving
-  namespace: knative-serving
-spec:
   namespace: knative-serving
 EOF
 ```

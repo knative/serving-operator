@@ -10,12 +10,11 @@ import (
 	"github.com/openshift-knative/knative-serving-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/predicate"
-	v1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -30,8 +29,6 @@ var (
 		"The filename containing the YAML resources to apply")
 	recursive = flag.Bool("recursive", false,
 		"If filename is a directory, process all manifests recursively")
-	installNs = flag.String("install-ns", "",
-		"The namespace in which to create an Install resource, if none exist")
 	log = logf.Log.WithName("controller_install")
 	// Platform-specific functions to run before installation
 	platformPreInstallFuncs []func(client.Client, *runtime.Scheme, string) error
@@ -70,6 +67,15 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	// Watch child deployments for availability
+	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &servingv1alpha1.Install{},
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -79,23 +85,9 @@ var _ reconcile.Reconciler = &ReconcileInstall{}
 type ReconcileInstall struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client  client.Client
-	scheme  *runtime.Scheme
-	config  mf.Manifest
-	nocache client.Client
-}
-
-func (r *ReconcileInstall) InjectConfig(config *rest.Config) error {
-	c, err := client.New(config, client.Options{})
-	if err != nil {
-		return err
-	}
-	r.nocache = c
-	// Make an attempt to create an Install CR, if necessary
-	if len(*installNs) > 0 {
-		go autoInstall(r.nocache, *installNs)
-	}
-	return nil
+	client client.Client
+	scheme *runtime.Scheme
+	config mf.Manifest
 }
 
 // Reconcile reads that state of the cluster for a Install object and makes changes based on the state read
@@ -124,38 +116,36 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 	stages := []func(*servingv1alpha1.Install) error{
 		r.transform,
 		r.install,
-		r.deleteObsoleteResources,
 		r.checkDeployments,
+		r.deleteObsoleteResources,
 	}
 
-	defer r.updateStatus(instance)
 	for _, stage := range stages {
 		if err := stage(instance); err != nil {
 			return reconcile.Result{}, err
 		}
 	}
-	// TODO: We requeue because we can't watch for owned deployments
-	// across namespaces. Our instance should really be cluster-scoped
-	return reconcile.Result{Requeue: !instance.Status.IsReady()}, nil
+	return reconcile.Result{}, nil
 }
 
 // Update the status subresource
-func (r *ReconcileInstall) updateStatus(instance *servingv1alpha1.Install) {
+func (r *ReconcileInstall) updateStatus(instance *servingv1alpha1.Install) error {
 
 	// Account for https://github.com/kubernetes-sigs/controller-runtime/issues/406
 	gvk := instance.GroupVersionKind()
 	defer instance.SetGroupVersionKind(gvk)
 
 	if err := r.client.Status().Update(context.TODO(), instance); err != nil {
-		log.Error(err, "Unable to update status")
+		return err
 	}
+	return nil
 }
 
 // Transform resources as appropriate for the spec and platform
 func (r *ReconcileInstall) transform(instance *servingv1alpha1.Install) error {
-	fns := []mf.Transformer{mf.InjectOwner(instance)}
-	if len(instance.Spec.Namespace) > 0 {
-		fns = append(fns, mf.InjectNamespace(instance.Spec.Namespace))
+	fns := []mf.Transformer{
+		mf.InjectOwner(instance),
+		mf.InjectNamespace(instance.GetNamespace()),
 	}
 	for _, f := range platformTransformFuncs {
 		fns = append(fns, f(r.client, r.scheme)...)
@@ -169,9 +159,13 @@ func (r *ReconcileInstall) transform(instance *servingv1alpha1.Install) error {
 
 // Apply the embedded resources
 func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
+	if instance.Status.IsDeploying() {
+		return nil
+	}
+	defer r.updateStatus(instance)
 	// Ensure needed prerequisites are installed
 	for _, f := range platformPreInstallFuncs {
-		if err := f(r.client, r.scheme, instance.Spec.Namespace); err != nil {
+		if err := f(r.client, r.scheme, instance.GetNamespace()); err != nil {
 			return err
 		}
 	}
@@ -195,16 +189,17 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 // Check for all deployments available
 // TODO: verify that all the Deployments in the config are available
 func (r *ReconcileInstall) checkDeployments(instance *servingv1alpha1.Install) error {
-	deployments := &v1.DeploymentList{}
+	defer r.updateStatus(instance)
+	deployments := &appsv1.DeploymentList{}
 	controller := r.config.Find("apps/v1", "Deployment", "controller")
-	err := r.nocache.List(context.TODO(), &client.ListOptions{Namespace: controller.GetNamespace()}, deployments)
+	err := r.client.List(context.TODO(), &client.ListOptions{Namespace: controller.GetNamespace()}, deployments)
 	if err != nil {
 		log.Error(err, "Unable to list Deployments")
 		return err
 	}
-	available := func(d v1.Deployment) bool {
+	available := func(d appsv1.Deployment) bool {
 		for _, c := range d.Status.Conditions {
-			if c.Type == v1.DeploymentAvailable && c.Status == corev1.ConditionTrue {
+			if c.Type == appsv1.DeploymentAvailable && c.Status == v1.ConditionTrue {
 				return true
 			}
 		}
@@ -245,30 +240,6 @@ func (r *ReconcileInstall) deleteObsoleteResources(instance *servingv1alpha1.Ins
 	resource.SetAPIVersion("autoscaling/v1")
 	resource.SetKind("HorizontalPodAutoscaler")
 	return r.config.Delete(resource)
-}
-
-// This may or may not be a good idea
-func autoInstall(c client.Client, ns string) (err error) {
-	const path = "deploy/crds/serving_v1alpha1_install_cr.yaml"
-	log.Info("Automatic Install requested", "namespace", ns)
-	installList := &servingv1alpha1.InstallList{}
-	err = c.List(context.TODO(), &client.ListOptions{Namespace: ns}, installList)
-	if err != nil {
-		log.Error(err, "Unable to list Installs")
-		return err
-	}
-	if len(installList.Items) == 0 {
-		if manifest, err := mf.NewManifest(path, false, c); err == nil {
-			if err = manifest.Transform(mf.InjectNamespace(ns)).ApplyAll(); err != nil {
-				log.Error(err, "Unable to create Install")
-			}
-		} else {
-			log.Error(err, "Unable to create Install manifest")
-		}
-	} else {
-		log.Info("Install found", "name", installList.Items[0].Name)
-	}
-	return err
 }
 
 // Set ConfigMap values from Install spec

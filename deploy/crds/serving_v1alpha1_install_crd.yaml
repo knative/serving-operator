@@ -39,9 +39,6 @@ spec:
               description: A means to override the corresponding entries in the upstream
                 configmaps
               type: object
-            namespace:
-              description: The target namespace in which to install the upstream resources
-              type: string
           type: object
         status:
           properties:

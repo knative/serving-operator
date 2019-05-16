@@ -27,6 +27,14 @@ func (is *InstallStatus) IsInstalled() bool {
 	return is.GetCondition(InstallSucceeded).IsTrue()
 }
 
+func (is *InstallStatus) IsAvailable() bool {
+	return is.GetCondition(InstallDeploymentsAvailable).IsTrue()
+}
+
+func (is *InstallStatus) IsDeploying() bool {
+	return is.IsInstalled() && !is.IsAvailable()
+}
+
 func (is *InstallStatus) GetCondition(t apis.ConditionType) *apis.Condition {
 	return installCondSet.Manage(is).GetCondition(t)
 }

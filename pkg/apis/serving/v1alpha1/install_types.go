@@ -21,9 +21,6 @@ type InstallSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
 
-	// The target namespace in which to install the upstream resources
-	// +optional
-	Namespace string `json:"namespace,omitempty"`
 	// A means to override the corresponding entries in the upstream configmaps
 	// +optional
 	Config map[string]map[string]string `json:"config,omitempty"`

@@ -67,9 +67,6 @@ func KnativeServingCluster(t *testing.T) {
 			Name:      "knative-serving",
 			Namespace: namespace,
 		},
-		Spec: servingv1alpha1.InstallSpec{
-			Namespace: namespace,
-		},
 	}
 	err = f.Client.Create(goctx.TODO(), install, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
