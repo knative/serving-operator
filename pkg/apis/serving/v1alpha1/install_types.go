@@ -1,12 +1,18 @@
 package v1alpha1
 
 import (
+	"github.com/knative/pkg/apis"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+
+const (
+	InstallSucceeded            apis.ConditionType = "InstallSucceeded"
+	InstallDeploymentsAvailable apis.ConditionType = "DeploymentsAvailable"
+)
 
 // InstallSpec defines the desired state of Install
 // +k8s:openapi-gen=true
@@ -16,8 +22,10 @@ type InstallSpec struct {
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
 
 	// The target namespace in which to install the upstream resources
+	// +optional
 	Namespace string `json:"namespace,omitempty"`
 	// A means to override the corresponding entries in the upstream configmaps
+	// +optional
 	Config map[string]map[string]string `json:"config,omitempty"`
 }
 
@@ -30,9 +38,14 @@ type InstallStatus struct {
 	// https://book.kubebuilder.io/beyond_basics/generating_crd.html
 
 	// The resources applied by the operator
-	Resources []unstructured.Unstructured `json:"resources"`
+	Resources []unstructured.Unstructured `json:"resources,omitempty"`
 	// The version of the installed release
-	Version string `json:"version"`
+	Version string `json:"version,omitempty"`
+	// The latest available observations of a resource's current state.
+	// +optional
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	Conditions apis.Conditions `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

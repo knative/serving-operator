@@ -5,6 +5,7 @@
 package v1alpha1
 
 import (
+	apis "github.com/knative/pkg/apis"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -109,6 +110,13 @@ func (in *InstallStatus) DeepCopyInto(out *InstallStatus) {
 	if in.Resources != nil {
 		in, out := &in.Resources, &out.Resources
 		*out = make([]unstructured.Unstructured, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.Conditions != nil {
+		in, out := &in.Conditions, &out.Conditions
+		*out = make(apis.Conditions, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

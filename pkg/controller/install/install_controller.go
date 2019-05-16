@@ -10,9 +10,12 @@ import (
 	"github.com/openshift-knative/knative-serving-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/predicate"
+	v1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -67,11 +70,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Make an attempt to create an Install CR, if necessary
-	if len(*installNs) > 0 {
-		c, _ := client.New(mgr.GetConfig(), client.Options{})
-		go autoInstall(c, *installNs)
-	}
 	return nil
 }
 
@@ -81,9 +79,23 @@ var _ reconcile.Reconciler = &ReconcileInstall{}
 type ReconcileInstall struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
-	config mf.Manifest
+	client  client.Client
+	scheme  *runtime.Scheme
+	config  mf.Manifest
+	nocache client.Client
+}
+
+func (r *ReconcileInstall) InjectConfig(config *rest.Config) error {
+	c, err := client.New(config, client.Options{})
+	if err != nil {
+		return err
+	}
+	r.nocache = c
+	// Make an attempt to create an Install CR, if necessary
+	if len(*installNs) > 0 {
+		go autoInstall(r.nocache, *installNs)
+	}
+	return nil
 }
 
 // Reconcile reads that state of the cluster for a Install object and makes changes based on the state read
@@ -104,21 +116,40 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 		return reconcile.Result{}, err
 	}
+	if len(instance.Status.Conditions) == 0 {
+		instance.Status.InitializeConditions()
+		r.updateStatus(instance)
+	}
 
 	stages := []func(*servingv1alpha1.Install) error{
 		r.transform,
 		r.install,
 		r.deleteObsoleteResources,
 		r.configure, // TODO: move to transform?
+		r.checkDeployments,
 	}
 
+	defer r.updateStatus(instance)
 	for _, stage := range stages {
 		if err := stage(instance); err != nil {
 			return reconcile.Result{}, err
 		}
 	}
+	// TODO: We requeue because we can't watch for owned deployments
+	// across namespaces. Our instance should really be cluster-scoped
+	return reconcile.Result{Requeue: !instance.Status.IsReady()}, nil
+}
 
-	return reconcile.Result{}, nil
+// Update the status subresource
+func (r *ReconcileInstall) updateStatus(instance *servingv1alpha1.Install) {
+
+	// Account for https://github.com/kubernetes-sigs/controller-runtime/issues/406
+	gvk := instance.GroupVersionKind()
+	defer instance.SetGroupVersionKind(gvk)
+
+	if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+		log.Error(err, "Unable to update status")
+	}
 }
 
 // Transform resources as appropriate for the spec and platform
@@ -136,6 +167,10 @@ func (r *ReconcileInstall) transform(instance *servingv1alpha1.Install) error {
 
 // Apply the embedded resources
 func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
+	if instance.Status.Version == version.Version {
+		// we've already successfully applied our YAML
+		return nil
+	}
 	// Ensure needed prerequisites are installed
 	for _, f := range platformPreInstallFuncs {
 		if err := f(r.client, r.scheme, instance.Spec.Namespace); err != nil {
@@ -143,6 +178,7 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 		}
 	}
 	if err := r.config.ApplyAll(); err != nil {
+		instance.Status.MarkInstallFailed(err.Error())
 		return err
 	}
 	// Do any post-installation tasks
@@ -154,8 +190,41 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	// Update status
 	instance.Status.Resources = r.config.Resources
 	instance.Status.Version = version.Version
-	if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+	instance.Status.MarkInstallSucceeded()
+	return nil
+}
+
+// Check for all deployments available
+// TODO: verify that all the Deployments in the config are available
+func (r *ReconcileInstall) checkDeployments(instance *servingv1alpha1.Install) error {
+	deployments := &v1.DeploymentList{}
+	controller := r.config.Find("apps/v1", "Deployment", "controller")
+	err := r.nocache.List(context.TODO(), &client.ListOptions{Namespace: controller.GetNamespace()}, deployments)
+	if err != nil {
+		log.Error(err, "Unable to list Deployments")
 		return err
+	}
+	available := func(d v1.Deployment) bool {
+		for _, c := range d.Status.Conditions {
+			if c.Type == v1.DeploymentAvailable && c.Status == corev1.ConditionTrue {
+				return true
+			}
+		}
+		return false
+	}
+	allAvailable := func() bool {
+		for _, deploy := range deployments.Items {
+			if !available(deploy) {
+				return false
+			}
+		}
+		return true
+	}
+	// TODO: Instead of a count, verify specific Deployments
+	if len(deployments.Items) >= 4 && allAvailable() {
+		instance.Status.MarkDeploymentsAvailable()
+	} else {
+		instance.Status.MarkDeploymentsNotReady()
 	}
 	return nil
 }
