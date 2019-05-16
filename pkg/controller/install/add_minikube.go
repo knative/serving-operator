@@ -5,5 +5,5 @@ import (
 )
 
 func init() {
-	platformFuncs = append(platformFuncs, minikube.Configure)
+	platformTransformFuncs = append(platformTransformFuncs, minikube.Configure)
 }

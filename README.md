@@ -12,7 +12,10 @@ appropriately for your cluster in the `default` namespace:
 
 ### Istio
 
-Version 0.5.x of Knative Serving requires Istio CRD's:
+On OpenShift, Istio will get installed automatically if not already
+present by using the [Maistra Operator](https://maistra.io/).
+
+For other platforms, version 0.5.x of Knative Serving requires Istio CRD's:
 
     kubectl apply -f https://github.com/knative/serving/releases/download/v0.5.2/istio-crds.yaml
 

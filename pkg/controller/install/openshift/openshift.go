@@ -7,7 +7,9 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 
 	mf "github.com/jcrossley3/manifestival"
+	"k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,7 +18,54 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
+const (
+	maistraOperatorNamespace     = "istio-operator"
+	maistraControlPlaneNamespace = "istio-system"
+)
+
 var log = logf.Log.WithName("openshift")
+
+// EnsureMaistra ensures Maistra is installed in the cluster
+func EnsureMaistra(c client.Client, scheme *runtime.Scheme, namespace string) error {
+	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", namespace); err != nil {
+		return err
+	} else if !routeExists {
+		// Not running in OpenShift
+		return nil
+	}
+
+	log.Info("Ensuring Istio is installed in OpenShift")
+
+	if operatorExists, err := kindExists(c, "controlplane", "istio.openshift.com/v1alpha3", namespace); err != nil {
+		return err
+	} else if !operatorExists {
+		if istioExists, err := kindExists(c, "virtualservice", "networking.istio.io/v1alpha3", namespace); err != nil {
+			return err
+		} else if istioExists {
+			log.Info("Maistra Operator not present but Istio CRDs already installed - assuming Istio is already setup")
+			return nil
+		}
+		// Maistra operator not installed
+		if err := installMaistraOperator(c); err != nil {
+			return err
+		}
+	} else {
+		log.Info("Maistra Operator already installed")
+	}
+
+	if controlPlaneExists, err := itemsExist(c, "controlplane", "istio.openshift.com/v1alpha3", maistraControlPlaneNamespace); err != nil {
+		return err
+	} else if !controlPlaneExists {
+		// Maistra controlplane not installed
+		if err := installMaistraControlPlane(c); err != nil {
+			return err
+		}
+	} else {
+		log.Info("Maistra ControlPlane already installed")
+	}
+
+	return nil
+}
 
 // Configure OpenShift if we're soaking in it
 func Configure(c client.Client, scheme *runtime.Scheme) (result []mf.Transformer) {
@@ -31,6 +80,44 @@ func Configure(c client.Client, scheme *runtime.Scheme) (result []mf.Transformer
 		result = append(result, rbac(scheme))
 	}
 	return result
+}
+
+func installMaistraOperator(c client.Client) error {
+	const path = "deploy/resources/maistra/maistra-operator-0.10.yaml"
+	log.Info("Installing Maistra operator")
+	if manifest, err := mf.NewManifest(path, false, c); err == nil {
+		if err = ensureNamespace(c, maistraOperatorNamespace); err != nil {
+			log.Error(err, "Unable to create Maistra operator namespace", "namespace", maistraOperatorNamespace)
+			return err
+		}
+		if err = manifest.Transform(mf.InjectNamespace(maistraOperatorNamespace)).ApplyAll(); err != nil {
+			log.Error(err, "Unable to install Maistra operator")
+			return err
+		}
+	} else {
+		log.Error(err, "Unable to create Maistra operator install manifest")
+		return err
+	}
+	return nil
+}
+
+func installMaistraControlPlane(c client.Client) error {
+	const path = "deploy/resources/maistra/maistra-controlplane-0.10.0.yaml"
+	log.Info("Installing Maistra ControlPlane")
+	if manifest, err := mf.NewManifest(path, false, c); err == nil {
+		if err = ensureNamespace(c, maistraControlPlaneNamespace); err != nil {
+			log.Error(err, "Unable to create Maistra ControlPlane namespace", "namespace", maistraControlPlaneNamespace)
+			return err
+		}
+		if err = manifest.Transform(mf.InjectNamespace(maistraControlPlaneNamespace)).ApplyAll(); err != nil {
+			log.Error(err, "Unable to install Maistra ControlPlane")
+			return err
+		}
+	} else {
+		log.Error(err, "Unable to create Maistra ControlPlane manifest")
+		return err
+	}
+	return nil
 }
 
 // TODO: These are addressed in master and shouldn't be required for 0.6.0
@@ -107,4 +194,39 @@ func egress(c client.Client) mf.Transformer {
 		}
 		return u
 	}
+}
+
+func kindExists(c client.Client, kind string, apiVersion string, namespace string) (bool, error) {
+	list := &unstructured.UnstructuredList{}
+	list.SetKind(kind)
+	list.SetAPIVersion(apiVersion)
+	if err := c.List(context.TODO(), &client.ListOptions{Namespace: namespace}, list); err != nil {
+		if meta.IsNoMatchError(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func itemsExist(c client.Client, kind string, apiVersion string, namespace string) (bool, error) {
+	list := &unstructured.UnstructuredList{}
+	list.SetKind(kind)
+	list.SetAPIVersion(apiVersion)
+	if err := c.List(context.TODO(), &client.ListOptions{Namespace: namespace}, list); err != nil {
+		return false, err
+	}
+	return len(list.Items) > 0, nil
+}
+
+func ensureNamespace(c client.Client, ns string) error {
+	namespace := &v1.Namespace{}
+	namespace.Name = ns
+	if err := c.Create(context.TODO(), namespace); err != nil {
+		if errors.IsAlreadyExists(err) {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
