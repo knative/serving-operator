@@ -281,6 +281,19 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:bf40199583e5143d1472fc34d10d6f4b69d97572142acf343b3e43136da40823"
+  name = "github.com/google/go-cmp"
+  packages = [
+    "cmp",
+    "cmp/internal/diff",
+    "cmp/internal/flags",
+    "cmp/internal/function",
+    "cmp/internal/value",
+  ]
+  pruneopts = "NUT"
+  revision = "6f77996f0c42f7b84e5a2b252227263f93432e9b"
+
+[[projects]]
   branch = "master"
   digest = "1:52c5834e2bebac9030c97cc0798ac11c3aa8a39f098aeb419f142533da6cd3cc"
   name = "github.com/google/gofuzz"
@@ -405,6 +418,17 @@
   pruneopts = "NUT"
   revision = "0ff49de124c6f76f8494e194af75bde0f1a49a29"
   version = "v1.1.6"
+
+[[projects]]
+  branch = "master"
+  digest = "1:f97f930f2261ad2ae307a85f0f8a30a16bb909dbb12c586b05139e513fa702e4"
+  name = "github.com/knative/pkg"
+  packages = [
+    "apis",
+    "kmp",
+  ]
+  pruneopts = "NUT"
+  revision = "9e0db8f0a7f47def18cf65e0859066d5e0377304"
 
 [[projects]]
   digest = "1:58999a98719fddbac6303cb17e8d85b945f60b72f48e3a2df6b950b97fa926f1"
@@ -951,16 +975,18 @@
   revision = "0fe22c71c47604641d9aa352c785b7912c200562"
 
 [[projects]]
-  digest = "1:67eff6b136389fceac875772fabf95f1e047efba4bc9226765399e4c7695a90a"
+  digest = "1:27ae2f5b3e432bf8ab7cd0f9faaba294665a8b2ddc40672fa1bea931372b4455"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/equality",
     "pkg/api/errors",
     "pkg/api/meta",
     "pkg/api/resource",
+    "pkg/api/validation",
     "pkg/apis/meta/internalversion",
     "pkg/apis/meta/v1",
     "pkg/apis/meta/v1/unstructured",
+    "pkg/apis/meta/v1/validation",
     "pkg/apis/meta/v1beta1",
     "pkg/conversion",
     "pkg/conversion/queryparams",
@@ -1244,6 +1270,7 @@
   input-imports = [
     "github.com/go-openapi/spec",
     "github.com/jcrossley3/manifestival",
+    "github.com/knative/pkg/apis",
     "github.com/openshift/api/config/v1",
     "github.com/openshift/cluster-network-operator/pkg/util/k8s",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
@@ -1256,6 +1283,7 @@
     "github.com/operator-framework/operator-sdk/version",
     "github.com/spf13/pflag",
     "k8s.io/api/core/v1",
+    "k8s.io/api/rbac/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/api/meta",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
