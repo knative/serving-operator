@@ -67,6 +67,41 @@ func EnsureMaistra(c client.Client, scheme *runtime.Scheme, namespace string) er
 	return nil
 }
 
+// EnsureOpenshiftIngress ensures knative-openshift-ingress operator is installed
+func EnsureOpenshiftIngress(c client.Client, scheme *runtime.Scheme, namespace string) error {
+	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", namespace); err != nil {
+		return err
+	} else if !routeExists {
+		// Not running in OpenShift
+		return nil
+	}
+
+	if err := installOpenshiftIngress(c, namespace); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func installOpenshiftIngress(c client.Client, namespace string) error {
+	const path = "deploy/resources/openshift-ingress/openshift-ingress-0.0.4.yaml"
+	log.Info("Ensuring Knative OpenShift Ingress operator is installed")
+	if manifest, err := mf.NewManifest(path, false, c); err == nil {
+		transforms := []mf.Transformer{}
+		if len(namespace) > 0 {
+			transforms = append(transforms, mf.InjectNamespace(namespace))
+		}
+		if err = manifest.Transform(transforms...).ApplyAll(); err != nil {
+			log.Error(err, "Unable to install Maistra operator")
+			return err
+		}
+	} else {
+		log.Error(err, "Unable to create Knative OpenShift Ingress operator install manifest")
+		return err
+	}
+	return nil
+}
+
 // Configure OpenShift if we're soaking in it
 func Configure(c client.Client, scheme *runtime.Scheme) (result []mf.Transformer) {
 	if t := ingress(c); t != nil {
