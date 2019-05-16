@@ -78,7 +78,7 @@ func ingress(c client.Client) mf.Transformer {
 		return nil
 	}
 	return func(u *unstructured.Unstructured) *unstructured.Unstructured {
-		if u.GetKind() == "ConfigMap" && u.GetName() == "config-network" {
+		if u.GetKind() == "ConfigMap" && u.GetName() == "config-domain" {
 			k, v := domain, ""
 			log.Info("Setting ingress", k, v)
 			unstructured.SetNestedField(u.Object, v, "data", k)
