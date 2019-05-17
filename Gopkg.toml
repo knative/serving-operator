@@ -82,3 +82,7 @@ required = [
 [[constraint]]
   branch = "master"
   name = "github.com/openshift/cluster-network-operator"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/knative/pkg"

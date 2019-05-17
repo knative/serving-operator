@@ -4,11 +4,12 @@ import (
 	"context"
 	"strings"
 
+	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
+	"github.com/openshift-knative/knative-serving-operator/pkg/controller/install/common"
 	configv1 "github.com/openshift/api/config/v1"
 
 	mf "github.com/jcrossley3/manifestival"
-	"k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -26,7 +27,8 @@ const (
 var log = logf.Log.WithName("openshift")
 
 // EnsureMaistra ensures Maistra is installed in the cluster
-func EnsureMaistra(c client.Client, scheme *runtime.Scheme, namespace string) error {
+func EnsureMaistra(c client.Client, scheme *runtime.Scheme, instance *servingv1alpha1.Install) error {
+	namespace := instance.GetNamespace()
 	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", namespace); err != nil {
 		return err
 	} else if !routeExists {
@@ -68,7 +70,8 @@ func EnsureMaistra(c client.Client, scheme *runtime.Scheme, namespace string) er
 }
 
 // EnsureOpenshiftIngress ensures knative-openshift-ingress operator is installed
-func EnsureOpenshiftIngress(c client.Client, scheme *runtime.Scheme, namespace string) error {
+func EnsureOpenshiftIngress(c client.Client, scheme *runtime.Scheme, instance *servingv1alpha1.Install) error {
+	namespace := instance.GetNamespace()
 	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", namespace); err != nil {
 		return err
 	} else if !routeExists {
@@ -109,10 +112,6 @@ func Configure(c client.Client, scheme *runtime.Scheme) (result []mf.Transformer
 	}
 	if t := egress(c); t != nil {
 		result = append(result, t)
-	}
-	if len(result) > 0 {
-		// We must be on OpenShift!
-		result = append(result, rbac(scheme))
 	}
 	return result
 }
@@ -155,38 +154,6 @@ func installMaistraControlPlane(c client.Client) error {
 	return nil
 }
 
-// TODO: These are addressed in master and shouldn't be required for 0.6.0
-func rbac(scheme *runtime.Scheme) mf.Transformer {
-	return func(u *unstructured.Unstructured) *unstructured.Unstructured {
-		if u.GetKind() == "ClusterRole" && u.GetName() == "knative-serving-core" {
-			role := &rbacv1.ClusterRole{}
-			scheme.Convert(u, role, nil) // check for err?
-		OUT:
-			for i, rule := range role.Rules {
-				for _, group := range rule.APIGroups {
-					if group == "apps" {
-						resource := "deployments/finalizers"
-						log.Info("Adding RBAC", "group", group, "resource", resource)
-						role.Rules[i].Resources = append(rule.Resources, resource)
-						break OUT
-					}
-				}
-			}
-			// Required to open privileged ports in OpenShift
-			rule := rbacv1.PolicyRule{
-				Verbs:         []string{"use"},
-				APIGroups:     []string{"security.openshift.io"},
-				Resources:     []string{"securitycontextconstraints"},
-				ResourceNames: []string{"privileged", "anyuid"},
-			}
-			log.Info("Adding RBAC", "rule", rule)
-			role.Rules = append(role.Rules, rule)
-			scheme.Convert(role, u, nil)
-		}
-		return u
-	}
-}
-
 func ingress(c client.Client) mf.Transformer {
 	ingressConfig := &configv1.Ingress{}
 	if err := c.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, ingressConfig); err != nil {
@@ -201,9 +168,8 @@ func ingress(c client.Client) mf.Transformer {
 	}
 	return func(u *unstructured.Unstructured) *unstructured.Unstructured {
 		if u.GetKind() == "ConfigMap" && u.GetName() == "config-domain" {
-			k, v := domain, ""
-			log.Info("Setting ingress", k, v)
-			unstructured.SetNestedField(u.Object, v, "data", k)
+			data := map[string]string{domain: ""}
+			common.UpdateConfigMap(u, data, log)
 		}
 		return u
 	}
@@ -223,9 +189,8 @@ func egress(c client.Client) mf.Transformer {
 	}
 	return func(u *unstructured.Unstructured) *unstructured.Unstructured {
 		if u.GetKind() == "ConfigMap" && u.GetName() == "config-network" {
-			k, v := "istio.sidecar.includeOutboundIPRanges", network
-			log.Info("Setting egress", k, v)
-			unstructured.SetNestedField(u.Object, v, "data", k)
+			data := map[string]string{"istio.sidecar.includeOutboundIPRanges": network}
+			common.UpdateConfigMap(u, data, log)
 		}
 		return u
 	}

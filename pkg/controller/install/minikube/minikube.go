@@ -4,7 +4,7 @@ import (
 	"context"
 
 	mf "github.com/jcrossley3/manifestival"
-
+	"github.com/openshift-knative/knative-serving-operator/pkg/controller/install/common"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -30,9 +30,10 @@ func Configure(c client.Client, _ *runtime.Scheme) []mf.Transformer {
 
 func egress(u *unstructured.Unstructured) *unstructured.Unstructured {
 	if u.GetKind() == "ConfigMap" && u.GetName() == "config-network" {
-		k, v := "istio.sidecar.includeOutboundIPRanges", "10.0.0.1/24"
-		log.Info("Setting egress", k, v)
-		unstructured.SetNestedField(u.Object, v, "data", k)
+		data := map[string]string{
+			"istio.sidecar.includeOutboundIPRanges": "10.0.0.1/24",
+		}
+		common.UpdateConfigMap(u, data, log)
 	}
 	return u
 }
