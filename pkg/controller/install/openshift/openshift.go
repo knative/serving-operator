@@ -10,7 +10,6 @@ import (
 
 	mf "github.com/jcrossley3/manifestival"
 	v1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -114,10 +113,6 @@ func Configure(c client.Client, scheme *runtime.Scheme) (result []mf.Transformer
 	if t := egress(c); t != nil {
 		result = append(result, t)
 	}
-	if len(result) > 0 {
-		// We must be on OpenShift!
-		result = append(result, rbac(scheme))
-	}
 	return result
 }
 
@@ -157,38 +152,6 @@ func installMaistraControlPlane(c client.Client) error {
 		return err
 	}
 	return nil
-}
-
-// TODO: These are addressed in master and shouldn't be required for 0.6.0
-func rbac(scheme *runtime.Scheme) mf.Transformer {
-	return func(u *unstructured.Unstructured) *unstructured.Unstructured {
-		if u.GetKind() == "ClusterRole" && u.GetName() == "knative-serving-core" {
-			role := &rbacv1.ClusterRole{}
-			scheme.Convert(u, role, nil) // check for err?
-		OUT:
-			for i, rule := range role.Rules {
-				for _, group := range rule.APIGroups {
-					if group == "apps" {
-						resource := "deployments/finalizers"
-						log.Info("Adding RBAC", "group", group, "resource", resource)
-						role.Rules[i].Resources = append(rule.Resources, resource)
-						break OUT
-					}
-				}
-			}
-			// Required to open privileged ports in OpenShift
-			rule := rbacv1.PolicyRule{
-				Verbs:         []string{"use"},
-				APIGroups:     []string{"security.openshift.io"},
-				Resources:     []string{"securitycontextconstraints"},
-				ResourceNames: []string{"privileged", "anyuid"},
-			}
-			log.Info("Adding RBAC", "rule", rule)
-			role.Rules = append(role.Rules, rule)
-			scheme.Convert(role, u, nil)
-		}
-		return u
-	}
 }
 
 func ingress(c client.Client) mf.Transformer {
