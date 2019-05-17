@@ -108,12 +108,9 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 		return reconcile.Result{}, err
 	}
-	if len(instance.Status.Conditions) == 0 {
-		instance.Status.InitializeConditions()
-		r.updateStatus(instance)
-	}
 
 	stages := []func(*servingv1alpha1.Install) error{
+		r.initStatus,
 		r.transform,
 		r.install,
 		r.checkDeployments,
@@ -126,6 +123,17 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 	}
 	return reconcile.Result{}, nil
+}
+
+// Initialize status conditions
+func (r *ReconcileInstall) initStatus(instance *servingv1alpha1.Install) error {
+	if len(instance.Status.Conditions) == 0 {
+		instance.Status.InitializeConditions()
+		if err := r.updateStatus(instance); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Update the status subresource
