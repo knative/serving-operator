@@ -194,17 +194,9 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 }
 
 // Check for all deployments available
-// TODO: verify that all the Deployments in the config are available
 func (r *ReconcileInstall) checkDeployments(instance *servingv1alpha1.Install) error {
 	defer r.updateStatus(instance)
-	deployments := &appsv1.DeploymentList{}
-	controller := r.config.Find("apps/v1", "Deployment", "controller")
-	err := r.client.List(context.TODO(), &client.ListOptions{Namespace: controller.GetNamespace()}, deployments)
-	if err != nil {
-		log.Error(err, "Unable to list Deployments")
-		return err
-	}
-	available := func(d appsv1.Deployment) bool {
+	available := func(d *appsv1.Deployment) bool {
 		for _, c := range d.Status.Conditions {
 			if c.Type == appsv1.DeploymentAvailable && c.Status == v1.ConditionTrue {
 				return true
@@ -212,20 +204,24 @@ func (r *ReconcileInstall) checkDeployments(instance *servingv1alpha1.Install) e
 		}
 		return false
 	}
-	allAvailable := func() bool {
-		for _, deploy := range deployments.Items {
-			if !available(deploy) {
-				return false
+	deployment := &appsv1.Deployment{}
+	for _, u := range r.config.Resources {
+		if u.GetKind() == "Deployment" {
+			key := client.ObjectKey{Namespace: u.GetNamespace(), Name: u.GetName()}
+			if err := r.client.Get(context.TODO(), key, deployment); err != nil {
+				instance.Status.MarkDeploymentsNotReady()
+				if errors.IsNotFound(err) {
+					return nil
+				}
+				return err
+			}
+			if !available(deployment) {
+				instance.Status.MarkDeploymentsNotReady()
+				return nil
 			}
 		}
-		return true
 	}
-	// TODO: Instead of a count, verify specific Deployments
-	if len(deployments.Items) >= 4 && allAvailable() {
-		instance.Status.MarkDeploymentsAvailable()
-	} else {
-		instance.Status.MarkDeploymentsNotReady()
-	}
+	instance.Status.MarkDeploymentsAvailable()
 	return nil
 }
 
