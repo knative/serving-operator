@@ -5,6 +5,7 @@ import (
 )
 
 func init() {
-	platformPrereqFuncs = append(platformPrereqFuncs, openshift.EnsureMaistra)
+	platformPreInstallFuncs = append(platformPreInstallFuncs, openshift.EnsureMaistra)
+	platformPostInstallFuncs = append(platformPostInstallFuncs, openshift.EnsureOpenshiftIngress)
 	platformTransformFuncs = append(platformTransformFuncs, openshift.Configure)
 }

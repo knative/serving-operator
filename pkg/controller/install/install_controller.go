@@ -30,8 +30,10 @@ var (
 	installNs = flag.String("install-ns", "",
 		"The namespace in which to create an Install resource, if none exist")
 	log = logf.Log.WithName("controller_install")
-	// Platform-specific installation prerequisites
-	platformPrereqFuncs []func(client.Client, *runtime.Scheme, string) error
+	// Platform-specific functions to run before installation
+	platformPreInstallFuncs []func(client.Client, *runtime.Scheme, string) error
+	// Platform-specific functions to run after installation
+	platformPostInstallFuncs []func(client.Client, *runtime.Scheme, string) error
 	// Platform-specific configuration via manifestival transformations
 	platformTransformFuncs []func(client.Client, *runtime.Scheme) []mf.Transformer
 )
@@ -135,13 +137,19 @@ func (r *ReconcileInstall) transform(instance *servingv1alpha1.Install) error {
 // Apply the embedded resources
 func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	// Ensure needed prerequisites are installed
-	for _, f := range platformPrereqFuncs {
+	for _, f := range platformPreInstallFuncs {
 		if err := f(r.client, r.scheme, instance.Spec.Namespace); err != nil {
 			return err
 		}
 	}
 	if err := r.config.ApplyAll(); err != nil {
 		return err
+	}
+	// Do any post-installation tasks
+	for _, f := range platformPostInstallFuncs {
+		if err := f(r.client, r.scheme, instance.Spec.Namespace); err != nil {
+			return err
+		}
 	}
 	// Update status
 	instance.Status.Resources = r.config.Resources
