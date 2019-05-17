@@ -34,8 +34,8 @@ resource](deploy/crds/serving_v1alpha1_install_cr.yaml).
 The optional `spec.config` field can be used to set the corresponding
 entries in the Knative Serving ConfigMaps. Conditions for a successful
 install and available deployments will be updated in the `status`
-field, along with a list of the resources the operator installs and
-their version when its `Ready` condition becomes "True".
+field, as well as which version of Knative Serving the operator
+installed.
 
 The following are all equivalent, but the latter may suffer from name
 conflicts.

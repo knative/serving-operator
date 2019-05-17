@@ -188,7 +188,6 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 		}
 	}
 	// Update status
-	instance.Status.Resources = r.config.Resources
 	instance.Status.Version = version.Version
 	instance.Status.MarkInstallSucceeded()
 	return nil

@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	"github.com/knative/pkg/apis"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -34,8 +33,6 @@ type InstallStatus struct {
 	// Add custom validation using kubebuilder tags:
 	// https://book.kubebuilder.io/beyond_basics/generating_crd.html
 
-	// The resources applied by the operator
-	Resources []unstructured.Unstructured `json:"resources,omitempty"`
 	// The version of the installed release
 	Version string `json:"version,omitempty"`
 	// The latest available observations of a resource's current state.
