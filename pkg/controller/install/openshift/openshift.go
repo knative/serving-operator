@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
 	"github.com/openshift-knative/knative-serving-operator/pkg/controller/install/common"
 	configv1 "github.com/openshift/api/config/v1"
 
@@ -27,7 +28,8 @@ const (
 var log = logf.Log.WithName("openshift")
 
 // EnsureMaistra ensures Maistra is installed in the cluster
-func EnsureMaistra(c client.Client, scheme *runtime.Scheme, namespace string) error {
+func EnsureMaistra(c client.Client, scheme *runtime.Scheme, instance *servingv1alpha1.Install) error {
+	namespace := instance.GetNamespace()
 	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", namespace); err != nil {
 		return err
 	} else if !routeExists {
@@ -69,7 +71,8 @@ func EnsureMaistra(c client.Client, scheme *runtime.Scheme, namespace string) er
 }
 
 // EnsureOpenshiftIngress ensures knative-openshift-ingress operator is installed
-func EnsureOpenshiftIngress(c client.Client, scheme *runtime.Scheme, namespace string) error {
+func EnsureOpenshiftIngress(c client.Client, scheme *runtime.Scheme, instance *servingv1alpha1.Install) error {
+	namespace := instance.GetNamespace()
 	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", namespace); err != nil {
 		return err
 	} else if !routeExists {

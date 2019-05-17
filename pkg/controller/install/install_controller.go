@@ -31,9 +31,9 @@ var (
 		"If filename is a directory, process all manifests recursively")
 	log = logf.Log.WithName("controller_install")
 	// Platform-specific functions to run before installation
-	platformPreInstallFuncs []func(client.Client, *runtime.Scheme, string) error
+	platformPreInstallFuncs []func(client.Client, *runtime.Scheme, *servingv1alpha1.Install) error
 	// Platform-specific functions to run after installation
-	platformPostInstallFuncs []func(client.Client, *runtime.Scheme, string) error
+	platformPostInstallFuncs []func(client.Client, *runtime.Scheme, *servingv1alpha1.Install) error
 	// Platform-specific configuration via manifestival transformations
 	platformTransformFuncs []func(client.Client, *runtime.Scheme) []mf.Transformer
 )
@@ -173,7 +173,7 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	defer r.updateStatus(instance)
 	// Ensure needed prerequisites are installed
 	for _, f := range platformPreInstallFuncs {
-		if err := f(r.client, r.scheme, instance.GetNamespace()); err != nil {
+		if err := f(r.client, r.scheme, instance); err != nil {
 			return err
 		}
 	}
@@ -183,7 +183,7 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	}
 	// Do any post-installation tasks
 	for _, f := range platformPostInstallFuncs {
-		if err := f(r.client, r.scheme, instance.Spec.Namespace); err != nil {
+		if err := f(r.client, r.scheme, instance); err != nil {
 			return err
 		}
 	}
