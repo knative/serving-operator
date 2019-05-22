@@ -14,18 +14,24 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-var log = logf.Log.WithName("minikube")
+var (
+	extension = common.Extension{
+		Transformers: []mf.Transformer{egress},
+	}
+	log = logf.Log.WithName("minikube")
+)
 
 // Configure minikube if we're soaking in it
-func Configure(c client.Client, _ *runtime.Scheme) []mf.Transformer {
+func Configure(c client.Client, _ *runtime.Scheme) (*common.Extension, error) {
 	node := &v1.Node{}
 	if err := c.Get(context.TODO(), types.NamespacedName{Name: "minikube"}, node); err != nil {
 		if !errors.IsNotFound(err) {
 			log.Error(err, "Unable to query for minikube node")
 		}
-		return nil // not running on minikube
+		// Not running in minikube
+		return nil, nil
 	}
-	return []mf.Transformer{egress}
+	return &extension, nil
 }
 
 func egress(u *unstructured.Unstructured) *unstructured.Unstructured {

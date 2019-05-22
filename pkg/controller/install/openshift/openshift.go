@@ -24,42 +24,56 @@ const (
 	maistraControlPlaneNamespace = "istio-system"
 )
 
-var log = logf.Log.WithName("openshift")
+var (
+	extension = common.Extension{
+		Transformers: []mf.Transformer{ingress, egress},
+		PreInstalls:  []common.Extender{ensureMaistra},
+		PostInstalls: []common.Extender{ensureOpenshiftIngress},
+	}
+	log = logf.Log.WithName("openshift")
+	api client.Client
+)
 
-// EnsureMaistra ensures Maistra is installed in the cluster
-func EnsureMaistra(c client.Client, scheme *runtime.Scheme, instance *servingv1alpha1.Install) error {
-	namespace := instance.GetNamespace()
-	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", namespace); err != nil {
-		return err
+// Configure OpenShift if we're soaking in it
+func Configure(c client.Client, _ *runtime.Scheme) (*common.Extension, error) {
+	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", ""); err != nil {
+		return nil, err
 	} else if !routeExists {
 		// Not running in OpenShift
-		return nil
+		return nil, nil
 	}
+	api = c
+	return &extension, nil
+}
+
+// ensureMaistra ensures Maistra is installed in the cluster
+func ensureMaistra(instance *servingv1alpha1.Install) error {
+	namespace := instance.GetNamespace()
 
 	log.Info("Ensuring Istio is installed in OpenShift")
 
-	if operatorExists, err := kindExists(c, "controlplane", "istio.openshift.com/v1alpha3", namespace); err != nil {
+	if operatorExists, err := kindExists(api, "controlplane", "istio.openshift.com/v1alpha3", namespace); err != nil {
 		return err
 	} else if !operatorExists {
-		if istioExists, err := kindExists(c, "virtualservice", "networking.istio.io/v1alpha3", namespace); err != nil {
+		if istioExists, err := kindExists(api, "virtualservice", "networking.istio.io/v1alpha3", namespace); err != nil {
 			return err
 		} else if istioExists {
 			log.Info("Maistra Operator not present but Istio CRDs already installed - assuming Istio is already setup")
 			return nil
 		}
 		// Maistra operator not installed
-		if err := installMaistraOperator(c); err != nil {
+		if err := installMaistraOperator(api); err != nil {
 			return err
 		}
 	} else {
 		log.Info("Maistra Operator already installed")
 	}
 
-	if controlPlaneExists, err := itemsExist(c, "controlplane", "istio.openshift.com/v1alpha3", maistraControlPlaneNamespace); err != nil {
+	if controlPlaneExists, err := itemsExist(api, "controlplane", "istio.openshift.com/v1alpha3", maistraControlPlaneNamespace); err != nil {
 		return err
 	} else if !controlPlaneExists {
 		// Maistra controlplane not installed
-		if err := installMaistraControlPlane(c); err != nil {
+		if err := installMaistraControlPlane(api); err != nil {
 			return err
 		}
 	} else {
@@ -69,27 +83,12 @@ func EnsureMaistra(c client.Client, scheme *runtime.Scheme, instance *servingv1a
 	return nil
 }
 
-// EnsureOpenshiftIngress ensures knative-openshift-ingress operator is installed
-func EnsureOpenshiftIngress(c client.Client, scheme *runtime.Scheme, instance *servingv1alpha1.Install) error {
+// ensureOpenshiftIngress ensures knative-openshift-ingress operator is installed
+func ensureOpenshiftIngress(instance *servingv1alpha1.Install) error {
 	namespace := instance.GetNamespace()
-	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", namespace); err != nil {
-		return err
-	} else if !routeExists {
-		// Not running in OpenShift
-		return nil
-	}
-
-	if err := installOpenshiftIngress(c, namespace); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func installOpenshiftIngress(c client.Client, namespace string) error {
 	const path = "deploy/resources/openshift-ingress/openshift-ingress-0.0.4.yaml"
 	log.Info("Ensuring Knative OpenShift Ingress operator is installed")
-	if manifest, err := mf.NewManifest(path, false, c); err == nil {
+	if manifest, err := mf.NewManifest(path, false, api); err == nil {
 		transforms := []mf.Transformer{}
 		if len(namespace) > 0 {
 			transforms = append(transforms, mf.InjectNamespace(namespace))
@@ -103,17 +102,6 @@ func installOpenshiftIngress(c client.Client, namespace string) error {
 		return err
 	}
 	return nil
-}
-
-// Configure OpenShift if we're soaking in it
-func Configure(c client.Client, scheme *runtime.Scheme) (result []mf.Transformer) {
-	if t := ingress(c); t != nil {
-		result = append(result, t)
-	}
-	if t := egress(c); t != nil {
-		result = append(result, t)
-	}
-	return result
 }
 
 func installMaistraOperator(c client.Client) error {
@@ -154,46 +142,40 @@ func installMaistraControlPlane(c client.Client) error {
 	return nil
 }
 
-func ingress(c client.Client) mf.Transformer {
-	ingressConfig := &configv1.Ingress{}
-	if err := c.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, ingressConfig); err != nil {
-		if !meta.IsNoMatchError(err) {
-			log.Error(err, "Unexpected error during detection")
+func ingress(u *unstructured.Unstructured) *unstructured.Unstructured {
+	if u.GetKind() == "ConfigMap" && u.GetName() == "config-domain" {
+		ingressConfig := &configv1.Ingress{}
+		if err := api.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, ingressConfig); err != nil {
+			if !meta.IsNoMatchError(err) {
+				log.Error(err, "Unexpected error during detection")
+			}
+			return u
 		}
-		return nil
-	}
-	domain := ingressConfig.Spec.Domain
-	if len(domain) == 0 {
-		return nil
-	}
-	return func(u *unstructured.Unstructured) *unstructured.Unstructured {
-		if u.GetKind() == "ConfigMap" && u.GetName() == "config-domain" {
+		domain := ingressConfig.Spec.Domain
+		if len(domain) > 0 {
 			data := map[string]string{domain: ""}
 			common.UpdateConfigMap(u, data, log)
 		}
-		return u
 	}
+	return u
 }
 
-func egress(c client.Client) mf.Transformer {
-	networkConfig := &configv1.Network{}
-	if err := c.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, networkConfig); err != nil {
-		if !meta.IsNoMatchError(err) {
-			log.Error(err, "Unexpected error during detection")
+func egress(u *unstructured.Unstructured) *unstructured.Unstructured {
+	if u.GetKind() == "ConfigMap" && u.GetName() == "config-network" {
+		networkConfig := &configv1.Network{}
+		if err := api.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, networkConfig); err != nil {
+			if !meta.IsNoMatchError(err) {
+				log.Error(err, "Unexpected error during detection")
+			}
+			return u
 		}
-		return nil
-	}
-	network := strings.Join(networkConfig.Spec.ServiceNetwork, ",")
-	if len(network) == 0 {
-		return nil
-	}
-	return func(u *unstructured.Unstructured) *unstructured.Unstructured {
-		if u.GetKind() == "ConfigMap" && u.GetName() == "config-network" {
+		network := strings.Join(networkConfig.Spec.ServiceNetwork, ",")
+		if len(network) > 0 {
 			data := map[string]string{"istio.sidecar.includeOutboundIPRanges": network}
 			common.UpdateConfigMap(u, data, log)
 		}
-		return u
 	}
+	return u
 }
 
 func kindExists(c client.Client, kind string, apiVersion string, namespace string) (bool, error) {

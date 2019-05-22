@@ -34,6 +34,7 @@ type InstallStatus struct {
 	// https://book.kubebuilder.io/beyond_basics/generating_crd.html
 
 	// The version of the installed release
+	// +optional
 	Version string `json:"version,omitempty"`
 	// The latest available observations of a resource's current state.
 	// +optional

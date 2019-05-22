@@ -30,12 +30,8 @@ var (
 	recursive = flag.Bool("recursive", false,
 		"If filename is a directory, process all manifests recursively")
 	log = logf.Log.WithName("controller_install")
-	// Platform-specific functions to run before installation
-	platformPreInstallFuncs []func(client.Client, *runtime.Scheme, *servingv1alpha1.Install) error
-	// Platform-specific functions to run after installation
-	platformPostInstallFuncs []func(client.Client, *runtime.Scheme, *servingv1alpha1.Install) error
-	// Platform-specific configuration via manifestival transformations
-	platformTransformFuncs []func(client.Client, *runtime.Scheme) []mf.Transformer
+	// Platform-specific behavior to affect the installation
+	platforms common.Platforms
 )
 
 // Add creates a new Install Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -111,7 +107,6 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	stages := []func(*servingv1alpha1.Install) error{
 		r.initStatus,
-		r.transform,
 		r.install,
 		r.checkDeployments,
 		r.deleteObsoleteResources,
@@ -149,44 +144,32 @@ func (r *ReconcileInstall) updateStatus(instance *servingv1alpha1.Install) error
 	return nil
 }
 
-// Transform resources as appropriate for the spec and platform
-func (r *ReconcileInstall) transform(instance *servingv1alpha1.Install) error {
-	fns := []mf.Transformer{
-		mf.InjectOwner(instance),
-		mf.InjectNamespace(instance.GetNamespace()),
-	}
-	for _, f := range platformTransformFuncs {
-		fns = append(fns, f(r.client, r.scheme)...)
-	}
-	// Let any config in instance override everything else
-	fns = append(fns, configure(instance))
-
-	r.config.Transform(fns...)
-	return nil
-}
-
 // Apply the embedded resources
 func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	if instance.Status.IsDeploying() {
 		return nil
 	}
 	defer r.updateStatus(instance)
-	// Ensure needed prerequisites are installed
-	for _, f := range platformPreInstallFuncs {
-		if err := f(r.client, r.scheme, instance); err != nil {
-			return err
+
+	extensions, err := platforms.Extend(r.client, r.scheme)
+	if err != nil {
+		return err
+	}
+	// Transform the manifestival resources
+	r.config.Transform(extensions.Transform(instance)...)
+
+	err = extensions.PreInstall(instance)
+	if err == nil {
+		err = r.config.ApplyAll()
+		if err == nil {
+			err = extensions.PostInstall(instance)
 		}
 	}
-	if err := r.config.ApplyAll(); err != nil {
+	if err != nil {
 		instance.Status.MarkInstallFailed(err.Error())
 		return err
 	}
-	// Do any post-installation tasks
-	for _, f := range platformPostInstallFuncs {
-		if err := f(r.client, r.scheme, instance); err != nil {
-			return err
-		}
-	}
+
 	// Update status
 	instance.Status.Version = version.Version
 	instance.Status.MarkInstallSucceeded()
@@ -243,16 +226,4 @@ func (r *ReconcileInstall) deleteObsoleteResources(instance *servingv1alpha1.Ins
 	resource.SetAPIVersion("autoscaling/v1")
 	resource.SetKind("HorizontalPodAutoscaler")
 	return r.config.Delete(resource)
-}
-
-// Set ConfigMap values from Install spec
-func configure(instance *servingv1alpha1.Install) mf.Transformer {
-	return func(u *unstructured.Unstructured) *unstructured.Unstructured {
-		if u.GetKind() == "ConfigMap" {
-			if data, ok := instance.Spec.Config[u.GetName()[7:]]; ok {
-				common.UpdateConfigMap(u, data, log)
-			}
-		}
-		return u
-	}
 }
