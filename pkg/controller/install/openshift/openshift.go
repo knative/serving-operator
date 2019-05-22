@@ -9,9 +9,11 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 
 	mf "github.com/jcrossley3/manifestival"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -26,9 +28,9 @@ const (
 
 var (
 	extension = common.Extension{
-		Transformers: []mf.Transformer{ingress, egress},
-		PreInstalls:  []common.Extender{ensureMaistra},
-		PostInstalls: []common.Extender{ensureOpenshiftIngress},
+		Transformers: []mf.Transformer{ingress, egress, ensureOpenShiftRegistryForConfigMap},
+		PreInstalls:  []common.Extender{ensureMaistra, ensureConfigMapForCrt},
+		PostInstalls: []common.Extender{ensureOpenshiftIngress, updateDeploymentController},
 	}
 	log = logf.Log.WithName("openshift")
 	api client.Client
@@ -104,6 +106,66 @@ func ensureOpenshiftIngress(instance *servingv1alpha1.Install) error {
 	return nil
 }
 
+func updateDeploymentController(instance *servingv1alpha1.Install) error {
+	depName := "controller"
+	cmName := "config-service-ca"
+	volName := "service-ca"
+
+	// Check the existance of configmap before updating the deployment/controller
+	cm := &v1.ConfigMap{}
+	if err := api.Get(context.TODO(), types.NamespacedName{Name: cmName, Namespace: instance.GetNamespace()}, cm); err != nil {
+		return err
+	}
+
+	if _, ok := cm.Data["service-ca.crt"]; ok {
+		found := &appsv1.Deployment{}
+		if err := api.Get(context.TODO(), types.NamespacedName{Name: depName, Namespace: instance.GetNamespace()}, found); err != nil {
+			return err
+		}
+
+		/* Deployment exist so update the deployment controller with volume, volumeMount and env.
+		oc -n $ns set volume deployment/controller --add --name=service-ca --configmap-name=$configmap_name --mount-path=$mount_path
+		oc -n $ns set env deployment/controller SSL_CERT_FILE=$mount_path/$cert_name */
+
+		v := v1.Volume{
+			Name: volName,
+			VolumeSource: v1.VolumeSource{
+				ConfigMap: &v1.ConfigMapVolumeSource{
+					LocalObjectReference: v1.LocalObjectReference{
+						Name: cmName,
+					},
+				},
+			},
+		}
+
+		found.Spec.Template.Spec.Volumes = append(found.Spec.Template.Spec.Volumes, v)
+
+		vMount := v1.VolumeMount{
+			Name:      "service-ca",
+			MountPath: "/var/run/secrets/kubernetes.io/servicecerts",
+		}
+
+		for j := range found.Spec.Template.Spec.Containers {
+			found.Spec.Template.Spec.Containers[j].VolumeMounts = append(found.Spec.Template.Spec.Containers[j].VolumeMounts, vMount)
+		}
+
+		envVar := &v1.EnvVar{
+			Name:  "SSL_CERT_FILE",
+			Value: "/var/run/secrets/kubernetes.io/servicecerts/service-ca.crt",
+		}
+
+		for i := range found.Spec.Template.Spec.Containers {
+			found.Spec.Template.Spec.Containers[i].Env = append(found.Spec.Template.Spec.Containers[i].Env, *envVar)
+		}
+
+		if err := api.Update(context.TODO(), found); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func installMaistraOperator(c client.Client) error {
 	const path = "deploy/resources/maistra/maistra-operator-0.10.yaml"
 	log.Info("Installing Maistra operator")
@@ -176,6 +238,39 @@ func egress(u *unstructured.Unstructured) *unstructured.Unstructured {
 		}
 	}
 	return u
+}
+
+func ensureOpenShiftRegistryForConfigMap(u *unstructured.Unstructured) *unstructured.Unstructured {
+	if u.GetKind() == "ConfigMap" && u.GetName() == "config-deployment" {
+		data := map[string]string{"registriesSkippingTagResolving": "ko.local,dev.local,docker-registry.default.svc:5000,image-registry.openshift-image-registry.svc:5000"}
+		common.UpdateConfigMap(u, data, log)
+	}
+
+	return u
+}
+
+func ensureConfigMapForCrt(instance *servingv1alpha1.Install) error {
+	cmName := "config-service-ca"
+	cm := &v1.ConfigMap{}
+	if err := api.Get(context.TODO(), types.NamespacedName{Name: cmName, Namespace: instance.GetNamespace()}, cm); err != nil {
+		if errors.IsNotFound(err) {
+			// Define a new configmap
+			cm.Name = cmName
+			cm.Annotations = make(map[string]string)
+			cm.Annotations["service.alpha.openshift.io/inject-cabundle"] = "true"
+			cm.Namespace = instance.GetNamespace()
+			cm.SetOwnerReferences([]metav1.OwnerReference{*metav1.NewControllerRef(instance, instance.GroupVersionKind())})
+			err = api.Create(context.TODO(), cm)
+			if err != nil {
+				return err
+			}
+			// ConfigMap created successfully
+			return nil
+		}
+		return err
+	}
+
+	return nil
 }
 
 func kindExists(c client.Client, kind string, apiVersion string, namespace string) (bool, error) {
