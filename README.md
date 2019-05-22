@@ -15,9 +15,9 @@ appropriately for your cluster in the `default` namespace:
 On OpenShift, Istio will get installed automatically if not already
 present by using the [Maistra Operator](https://maistra.io/).
 
-For other platforms, version 0.5.x of Knative Serving requires Istio CRD's:
+For other platforms, version 0.6.x of Knative Serving requires Istio CRD's:
 
-    kubectl apply -f https://github.com/knative/serving/releases/download/v0.5.2/istio-crds.yaml
+    kubectl apply -f https://raw.githubusercontent.com/knative/serving/v0.6.0/third_party/istio-1.0.7/istio-crds.yaml
 
 ### Operator SDK
 
