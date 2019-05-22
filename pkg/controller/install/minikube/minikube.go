@@ -17,15 +17,15 @@ import (
 var log = logf.Log.WithName("minikube")
 
 // Configure minikube if we're soaking in it
-func Configure(c client.Client, _ *runtime.Scheme) []mf.Transformer {
+func Configure(c client.Client, _ *runtime.Scheme) (*common.Extension, error) {
 	node := &v1.Node{}
 	if err := c.Get(context.TODO(), types.NamespacedName{Name: "minikube"}, node); err != nil {
 		if !errors.IsNotFound(err) {
 			log.Error(err, "Unable to query for minikube node")
 		}
-		return nil // not running on minikube
+		return nil, nil // not running on minikube
 	}
-	return []mf.Transformer{egress}
+	return &common.Extension{Transformers: []mf.Transformer{egress}}, nil
 }
 
 func egress(u *unstructured.Unstructured) *unstructured.Unstructured {

@@ -24,42 +24,66 @@ const (
 	maistraControlPlaneNamespace = "istio-system"
 )
 
-var log = logf.Log.WithName("openshift")
+var (
+	log = logf.Log.WithName("openshift")
+	api client.Client
+)
 
-// EnsureMaistra ensures Maistra is installed in the cluster
-func EnsureMaistra(c client.Client, scheme *runtime.Scheme, instance *servingv1alpha1.Install) error {
-	namespace := instance.GetNamespace()
-	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", namespace); err != nil {
-		return err
+// Configure OpenShift if we're soaking in it
+func Configure(c client.Client, _ *runtime.Scheme) (*common.Extension, error) {
+	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", ""); err != nil {
+		return nil, err
 	} else if !routeExists {
 		// Not running in OpenShift
-		return nil
+		return nil, nil
 	}
+	api = c
+	result := &common.Extension{
+		Transformers: transforms(c),
+		PreInstalls:  []common.Extender{ensureMaistra},
+		PostInstalls: []common.Extender{ensureOpenshiftIngress},
+	}
+	return result, nil
+}
+
+func transforms(c client.Client) (result []mf.Transformer) {
+	if t := ingress(c); t != nil {
+		result = append(result, t)
+	}
+	if t := egress(c); t != nil {
+		result = append(result, t)
+	}
+	return result
+}
+
+// ensureMaistra ensures Maistra is installed in the cluster
+func ensureMaistra(instance *servingv1alpha1.Install) error {
+	namespace := instance.GetNamespace()
 
 	log.Info("Ensuring Istio is installed in OpenShift")
 
-	if operatorExists, err := kindExists(c, "controlplane", "istio.openshift.com/v1alpha3", namespace); err != nil {
+	if operatorExists, err := kindExists(api, "controlplane", "istio.openshift.com/v1alpha3", namespace); err != nil {
 		return err
 	} else if !operatorExists {
-		if istioExists, err := kindExists(c, "virtualservice", "networking.istio.io/v1alpha3", namespace); err != nil {
+		if istioExists, err := kindExists(api, "virtualservice", "networking.istio.io/v1alpha3", namespace); err != nil {
 			return err
 		} else if istioExists {
 			log.Info("Maistra Operator not present but Istio CRDs already installed - assuming Istio is already setup")
 			return nil
 		}
 		// Maistra operator not installed
-		if err := installMaistraOperator(c); err != nil {
+		if err := installMaistraOperator(api); err != nil {
 			return err
 		}
 	} else {
 		log.Info("Maistra Operator already installed")
 	}
 
-	if controlPlaneExists, err := itemsExist(c, "controlplane", "istio.openshift.com/v1alpha3", maistraControlPlaneNamespace); err != nil {
+	if controlPlaneExists, err := itemsExist(api, "controlplane", "istio.openshift.com/v1alpha3", maistraControlPlaneNamespace); err != nil {
 		return err
 	} else if !controlPlaneExists {
 		// Maistra controlplane not installed
-		if err := installMaistraControlPlane(c); err != nil {
+		if err := installMaistraControlPlane(api); err != nil {
 			return err
 		}
 	} else {
@@ -69,27 +93,12 @@ func EnsureMaistra(c client.Client, scheme *runtime.Scheme, instance *servingv1a
 	return nil
 }
 
-// EnsureOpenshiftIngress ensures knative-openshift-ingress operator is installed
-func EnsureOpenshiftIngress(c client.Client, scheme *runtime.Scheme, instance *servingv1alpha1.Install) error {
+// ensureOpenshiftIngress ensures knative-openshift-ingress operator is installed
+func ensureOpenshiftIngress(instance *servingv1alpha1.Install) error {
 	namespace := instance.GetNamespace()
-	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", namespace); err != nil {
-		return err
-	} else if !routeExists {
-		// Not running in OpenShift
-		return nil
-	}
-
-	if err := installOpenshiftIngress(c, namespace); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func installOpenshiftIngress(c client.Client, namespace string) error {
 	const path = "deploy/resources/openshift-ingress/openshift-ingress-0.0.4.yaml"
 	log.Info("Ensuring Knative OpenShift Ingress operator is installed")
-	if manifest, err := mf.NewManifest(path, false, c); err == nil {
+	if manifest, err := mf.NewManifest(path, false, api); err == nil {
 		transforms := []mf.Transformer{}
 		if len(namespace) > 0 {
 			transforms = append(transforms, mf.InjectNamespace(namespace))
@@ -103,17 +112,6 @@ func installOpenshiftIngress(c client.Client, namespace string) error {
 		return err
 	}
 	return nil
-}
-
-// Configure OpenShift if we're soaking in it
-func Configure(c client.Client, scheme *runtime.Scheme) (result []mf.Transformer) {
-	if t := ingress(c); t != nil {
-		result = append(result, t)
-	}
-	if t := egress(c); t != nil {
-		result = append(result, t)
-	}
-	return result
 }
 
 func installMaistraOperator(c client.Client) error {
