@@ -37,13 +37,20 @@ var (
 )
 
 // Configure OpenShift if we're soaking in it
-func Configure(c client.Client, _ *runtime.Scheme) (*common.Extension, error) {
+func Configure(c client.Client, s *runtime.Scheme) (*common.Extension, error) {
 	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", ""); err != nil {
 		return nil, err
 	} else if !routeExists {
 		// Not running in OpenShift
 		return nil, nil
 	}
+
+	// Register scheme
+	if err := configv1.Install(s); err != nil {
+		log.Error(err, "Unable to register scheme")
+		return nil, err
+	}
+
 	api = c
 	return &extension, nil
 }
