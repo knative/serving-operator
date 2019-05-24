@@ -41,14 +41,6 @@
   version = "v0.3.1"
 
 [[projects]]
-  digest = "1:a26f8da48b22e6176c1c6a2459904bb30bd0c49ada04b2963c2c3a203e81a620"
-  name = "github.com/Masterminds/semver"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "c7af12943936e8c39859482e61f0574c2fd7fc75"
-  version = "v1.4.2"
-
-[[projects]]
   digest = "1:0a111edd8693fd977f42a0c4f199a0efb13c20aec9da99ad8830c7bb6a87e8d6"
   name = "github.com/PuerkitoBio/purell"
   packages = ["."]
@@ -96,7 +88,7 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:e8edae4db8ee767863e94b68290007be469f051f4674dc49164632a810a0aac3"
+  digest = "1:3d89924c8f89318d81c5d21a5d704bba9ab821f0580a5afcae2b3172f7b1156a"
   name = "github.com/coreos/prometheus-operator"
   packages = [
     "pkg/apis/monitoring",
@@ -105,16 +97,8 @@
     "pkg/client/versioned/typed/monitoring/v1",
   ]
   pruneopts = "NUT"
-  revision = "72ec4b9b16ef11700724dc71fec77112536eed40"
-  version = "v0.26.0"
-
-[[projects]]
-  digest = "1:8449bb0c1da0fd7ec4706afb5ae46ad0ad658fd87f17a7eb067c5a307ffe3818"
-  name = "github.com/cyphar/filepath-securejoin"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "a261ee33d7a517f054effbf451841abaafe3e0fd"
-  version = "v0.2.2"
+  revision = "7a25bf6b6bb2347dacb235659b73bc210117acc7"
+  version = "v0.29.0"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -206,23 +190,6 @@
   pruneopts = "NUT"
   revision = "fa0dfdc10b5366ce365b7d9d1755a03e4e797bc5"
   version = "v1.6.15"
-
-[[projects]]
-  digest = "1:6a7159c5f8f8826207545407a458b43ab6599c1c8a2271465c2e979ecea1dcd4"
-  name = "github.com/gobwas/glob"
-  packages = [
-    ".",
-    "compiler",
-    "match",
-    "syntax",
-    "syntax/ast",
-    "syntax/lexer",
-    "util/runes",
-    "util/strings",
-  ]
-  pruneopts = "NUT"
-  revision = "5ccd90ef52e1e632236f7326478d4faa74f99438"
-  version = "v0.2.3"
 
 [[projects]]
   digest = "1:a1b2a5e38f79688ee8250942d5fa960525fceb1024c855c7bc76fa77b0f3cca2"
@@ -372,14 +339,6 @@
   version = "v0.5.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:b0b1cae9ff30d8c219dc64e5f8dcfbb3f5f3f10f9e67dec737ce0bc04bf31a54"
-  name = "github.com/iancoleman/strcase"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "e506e3ef73653e84c592ba44aab577a46678f68c"
-
-[[projects]]
   digest = "1:aaa38889f11896ee3644d77e17dc7764cc47f5f3d3b488268df2af2b52541c5f"
   name = "github.com/imdario/mergo"
   packages = ["."]
@@ -467,6 +426,14 @@
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:f9f72e583aaacf1d1ac5d6121abd4afd3c690baa9e14e1d009df26bf831ba347"
+  name = "github.com/mitchellh/go-homedir"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "af06845cf3004701891bf4fdb884bfe4920b3727"
+  version = "v1.1.0"
+
+[[projects]]
   digest = "1:2f42fa12d6911c7b7659738758631bec870b7e9b4c6be5444f963cdcfccc191f"
   name = "github.com/modern-go/concurrent"
   packages = ["."]
@@ -491,21 +458,12 @@
   revision = "275768afc8f66b79aeb12debf94ffc85255104ad"
 
 [[projects]]
-  branch = "master"
-  digest = "1:57606ab89afc47182f68bd2480d5e8c86f0024051b969605c13ad158c7af9d02"
-  name = "github.com/openshift/cluster-network-operator"
-  packages = ["pkg/util/k8s"]
-  pruneopts = "NUT"
-  revision = "6883bb6a4f4cbb5c7fd7c7b0d40484cfaf7f74be"
-
-[[projects]]
-  digest = "1:24b17b5746770daf41fee7b5e75e75f56bbad9c19adb8e6a721321b298b3e1f1"
+  digest = "1:0fadb8f48ea2c0230075d956317e8a8d094582f87bb9076f06f57fc23b339dc8"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
     "internal/pkg/scaffold",
-    "internal/pkg/scaffold/ansible",
-    "internal/pkg/scaffold/helm",
     "internal/pkg/scaffold/input",
+    "internal/pkg/scaffold/internal/deps",
     "internal/util/fileutil",
     "internal/util/k8sutil",
     "internal/util/projutil",
@@ -515,13 +473,14 @@
     "pkg/log/zap",
     "pkg/metrics",
     "pkg/predicate",
+    "pkg/restmapper",
     "pkg/test",
     "pkg/test/e2eutil",
     "version",
   ]
   pruneopts = "NUT"
-  revision = "7e07b20c9e22560fb22a3295b612eae7652b8b14"
-  version = "v0.7.0"
+  revision = "78c472461e75e6c64589cfadf577a2004b8a26b3"
+  version = "v0.8.0"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
@@ -708,19 +667,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e46e3e11cf8c28dfe76fa68f1e7712dc1f22d2f342489a13a21b4455c52e48e1"
+  digest = "1:058e9504b9a79bfe86092974d05bb3298d2aa0c312d266d43148de289a5065d9"
   name = "golang.org/x/crypto"
-  packages = [
-    "cast5",
-    "openpgp",
-    "openpgp/armor",
-    "openpgp/clearsign",
-    "openpgp/elgamal",
-    "openpgp/errors",
-    "openpgp/packet",
-    "openpgp/s2k",
-    "ssh/terminal",
-  ]
+  packages = ["ssh/terminal"]
   pruneopts = "NUT"
   revision = "b7391e95e576cacdcdd422573063bc057239113d"
 
@@ -1110,7 +1059,7 @@
   revision = "8d9ed539ba3134352c586810e749e58df4e94e4f"
 
 [[projects]]
-  digest = "1:686f216a73461588304ff299a21ea49ad6783184e2dbb7707d2189045efbc0d8"
+  digest = "1:34f858e7c3058fe32be239a64a9a86aeb608f39eba41b1bd358af8cfb802de05"
   name = "k8s.io/code-generator"
   packages = [
     "cmd/client-gen",
@@ -1126,8 +1075,6 @@
     "cmd/conversion-gen/generators",
     "cmd/deepcopy-gen",
     "cmd/deepcopy-gen/args",
-    "cmd/defaulter-gen",
-    "cmd/defaulter-gen/args",
     "cmd/informer-gen",
     "cmd/informer-gen/args",
     "cmd/informer-gen/generators",
@@ -1141,12 +1088,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:39912eb5f8eaf46486faae0839586c27c93423e552f76875defa048f52c15c15"
+  digest = "1:6dc0e912aaeea5f98199e018d3601b4c98b7549afd0cd5ef4ca025911e0a90b2"
   name = "k8s.io/gengo"
   packages = [
     "args",
     "examples/deepcopy-gen/generators",
-    "examples/defaulter-gen/generators",
     "examples/set-gen/sets",
     "generator",
     "namer",
@@ -1155,31 +1101,6 @@
   ]
   pruneopts = "UT"
   revision = "bc9033e9ec9e0cec1552e9af7c079cb878dfc511"
-
-[[projects]]
-  digest = "1:97446a1ed07457d398d57cdea45df0ab5e9d5c13d11eeaaba0ddec83ddd5737b"
-  name = "k8s.io/helm"
-  packages = [
-    "pkg/chartutil",
-    "pkg/downloader",
-    "pkg/getter",
-    "pkg/helm/environment",
-    "pkg/helm/helmpath",
-    "pkg/ignore",
-    "pkg/plugin",
-    "pkg/proto/hapi/chart",
-    "pkg/proto/hapi/version",
-    "pkg/provenance",
-    "pkg/repo",
-    "pkg/resolver",
-    "pkg/sympath",
-    "pkg/tlsutil",
-    "pkg/urlutil",
-    "pkg/version",
-  ]
-  pruneopts = "NUT"
-  revision = "618447cbf203d147601b4b9bd7f8c37a5d39fbb4"
-  version = "v2.13.1"
 
 [[projects]]
   digest = "1:c263611800c3a97991dbcf9d3bc4de390f6224aaa8ca0a7226a9d734f65a416a"
@@ -1242,7 +1163,7 @@
   version = "v0.1.10"
 
 [[projects]]
-  digest = "1:037619f36f0f7db5e7dad0e740457bb61aa40bbdc43a6016f7e46e29af1c9b6c"
+  digest = "1:024781b25f1d15e78be60cc44842c092d3cda8d494f6c972e6f35707ac35419a"
   name = "sigs.k8s.io/controller-tools"
   packages = [
     "pkg/crd/generator",
@@ -1253,8 +1174,7 @@
     "pkg/util",
   ]
   pruneopts = "NUT"
-  revision = "950a0e88e4effb864253b3c7504b326cc83b9d11"
-  version = "v0.1.8"
+  revision = "9d55346c2bde73fb3326ac22eac2e5210a730207"
 
 [[projects]]
   digest = "1:8730e0150dfb2b7e173890c8b9868e7a273082ef8e39f4940e3506a481cf895c"
@@ -1273,12 +1193,12 @@
     "github.com/jcrossley3/manifestival",
     "github.com/knative/pkg/apis",
     "github.com/openshift/api/config/v1",
-    "github.com/openshift/cluster-network-operator/pkg/util/k8s",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/leader",
     "github.com/operator-framework/operator-sdk/pkg/log/zap",
     "github.com/operator-framework/operator-sdk/pkg/metrics",
     "github.com/operator-framework/operator-sdk/pkg/predicate",
+    "github.com/operator-framework/operator-sdk/pkg/restmapper",
     "github.com/operator-framework/operator-sdk/pkg/test",
     "github.com/operator-framework/operator-sdk/pkg/test/e2eutil",
     "github.com/operator-framework/operator-sdk/version",
@@ -1292,11 +1212,10 @@
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/apimachinery/pkg/types",
-    "k8s.io/client-go/plugin/pkg/client/auth/gcp",
+    "k8s.io/client-go/plugin/pkg/client/auth",
     "k8s.io/code-generator/cmd/client-gen",
     "k8s.io/code-generator/cmd/conversion-gen",
     "k8s.io/code-generator/cmd/deepcopy-gen",
-    "k8s.io/code-generator/cmd/defaulter-gen",
     "k8s.io/code-generator/cmd/informer-gen",
     "k8s.io/code-generator/cmd/lister-gen",
     "k8s.io/gengo/args",
