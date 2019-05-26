@@ -63,7 +63,7 @@ required = [
 
 [[constraint]]
   name = "github.com/jcrossley3/manifestival"
-  branch = "master"
+  branch = "newideas"
 
 [prune]
   go-tests = true

@@ -155,14 +155,15 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 	if err != nil {
 		return err
 	}
-	// Transform the manifestival resources
-	r.config.Transform(extensions.Transform(instance)...)
 
-	err = extensions.PreInstall(instance)
+	err = r.config.Transform(extensions.Transform(instance)...)
 	if err == nil {
-		err = r.config.ApplyAll()
+		err = extensions.PreInstall(instance)
 		if err == nil {
-			err = extensions.PostInstall(instance)
+			err = r.config.ApplyAll()
+			if err == nil {
+				err = extensions.PostInstall(instance)
+			}
 		}
 	}
 	if err != nil {

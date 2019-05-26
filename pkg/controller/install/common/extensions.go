@@ -42,13 +42,13 @@ func (exts Extensions) Transform(instance *servingv1alpha1.Install) []mf.Transfo
 		result = append(result, extension.Transformers...)
 	}
 	// Let any config in instance override everything else
-	return append(result, func(u *unstructured.Unstructured) *unstructured.Unstructured {
+	return append(result, func(u *unstructured.Unstructured) error {
 		if u.GetKind() == "ConfigMap" {
 			if data, ok := instance.Spec.Config[u.GetName()[7:]]; ok {
 				UpdateConfigMap(u, data, log)
 			}
 		}
-		return u
+		return nil
 	})
 }
 

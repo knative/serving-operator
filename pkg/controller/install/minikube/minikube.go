@@ -34,12 +34,12 @@ func Configure(c client.Client, _ *runtime.Scheme) (*common.Extension, error) {
 	return &extension, nil
 }
 
-func egress(u *unstructured.Unstructured) *unstructured.Unstructured {
+func egress(u *unstructured.Unstructured) error {
 	if u.GetKind() == "ConfigMap" && u.GetName() == "config-network" {
 		data := map[string]string{
 			"istio.sidecar.includeOutboundIPRanges": "10.0.0.1/24",
 		}
 		common.UpdateConfigMap(u, data, log)
 	}
-	return u
+	return nil
 }
