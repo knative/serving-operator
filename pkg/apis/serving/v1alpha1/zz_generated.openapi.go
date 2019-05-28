@@ -13,17 +13,17 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.Install":       schema_pkg_apis_serving_v1alpha1_Install(ref),
-		"github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.InstallSpec":   schema_pkg_apis_serving_v1alpha1_InstallSpec(ref),
-		"github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.InstallStatus": schema_pkg_apis_serving_v1alpha1_InstallStatus(ref),
+		"github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServing":       schema_pkg_apis_serving_v1alpha1_KnativeServing(ref),
+		"github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServingSpec":   schema_pkg_apis_serving_v1alpha1_KnativeServingSpec(ref),
+		"github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServingStatus": schema_pkg_apis_serving_v1alpha1_KnativeServingStatus(ref),
 	}
 }
 
-func schema_pkg_apis_serving_v1alpha1_Install(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_serving_v1alpha1_KnativeServing(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Install is the Schema for the installs API",
+				Description: "KnativeServing is the Schema for the knativeservings API",
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -46,27 +46,27 @@ func schema_pkg_apis_serving_v1alpha1_Install(ref common.ReferenceCallback) comm
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.InstallSpec"),
+							Ref: ref("github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServingSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.InstallStatus"),
+							Ref: ref("github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServingStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.InstallSpec", "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.InstallStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServingSpec", "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServingStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_serving_v1alpha1_InstallSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_serving_v1alpha1_KnativeServingSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "InstallSpec defines the desired state of Install",
+				Description: "KnativeServingSpec defines the desired state of KnativeServing",
 				Properties:  map[string]spec.Schema{},
 			},
 		},
@@ -74,11 +74,11 @@ func schema_pkg_apis_serving_v1alpha1_InstallSpec(ref common.ReferenceCallback) 
 	}
 }
 
-func schema_pkg_apis_serving_v1alpha1_InstallStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_serving_v1alpha1_KnativeServingStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "InstallStatus defines the observed state of Install",
+				Description: "KnativeServingStatus defines the observed state of KnativeServing",
 				Properties:  map[string]spec.Schema{},
 			},
 		},

@@ -1,4 +1,4 @@
-package install
+package knativeserving
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 
 	mf "github.com/jcrossley3/manifestival"
 	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
-	"github.com/openshift-knative/knative-serving-operator/pkg/controller/install/common"
+	"github.com/openshift-knative/knative-serving-operator/pkg/controller/knativeserving/common"
 	"github.com/openshift-knative/knative-serving-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/predicate"
@@ -29,12 +29,12 @@ var (
 		"The filename containing the YAML resources to apply")
 	recursive = flag.Bool("recursive", false,
 		"If filename is a directory, process all manifests recursively")
-	log = logf.Log.WithName("controller_install")
+	log = logf.Log.WithName("controller_knativeserving")
 	// Platform-specific behavior to affect the installation
 	platforms common.Platforms
 )
 
-// Add creates a new Install Controller and adds it to the Manager. The Manager will set fields on the Controller
+// Add creates a new KnativeServing Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
 	manifest, err := mf.NewManifest(*filename, *recursive, mgr.GetClient())
@@ -46,19 +46,19 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager, man mf.Manifest) reconcile.Reconciler {
-	return &ReconcileInstall{client: mgr.GetClient(), scheme: mgr.GetScheme(), config: man}
+	return &ReconcileKnativeServing{client: mgr.GetClient(), scheme: mgr.GetScheme(), config: man}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
-	c, err := controller.New("install-controller", mgr, controller.Options{Reconciler: r})
+	c, err := controller.New("knativeserving-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
 	}
 
-	// Watch for changes to primary resource Install
-	err = c.Watch(&source.Kind{Type: &servingv1alpha1.Install{}}, &handler.EnqueueRequestForObject{}, predicate.GenerationChangedPredicate{})
+	// Watch for changes to primary resource KnativeServing
+	err = c.Watch(&source.Kind{Type: &servingv1alpha1.KnativeServing{}}, &handler.EnqueueRequestForObject{}, predicate.GenerationChangedPredicate{})
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch child deployments for availability
 	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &servingv1alpha1.Install{},
+		OwnerType:    &servingv1alpha1.KnativeServing{},
 	})
 	if err != nil {
 		return err
@@ -75,10 +75,10 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-var _ reconcile.Reconciler = &ReconcileInstall{}
+var _ reconcile.Reconciler = &ReconcileKnativeServing{}
 
-// ReconcileInstall reconciles a Install object
-type ReconcileInstall struct {
+// ReconcileKnativeServing reconciles a KnativeServing object
+type ReconcileKnativeServing struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
@@ -86,17 +86,17 @@ type ReconcileInstall struct {
 	config mf.Manifest
 }
 
-// Reconcile reads that state of the cluster for a Install object and makes changes based on the state read
-// and what is in the Install.Spec
+// Reconcile reads that state of the cluster for a KnativeServing object and makes changes based on the state read
+// and what is in the KnativeServing.Spec
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileKnativeServing) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-	reqLogger.Info("Reconciling Install")
+	reqLogger.Info("Reconciling KnativeServing")
 
-	// Fetch the Install instance
-	instance := &servingv1alpha1.Install{}
+	// Fetch the KnativeServing instance
+	instance := &servingv1alpha1.KnativeServing{}
 	if err := r.client.Get(context.TODO(), request.NamespacedName, instance); err != nil {
 		if errors.IsNotFound(err) {
 			r.config.DeleteAll()
@@ -105,7 +105,7 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	stages := []func(*servingv1alpha1.Install) error{
+	stages := []func(*servingv1alpha1.KnativeServing) error{
 		r.initStatus,
 		r.install,
 		r.checkDeployments,
@@ -121,7 +121,7 @@ func (r *ReconcileInstall) Reconcile(request reconcile.Request) (reconcile.Resul
 }
 
 // Initialize status conditions
-func (r *ReconcileInstall) initStatus(instance *servingv1alpha1.Install) error {
+func (r *ReconcileKnativeServing) initStatus(instance *servingv1alpha1.KnativeServing) error {
 	if len(instance.Status.Conditions) == 0 {
 		instance.Status.InitializeConditions()
 		if err := r.updateStatus(instance); err != nil {
@@ -132,7 +132,7 @@ func (r *ReconcileInstall) initStatus(instance *servingv1alpha1.Install) error {
 }
 
 // Update the status subresource
-func (r *ReconcileInstall) updateStatus(instance *servingv1alpha1.Install) error {
+func (r *ReconcileKnativeServing) updateStatus(instance *servingv1alpha1.KnativeServing) error {
 
 	// Account for https://github.com/kubernetes-sigs/controller-runtime/issues/406
 	gvk := instance.GroupVersionKind()
@@ -145,7 +145,7 @@ func (r *ReconcileInstall) updateStatus(instance *servingv1alpha1.Install) error
 }
 
 // Apply the embedded resources
-func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
+func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServing) error {
 	if instance.Status.IsDeploying() {
 		return nil
 	}
@@ -178,7 +178,7 @@ func (r *ReconcileInstall) install(instance *servingv1alpha1.Install) error {
 }
 
 // Check for all deployments available
-func (r *ReconcileInstall) checkDeployments(instance *servingv1alpha1.Install) error {
+func (r *ReconcileKnativeServing) checkDeployments(instance *servingv1alpha1.KnativeServing) error {
 	defer r.updateStatus(instance)
 	available := func(d *appsv1.Deployment) bool {
 		for _, c := range d.Status.Conditions {
@@ -210,7 +210,7 @@ func (r *ReconcileInstall) checkDeployments(instance *servingv1alpha1.Install) e
 }
 
 // Delete obsolete istio-system resources, if any
-func (r *ReconcileInstall) deleteObsoleteResources(instance *servingv1alpha1.Install) error {
+func (r *ReconcileKnativeServing) deleteObsoleteResources(instance *servingv1alpha1.KnativeServing) error {
 	resource := &unstructured.Unstructured{}
 	resource.SetNamespace("istio-system")
 	resource.SetName("knative-ingressgateway")

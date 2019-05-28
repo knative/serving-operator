@@ -9,13 +9,13 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 const (
-	InstallSucceeded            apis.ConditionType = "InstallSucceeded"
-	InstallDeploymentsAvailable apis.ConditionType = "DeploymentsAvailable"
+	InstallSucceeded     apis.ConditionType = "InstallSucceeded"
+	DeploymentsAvailable apis.ConditionType = "DeploymentsAvailable"
 )
 
-// InstallSpec defines the desired state of Install
+// KnativeServingSpec defines the desired state of KnativeServing
 // +k8s:openapi-gen=true
-type InstallSpec struct {
+type KnativeServingSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
@@ -25,9 +25,9 @@ type InstallSpec struct {
 	Config map[string]map[string]string `json:"config,omitempty"`
 }
 
-// InstallStatus defines the observed state of Install
+// KnativeServingStatus defines the observed state of KnativeServing
 // +k8s:openapi-gen=true
-type InstallStatus struct {
+type KnativeServingStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags:
@@ -45,25 +45,25 @@ type InstallStatus struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Install is the Schema for the installs API
+// KnativeServing is the Schema for the knativeservings API
 // +k8s:openapi-gen=true
-type Install struct {
+type KnativeServing struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   InstallSpec   `json:"spec,omitempty"`
-	Status InstallStatus `json:"status,omitempty"`
+	Spec   KnativeServingSpec   `json:"spec,omitempty"`
+	Status KnativeServingStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// InstallList contains a list of Install
-type InstallList struct {
+// KnativeServingList contains a list of KnativeServing
+type KnativeServingList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Install `json:"items"`
+	Items           []KnativeServing `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Install{}, &InstallList{})
+	SchemeBuilder.Register(&KnativeServing{}, &KnativeServingList{})
 }
