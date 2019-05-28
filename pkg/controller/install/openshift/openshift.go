@@ -29,7 +29,7 @@ const (
 
 var (
 	extension = common.Extension{
-		Transformers: []mf.Transformer{ingress, egress, openShiftRegistry, deploymentController},
+		Transformers: []mf.Transformer{ingress, egress, deploymentController},
 		PreInstalls:  []common.Extender{ensureMaistra, caBundleConfigMap},
 		PostInstalls: []common.Extender{ensureOpenshiftIngress},
 	}
@@ -195,14 +195,6 @@ func egress(u *unstructured.Unstructured) error {
 			data := map[string]string{"istio.sidecar.includeOutboundIPRanges": network}
 			common.UpdateConfigMap(u, data, log)
 		}
-	}
-	return nil
-}
-
-func openShiftRegistry(u *unstructured.Unstructured) error {
-	if u.GetKind() == "ConfigMap" && u.GetName() == "config-deployment" {
-		data := map[string]string{"registriesSkippingTagResolving": "ko.local,dev.local,docker-registry.default.svc:5000,image-registry.openshift-image-registry.svc:5000"}
-		common.UpdateConfigMap(u, data, log)
 	}
 	return nil
 }
