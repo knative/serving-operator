@@ -105,7 +105,10 @@ func ensureOpenshiftIngress(instance *servingv1alpha1.Install) error {
 		if len(namespace) > 0 {
 			transforms = append(transforms, mf.InjectNamespace(namespace))
 		}
-		if err = manifest.Transform(transforms...).ApplyAll(); err != nil {
+		if err = manifest.Transform(transforms...); err == nil {
+			err = manifest.ApplyAll()
+		}
+		if err != nil {
 			log.Error(err, "Unable to install Maistra operator")
 			return err
 		}
@@ -124,7 +127,10 @@ func installMaistraOperator(c client.Client) error {
 			log.Error(err, "Unable to create Maistra operator namespace", "namespace", maistraOperatorNamespace)
 			return err
 		}
-		if err = manifest.Transform(mf.InjectNamespace(maistraOperatorNamespace)).ApplyAll(); err != nil {
+		if err = manifest.Transform(mf.InjectNamespace(maistraOperatorNamespace)); err == nil {
+			err = manifest.ApplyAll()
+		}
+		if err != nil {
 			log.Error(err, "Unable to install Maistra operator")
 			return err
 		}
@@ -143,7 +149,10 @@ func installMaistraControlPlane(c client.Client) error {
 			log.Error(err, "Unable to create Maistra ControlPlane namespace", "namespace", maistraControlPlaneNamespace)
 			return err
 		}
-		if err = manifest.Transform(mf.InjectNamespace(maistraControlPlaneNamespace)).ApplyAll(); err != nil {
+		if err = manifest.Transform(mf.InjectNamespace(maistraControlPlaneNamespace)); err == nil {
+			err = manifest.ApplyAll()
+		}
+		if err != nil {
 			log.Error(err, "Unable to install Maistra ControlPlane")
 			return err
 		}
@@ -154,14 +163,14 @@ func installMaistraControlPlane(c client.Client) error {
 	return nil
 }
 
-func ingress(u *unstructured.Unstructured) *unstructured.Unstructured {
+func ingress(u *unstructured.Unstructured) error {
 	if u.GetKind() == "ConfigMap" && u.GetName() == "config-domain" {
 		ingressConfig := &configv1.Ingress{}
 		if err := api.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, ingressConfig); err != nil {
 			if !meta.IsNoMatchError(err) {
-				log.Error(err, "Unexpected error during detection")
+				return err
 			}
-			return u
+			return nil
 		}
 		domain := ingressConfig.Spec.Domain
 		if len(domain) > 0 {
@@ -169,17 +178,17 @@ func ingress(u *unstructured.Unstructured) *unstructured.Unstructured {
 			common.UpdateConfigMap(u, data, log)
 		}
 	}
-	return u
+	return nil
 }
 
-func egress(u *unstructured.Unstructured) *unstructured.Unstructured {
+func egress(u *unstructured.Unstructured) error {
 	if u.GetKind() == "ConfigMap" && u.GetName() == "config-network" {
 		networkConfig := &configv1.Network{}
 		if err := api.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, networkConfig); err != nil {
 			if !meta.IsNoMatchError(err) {
-				log.Error(err, "Unexpected error during detection")
+				return err
 			}
-			return u
+			return nil
 		}
 		network := strings.Join(networkConfig.Spec.ServiceNetwork, ",")
 		if len(network) > 0 {
@@ -187,29 +196,30 @@ func egress(u *unstructured.Unstructured) *unstructured.Unstructured {
 			common.UpdateConfigMap(u, data, log)
 		}
 	}
-	return u
+	return nil
 }
 
-func openShiftRegistry(u *unstructured.Unstructured) *unstructured.Unstructured {
+func openShiftRegistry(u *unstructured.Unstructured) error {
 	if u.GetKind() == "ConfigMap" && u.GetName() == "config-deployment" {
 		data := map[string]string{"registriesSkippingTagResolving": "ko.local,dev.local,docker-registry.default.svc:5000,image-registry.openshift-image-registry.svc:5000"}
 		common.UpdateConfigMap(u, data, log)
 	}
-
-	return u
+	return nil
 }
 
-func deploymentController(u *unstructured.Unstructured) *unstructured.Unstructured {
+func deploymentController(u *unstructured.Unstructured) error {
 	const volumeName = "service-ca"
 	if u.GetKind() == "Deployment" && u.GetName() == "controller" {
 
 		deploy := &appsv1.Deployment{}
-		scheme.Convert(u, deploy, nil)
+		if err := scheme.Convert(u, deploy, nil); err != nil {
+			return err
+		}
 
 		volumes := deploy.Spec.Template.Spec.Volumes
 		for _, v := range volumes {
 			if v.Name == volumeName {
-				return u
+				return nil
 			}
 		}
 		deploy.Spec.Template.Spec.Volumes = append(volumes, v1.Volume{
@@ -232,9 +242,11 @@ func deploymentController(u *unstructured.Unstructured) *unstructured.Unstructur
 			Name:  "SSL_CERT_FILE",
 			Value: "/var/run/secrets/kubernetes.io/servicecerts/service-ca.crt",
 		})
-		scheme.Convert(deploy, u, nil)
+		if err := scheme.Convert(deploy, u, nil); err != nil {
+			return err
+		}
 	}
-	return u
+	return nil
 }
 
 func caBundleConfigMap(instance *servingv1alpha1.Install) error {
