@@ -355,12 +355,12 @@
   version = "v1.0"
 
 [[projects]]
-  branch = "newideas"
-  digest = "1:40185bb7a1d1360bb26a0702d98a16a11f2c332b5aa775fb13229e44228f6c4d"
+  branch = "master"
+  digest = "1:8fbf494bdf672fa8f092c54e69f6aff8472d8d4e408f88650ea12d0c400802ec"
   name = "github.com/jcrossley3/manifestival"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "4c3370701b1e52aaa9af795c2c6b4a7e54518629"
+  revision = "52be0f85c9024ef6749526788e47ca4113e88654"
 
 [[projects]]
   digest = "1:da62aa6632d04e080b8a8b85a59ed9ed1550842a0099a55f3ae3a20d02a3745a"

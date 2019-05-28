@@ -21,9 +21,9 @@ type Manifestival interface {
 	// Updates or creates a particular resource
 	Apply(*unstructured.Unstructured) error
 	// Deletes all resources in the manifest
-	DeleteAll() error
+	DeleteAll(opts ...client.DeleteOptionFunc) error
 	// Deletes a particular resource
-	Delete(spec *unstructured.Unstructured) error
+	Delete(spec *unstructured.Unstructured, opts ...client.DeleteOptionFunc) error
 	// Returns a copy of the resource from the api server, nil if not found
 	Get(spec *unstructured.Unstructured) (*unstructured.Unstructured, error)
 	// Transforms the resources within a Manifest
@@ -78,7 +78,7 @@ func (f *Manifest) Apply(spec *unstructured.Unstructured) error {
 	return nil
 }
 
-func (f *Manifest) DeleteAll() error {
+func (f *Manifest) DeleteAll(opts ...client.DeleteOptionFunc) error {
 	a := make([]unstructured.Unstructured, len(f.Resources))
 	copy(a, f.Resources)
 	// we want to delete in reverse order
@@ -87,7 +87,7 @@ func (f *Manifest) DeleteAll() error {
 	}
 	for _, spec := range a {
 		if okToDelete(&spec) {
-			if err := f.Delete(&spec); err != nil {
+			if err := f.Delete(&spec, opts...); err != nil {
 				return err
 			}
 		}
@@ -95,13 +95,13 @@ func (f *Manifest) DeleteAll() error {
 	return nil
 }
 
-func (f *Manifest) Delete(spec *unstructured.Unstructured) error {
+func (f *Manifest) Delete(spec *unstructured.Unstructured, opts ...client.DeleteOptionFunc) error {
 	current, err := f.Get(spec)
 	if current == nil && err == nil {
 		return nil
 	}
 	logResource("Deleting", spec)
-	if err := f.client.Delete(context.TODO(), spec); err != nil {
+	if err := f.client.Delete(context.TODO(), spec, opts...); err != nil {
 		// ignore GC race conditions triggered by owner references
 		if !errors.IsNotFound(err) {
 			return err
