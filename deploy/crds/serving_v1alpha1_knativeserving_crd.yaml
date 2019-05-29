@@ -10,7 +10,7 @@ spec:
     plural: knativeservings
     singular: knativeserving
     shortNames:
-    - ksi
+    - ks
   scope: Namespaced
   subresources:
     status: {}

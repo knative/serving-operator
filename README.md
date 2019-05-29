@@ -41,12 +41,12 @@ The following are all equivalent, but the latter may suffer from name
 conflicts.
 
     kubectl get knativeservings.serving.knative.dev -oyaml
-    kubectl get ksi -oyaml
     kubectl get knativeserving -oyaml
+    kubectl get ks -oyaml
 
 To uninstall Knative Serving, simply delete the `KnativeServing` resource.
 
-    kubectl delete ksi --all
+    kubectl delete ks --all
     
 ## Development
 

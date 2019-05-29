@@ -20,14 +20,14 @@ var (
 )
 
 func TestKnativeServing(t *testing.T) {
-	installList := &servingv1alpha1.InstallList{
+	knativeServingList := &servingv1alpha1.KnativeServingList{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Install",
+			Kind:       "KnativeServing",
 			APIVersion: "serving.knative.dev/v1alpha1",
 		},
 	}
 
-	err := framework.AddToFrameworkScheme(apis.AddToScheme, installList)
+	err := framework.AddToFrameworkScheme(apis.AddToScheme, knativeServingList)
 	if err != nil {
 		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
 	}
@@ -57,10 +57,10 @@ func KnativeServingCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// create Install custom resource
-	install := &servingv1alpha1.Install{
+	// create KnativeServing custom resource
+	knativeServing := &servingv1alpha1.KnativeServing{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Install",
+			Kind:       "KnativeServing",
 			APIVersion: "serving.knative.dev/v1alpha1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -68,7 +68,7 @@ func KnativeServingCluster(t *testing.T) {
 			Namespace: namespace,
 		},
 	}
-	err = f.Client.Create(goctx.TODO(), install, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+	err = f.Client.Create(goctx.TODO(), knativeServing, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		t.Fatal(err)
 	}
