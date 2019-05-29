@@ -13,11 +13,7 @@ indent() {
   sed "s/^/$INDENT/" | sed "s/^${INDENT}\($1\)/${INDENT:0:-2}- \1/"
 }
 
-rm -rf $DIR/.crds
-mkdir $DIR/.crds
-find $DIR/deploy/olm-catalog -name '*_crd.yaml' | sort -n | xargs -I{} cp {} $DIR/.crds/
-
-CRD=$(cat $(ls $DIR/.crds/*) | grep -v -- "---" | indent apiVersion)
+CRD=$(cat $(find $DIR/deploy/olm-catalog -name '*_crd.yaml' | sort -n) | grep -v -- "---" | indent apiVersion)
 CSV=$(cat $(find $DIR/deploy/olm-catalog -name '*version.yaml' | sort -n) | indent apiVersion)
 PKG=$(cat $DIR/deploy/olm-catalog/$NAME/*package.yaml | indent packageName)
 
