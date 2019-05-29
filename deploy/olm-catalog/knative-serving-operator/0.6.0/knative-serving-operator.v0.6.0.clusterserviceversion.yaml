@@ -108,6 +108,8 @@ spec:
                 - name: OPERATOR_NAME
                   value: knative-serving-operator
                 image: quay.io/openshift-knative/knative-serving-operator:v0.6.0
+                args:
+                  - --filename=https://raw.githubusercontent.com/openshift/knative-serving/release-v0.6.0/openshift/release/knative-serving-v0.6.0.yaml
                 imagePullPolicy: Always
                 name: knative-serving-operator
                 resources: {}
