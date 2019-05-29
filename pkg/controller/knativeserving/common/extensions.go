@@ -12,7 +12,7 @@ import (
 var log = logf.Log.WithName("common")
 
 type Platforms []func(client.Client, *runtime.Scheme) (*Extension, error)
-type Extender func(*servingv1alpha1.Install) error
+type Extender func(*servingv1alpha1.KnativeServing) error
 type Extensions []Extension
 type Extension struct {
 	Transformers []mf.Transformer
@@ -33,7 +33,7 @@ func (platforms Platforms) Extend(c client.Client, scheme *runtime.Scheme) (resu
 	return
 }
 
-func (exts Extensions) Transform(instance *servingv1alpha1.Install) []mf.Transformer {
+func (exts Extensions) Transform(instance *servingv1alpha1.KnativeServing) []mf.Transformer {
 	result := []mf.Transformer{
 		mf.InjectOwner(instance),
 		mf.InjectNamespace(instance.GetNamespace()),
@@ -52,7 +52,7 @@ func (exts Extensions) Transform(instance *servingv1alpha1.Install) []mf.Transfo
 	})
 }
 
-func (exts Extensions) PreInstall(instance *servingv1alpha1.Install) error {
+func (exts Extensions) PreInstall(instance *servingv1alpha1.KnativeServing) error {
 	for _, extension := range exts {
 		for _, f := range extension.PreInstalls {
 			if err := f(instance); err != nil {
@@ -63,7 +63,7 @@ func (exts Extensions) PreInstall(instance *servingv1alpha1.Install) error {
 	return nil
 }
 
-func (exts Extensions) PostInstall(instance *servingv1alpha1.Install) error {
+func (exts Extensions) PostInstall(instance *servingv1alpha1.KnativeServing) error {
 	for _, extension := range exts {
 		for _, f := range extension.PostInstalls {
 			if err := f(instance); err != nil {

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
-	"github.com/openshift-knative/knative-serving-operator/pkg/controller/install/common"
+	"github.com/openshift-knative/knative-serving-operator/pkg/controller/knativeserving/common"
 	configv1 "github.com/openshift/api/config/v1"
 
 	mf "github.com/jcrossley3/manifestival"
@@ -59,7 +59,7 @@ func Configure(c client.Client, s *runtime.Scheme) (*common.Extension, error) {
 }
 
 // ensureMaistra ensures Maistra is installed in the cluster
-func ensureMaistra(instance *servingv1alpha1.Install) error {
+func ensureMaistra(instance *servingv1alpha1.KnativeServing) error {
 	namespace := instance.GetNamespace()
 
 	log.Info("Ensuring Istio is installed in OpenShift")
@@ -96,7 +96,7 @@ func ensureMaistra(instance *servingv1alpha1.Install) error {
 }
 
 // ensureOpenshiftIngress ensures knative-openshift-ingress operator is installed
-func ensureOpenshiftIngress(instance *servingv1alpha1.Install) error {
+func ensureOpenshiftIngress(instance *servingv1alpha1.KnativeServing) error {
 	namespace := instance.GetNamespace()
 	const path = "deploy/resources/openshift-ingress/openshift-ingress-0.0.4.yaml"
 	log.Info("Ensuring Knative OpenShift Ingress operator is installed")
@@ -241,7 +241,7 @@ func deploymentController(u *unstructured.Unstructured) error {
 	return nil
 }
 
-func caBundleConfigMap(instance *servingv1alpha1.Install) error {
+func caBundleConfigMap(instance *servingv1alpha1.KnativeServing) error {
 	cm := &v1.ConfigMap{}
 	if err := api.Get(context.TODO(), types.NamespacedName{Name: caBundleConfigMapName, Namespace: instance.GetNamespace()}, cm); err != nil {
 		if errors.IsNotFound(err) {
