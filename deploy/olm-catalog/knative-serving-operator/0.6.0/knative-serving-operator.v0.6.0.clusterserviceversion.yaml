@@ -180,6 +180,11 @@ spec:
   - FaaS
   - microservices
   - scale to zero
+  links:
+  - name: Documentation
+    url: https://www.knative.dev/docs/serving/
+  - name: Source Repository
+    url: https://github.com/knative/serving
   maintainers:
   - email: knative@redhat.com
     name: Knative Team

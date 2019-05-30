@@ -199,9 +199,14 @@ spec:
   - FaaS
   - microservices
   - scale to zero
+  links:
+  - name: Documentation
+    url: https://www.knative.dev/docs/serving/
+  - name: Source Repository
+    url: https://github.com/knative/serving
   maintainers:
-  - email: jcrossley@redhat.com
-    name: Jim Crossley
+  - email: knative@redhat.com
+    name: Knative Team
   maturity: alpha
   provider:
     name: Knative Community
