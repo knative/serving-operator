@@ -138,7 +138,7 @@ installing OLM on it:
 Once all the pods in the `olm` namespace are running, install the
 operator like so:
     
-    ./hack/catalog.sh | kubectl apply -n olm -f -
+    ./hack/catalog.sh | kubectl apply -n $OLM -f -
 
 Interacting with OLM is possible using `kubectl` but the OKD console
 is "friendlier". If you have docker installed, use [this
@@ -172,7 +172,7 @@ metadata:
   namespace: knative-serving
 spec:
   source: knative-serving-operator
-  sourceNamespace: olm
+  sourceNamespace: $OLM
   name: knative-serving-operator
   channel: alpha
 ---
