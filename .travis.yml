@@ -21,24 +21,4 @@ before_script:
 
 script:
 - kubectl cluster-info
-- kubectl apply -f deploy/crds/serving_v1alpha1_knativeserving_crd.yaml
-- kubectl apply -n default -f deploy/
-- kubectl apply -n default -f deploy/crds/serving_v1alpha1_knativeserving_cr.yaml
-- sleep 30
-- kubectl get pod --all-namespaces
-- kubectl logs deployment/knative-serving-operator
-- sleep 30
-- kubectl get pod --all-namespaces
-- kubectl logs deployment/knative-serving-operator
-- sleep 30
-- kubectl get pod --all-namespaces
-- kubectl logs deployment/knative-serving-operator
-- sleep 30
-- kubectl get pod --all-namespaces
-- kubectl logs deployment/knative-serving-operator
-- sleep 30
-- kubectl get pod --all-namespaces
-- kubectl logs deployment/knative-serving-operator
-- sleep 30
-- kubectl get pod --all-namespaces
-- kubectl logs deployment/knative-serving-operator
+- test/e2e-travis.sh

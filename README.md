@@ -2,11 +2,12 @@
 
 The following will install [Knative
 Serving](https://github.com/knative/serving) and configure it
-appropriately for your cluster in the `default` namespace:
+appropriately for your cluster in the `knative-serving` namespace:
 
+    kubectl create ns knative-serving
     kubectl apply -f deploy/crds/serving_v1alpha1_knativeserving_crd.yaml
-    kubectl apply -f deploy/
-    kubectl apply -f deploy/crds/serving_v1alpha1_knativeserving_cr.yaml
+    kubectl apply -n knative-serving -f deploy/
+    kubectl apply -n knative-serving -f deploy/crds/serving_v1alpha1_knativeserving_cr.yaml
 
 ## Prerequisites
 
@@ -66,7 +67,7 @@ available options:
 
 To run end-to-end tests against your cluster:
 
-    operator-sdk test local ./test/e2e --namespace default
+    operator-sdk test local ./test/e2e --namespace knative-serving
 
 The `--namespace` parameter must match that of the `ServiceAccount`
 subject in the [role_binding.yaml](deploy/role_binding.yaml).
