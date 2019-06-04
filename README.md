@@ -123,7 +123,7 @@ manifest in the bundle beneath
 [deploy/olm-catalog](deploy/olm-catalog/). You should apply its output
 in the OLM namespace:
 
-    OLM=$(kubectl get pods --all-namespaces | grep olm-operator | head -1 | awk '{print $1}')
+    OLM=$(kubectl get deploy --all-namespaces | grep olm-operator | awk '{print $1}')
     ./hack/catalog.sh | kubectl apply -n $OLM -f -
 
 ### Using OLM on Minikube
