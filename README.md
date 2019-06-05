@@ -133,7 +133,8 @@ You can test the operator using
 installing OLM on it:
 
     minikube start
-    kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.9.0/olm.yaml
+    kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.10.0/crds.yaml
+    kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.10.0/olm.yaml
 
 Once all the pods in the `olm` namespace are running, install the
 operator like so:
