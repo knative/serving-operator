@@ -101,7 +101,7 @@ func ensureOpenshiftIngress(instance *servingv1alpha1.KnativeServing) error {
 	const path = "deploy/resources/openshift-ingress/openshift-ingress-0.0.4.yaml"
 	log.Info("Ensuring Knative OpenShift Ingress operator is installed")
 	if manifest, err := mf.NewManifest(path, false, api); err == nil {
-		transforms := []mf.Transformer{}
+		transforms := []mf.Transformer{mf.InjectOwner(instance)}
 		if len(namespace) > 0 {
 			transforms = append(transforms, mf.InjectNamespace(namespace))
 		}
