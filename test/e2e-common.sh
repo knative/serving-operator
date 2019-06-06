@@ -25,6 +25,8 @@ readonly LATEST_SERVING_RELEASE_VERSION=0.6.0
 readonly ISTIO_VERSION=1.1.3
 # Test without Istio mesh enabled
 readonly ISTIO_MESH=0
+# Namespace used for tests
+readonly TEST_NAMESPACE="operator-tests"
 
 # Choose a correct istio-crds.yaml file.
 # - $1 specifies Istio version.
@@ -77,11 +79,19 @@ function install_istio() {
 function install_serving_operator() {
   header "Installing Knative Serving operator"
 
+  # Deploy the operator
   kubectl create ns knative-serving
   kubectl apply -f deploy/crds/serving_v1alpha1_knativeserving_crd.yaml
   kubectl apply -n knative-serving -f deploy/
+
+  # Wait for the operator to be running
+  wait_until_pods_running knative-serving
+
+  # Install Knative Serving
   kubectl apply -n knative-serving -f deploy/crds/serving_v1alpha1_knativeserving_cr.yaml
 
+  # Wait for Serving to come up
+  sleep 10
   wait_until_pods_running knative-serving
 }
 
@@ -90,11 +100,17 @@ function knative_setup() {
   install_serving_operator
 }
 
-# Check if we should use --resolvabledomain.  In case the ingress only has
-# hostname, we doesn't yet have a way to support resolvable domain in tests.
-function use_resolvable_domain() {
-  # Temporarily turning off xip.io tests, as DNS errors aren't always retried.
-  echo "false"
+# Create test resources
+function test_setup() {
+  echo ">> Creating test namespaces"
+  kubectl create namespace $TEST_NAMESPACE
+}
+
+# Delete test resources
+function test_teardown() {
+  echo ">> Removing test namespaces"
+  kubectl delete all --all --ignore-not-found --now --timeout 60s -n $TEST_NAMESPACE
+  kubectl delete --ignore-not-found --now --timeout 300s namespace $TEST_NAMESPACE
 }
 
 # Uninstalls Knative Serving from the current cluster.

@@ -23,8 +23,44 @@ source $(dirname $0)/e2e-common.sh
 knative_setup
 
 # Let's see what the operator did
-kubectl get pod --all-namespaces
 kubectl logs -n knative-serving deployment/knative-serving-operator
+kubectl get pod --all-namespaces
+kubectl get knativeserving --all-namespaces -o yaml
 
-# If we got this far, the operator installed Knative Serving
+test_setup
+
+NODE_PORT=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath="{.spec.ports[?(@.port==80)].nodePort}")
+NODE_IP=$(kubectl get node -o jsonpath="{.items[0].status.addresses[?(@.type=='InternalIP')].address}")
+
+echo ">> Detected ingress gateway $NODE_IP:$NODE_PORT"
+
+# Run the tests
+header "Running tests"
+
+failed=0
+
+echo ">> Testing basic helloworld-go"
+# Run a basic test to ensure we can deploy a Knative service
+cat <<EOF | kubectl apply -f - || failed=1
+apiVersion: serving.knative.dev/v1alpha1
+kind: Service
+metadata:
+  name: helloworld-go
+  namespace: $TEST_NAMESPACE
+spec:
+  template:
+    spec:
+      containers:
+      - image: gcr.io/knative-samples/helloworld-go
+EOF
+
+wait_until_routable "$NODE_IP:$NODE_PORT" "helloworld-go.$TEST_NAMESPACE.example.com" || failed=1
+curl -f -H "Host: helloworld-go.$TEST_NAMESPACE.example.com" http://$NODE_IP:$NODE_PORT/ || failed=1
+(( !failed )) && echo ">> PASS: basic helloworld-go"
+
+# Require that all tests succeeded.
+(( failed )) && fail_test
+
+test_teardown
+
 success
