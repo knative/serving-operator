@@ -3,6 +3,7 @@ package knativeserving
 import (
 	"context"
 	"flag"
+	"fmt"
 
 	mf "github.com/jcrossley3/manifestival"
 	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
@@ -24,6 +25,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+const (
+	operand = "knative-serving"
+)
+
 var (
 	filename = flag.String("filename", "deploy/resources",
 		"The filename containing the YAML resources to apply")
@@ -37,16 +42,12 @@ var (
 // Add creates a new KnativeServing Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
-	manifest, err := mf.NewManifest(*filename, *recursive, mgr.GetClient())
-	if err != nil {
-		return err
-	}
-	return add(mgr, newReconciler(mgr, manifest))
+	return add(mgr, newReconciler(mgr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, man mf.Manifest) reconcile.Reconciler {
-	return &ReconcileKnativeServing{client: mgr.GetClient(), scheme: mgr.GetScheme(), config: man}
+func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	return &ReconcileKnativeServing{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -86,6 +87,16 @@ type ReconcileKnativeServing struct {
 	config mf.Manifest
 }
 
+// Create manifestival resources and KnativeServing, if necessary
+func (r *ReconcileKnativeServing) InjectClient(c client.Client) error {
+	m, err := mf.NewManifest(*filename, *recursive, c)
+	if err != nil {
+		return err
+	}
+	r.config = m
+	return r.ensureKnativeServing()
+}
+
 // Reconcile reads that state of the cluster for a KnativeServing object and makes changes based on the state read
 // and what is in the KnativeServing.Spec
 // Note:
@@ -99,10 +110,16 @@ func (r *ReconcileKnativeServing) Reconcile(request reconcile.Request) (reconcil
 	instance := &servingv1alpha1.KnativeServing{}
 	if err := r.client.Get(context.TODO(), request.NamespacedName, instance); err != nil {
 		if errors.IsNotFound(err) {
-			r.config.DeleteAll()
+			if isInteresting(request) {
+				r.config.DeleteAll()
+			}
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
+	}
+
+	if !isInteresting(request) {
+		return reconcile.Result{}, r.ignore(instance)
 	}
 
 	stages := []func(*servingv1alpha1.KnativeServing) error{
@@ -173,6 +190,7 @@ func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServi
 
 	// Update status
 	instance.Status.Version = version.Version
+	log.Info("Install succeeded", "version", version.Version)
 	instance.Status.MarkInstallSucceeded()
 	return nil
 }
@@ -205,6 +223,7 @@ func (r *ReconcileKnativeServing) checkDeployments(instance *servingv1alpha1.Kna
 			}
 		}
 	}
+	log.Info("All deployments are available")
 	instance.Status.MarkDeploymentsAvailable()
 	return nil
 }
@@ -227,4 +246,43 @@ func (r *ReconcileKnativeServing) deleteObsoleteResources(instance *servingv1alp
 	resource.SetAPIVersion("autoscaling/v1")
 	resource.SetKind("HorizontalPodAutoscaler")
 	return r.config.Delete(resource)
+}
+
+// Because it's effectively cluster-scoped, we only care about a
+// single, named resource: knative-serving/knative-serving
+func isInteresting(request reconcile.Request) bool {
+	return request.Namespace == operand && request.Name == operand
+}
+
+// Reflect our ignorance in the KnativeServing status
+func (r *ReconcileKnativeServing) ignore(instance *servingv1alpha1.KnativeServing) (err error) {
+	err = r.initStatus(instance)
+	if err == nil {
+		msg := fmt.Sprintf("The only KnativeServing resource that matters is %s/%s", operand, operand)
+		instance.Status.MarkIgnored(msg)
+		err = r.updateStatus(instance)
+	}
+	return
+}
+
+// If we can't find knative-serving/knative-serving, create it
+func (r *ReconcileKnativeServing) ensureKnativeServing() (err error) {
+	const path = "deploy/crds/serving_v1alpha1_knativeserving_cr.yaml"
+	instance := &servingv1alpha1.KnativeServing{}
+	key := client.ObjectKey{Namespace: operand, Name: operand}
+	if err = r.client.Get(context.TODO(), key, instance); err != nil {
+		var manifest mf.Manifest
+		manifest, err = mf.NewManifest(path, false, r.client)
+		if err == nil {
+			// create namespace
+			err = manifest.Apply(&r.config.Resources[0])
+		}
+		if err == nil {
+			err = manifest.Transform(mf.InjectNamespace(operand))
+		}
+		if err == nil {
+			err = manifest.ApplyAll()
+		}
+	}
+	return
 }
