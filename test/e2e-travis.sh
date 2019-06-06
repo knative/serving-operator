@@ -52,6 +52,9 @@ spec:
     spec:
       containers:
       - image: gcr.io/knative-samples/helloworld-go
+        resources:
+          requests:
+            cpu: 25m
 EOF
 
 wait_until_routable "$NODE_IP:$NODE_PORT" "helloworld-go.$TEST_NAMESPACE.example.com" || failed=1
