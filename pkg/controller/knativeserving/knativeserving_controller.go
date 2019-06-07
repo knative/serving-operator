@@ -228,8 +228,9 @@ func (r *ReconcileKnativeServing) checkDeployments(instance *servingv1alpha1.Kna
 	return nil
 }
 
-// Delete obsolete istio-system resources, if any
+// Delete obsolete resources from previous versions
 func (r *ReconcileKnativeServing) deleteObsoleteResources(instance *servingv1alpha1.KnativeServing) error {
+	// istio-system resources from 0.3
 	resource := &unstructured.Unstructured{}
 	resource.SetNamespace("istio-system")
 	resource.SetName("knative-ingressgateway")
@@ -245,7 +246,18 @@ func (r *ReconcileKnativeServing) deleteObsoleteResources(instance *servingv1alp
 	}
 	resource.SetAPIVersion("autoscaling/v1")
 	resource.SetKind("HorizontalPodAutoscaler")
-	return r.config.Delete(resource)
+	if err := r.config.Delete(resource); err != nil {
+		return err
+	}
+	// config-controller from 0.5
+	resource.SetNamespace(instance.GetNamespace())
+	resource.SetName("config-controller")
+	resource.SetAPIVersion("v1")
+	resource.SetKind("ConfigMap")
+	if err := r.config.Delete(resource); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Because it's effectively cluster-scoped, we only care about a
