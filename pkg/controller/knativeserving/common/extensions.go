@@ -44,7 +44,7 @@ func (exts Extensions) Transform(instance *servingv1alpha1.KnativeServing) []mf.
 	// Let any config in instance override everything else
 	return append(result, func(u *unstructured.Unstructured) error {
 		if u.GetKind() == "ConfigMap" {
-			if data, ok := instance.Spec.Config[u.GetName()[7:]]; ok {
+			if data, ok := instance.Spec.Config[u.GetName()[len(`config-`):]]; ok {
 				UpdateConfigMap(u, data, log)
 			}
 		}
