@@ -31,14 +31,24 @@ spec:
   description: |
     Knative Serving builds on Kubernetes to support deploying and
     serving of serverless applications and functions. Serving is easy
-    to get started with and scales to support advanced scenarios.
-
-    The Knative Serving project provides middleware primitives that enable:
+    to get started with and scales to support advanced scenarios. The
+    Knative Serving project provides middleware primitives that
+    enable:
 
     - Rapid deployment of serverless containers
     - Automatic scaling up and down to zero
     - Routing and network programming for Istio components
     - Point-in-time snapshots of deployed code and configurations
+
+    ## Prerequisites
+
+    ### Istio
+
+    Knative requires Istio, and this operator will attempt to discover
+    it. If not found, it will install the Maistra Operator and a
+    minimal Maistra ControlPlane.
+
+    ## Further Information
 
     For documentation on using Knative Serving, see the
     [serving section](https://www.knative.dev/docs/serving/) of the
@@ -168,6 +178,6 @@ spec:
     name: Knative Team
   maturity: alpha
   provider:
-    name: Knative Community
+    name: Red Hat
   replaces: knative-serving-operator.v0.5.2
   version: 0.6.0
