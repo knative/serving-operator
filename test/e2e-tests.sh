@@ -35,7 +35,7 @@ initialize $@ --skip-istio-addon
 
 # Let's see what the operator did
 kubectl get pod --all-namespaces
-kubectl logs -n knative-serving deployment/knative-serving-operator
+kubectl logs deployment/knative-serving-operator
 
 # If we got this far, the operator installed Knative Serving
 success

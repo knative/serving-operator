@@ -23,7 +23,7 @@ source $(dirname $0)/e2e-common.sh
 knative_setup
 
 # Let's see what the operator did
-kubectl logs -n knative-serving deployment/knative-serving-operator
+kubectl logs deployment/knative-serving-operator
 kubectl get pod --all-namespaces
 kubectl get knativeserving --all-namespaces -o yaml
 
