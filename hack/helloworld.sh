@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-NAME=helloworld
+NAME=hello
+TARGET=${USER:-world}
 
 # Create a sample Knative Service
 cat <<EOF | kubectl apply -f -
@@ -15,7 +16,7 @@ spec:
         - image: gcr.io/knative-samples/helloworld-go
           env:
             - name: TARGET
-              value: "World"
+              value: $TARGET
 EOF
 
 # Wait for the Knative Service to be ready
@@ -24,3 +25,9 @@ while output=$(kubectl get ksvc $NAME); do
   echo $output | grep True >/dev/null && break
   sleep 2
 done
+
+# Parse the URL from the knative service
+URL=$(kubectl get ksvc $NAME | grep True | awk '{print $2}')
+
+# Fetch it, accounting for possible istio race conditions
+until curl -f $URL; do sleep 2; done
