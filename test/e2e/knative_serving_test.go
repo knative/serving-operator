@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	goctx "context"
 	"testing"
 	"time"
 
@@ -57,24 +56,10 @@ func KnativeServingCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// create KnativeServing custom resource
-	knativeServing := &servingv1alpha1.KnativeServing{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "KnativeServing",
-			APIVersion: "serving.knative.dev/v1alpha1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "knative-serving",
-			Namespace: namespace,
-		},
-	}
-	err = f.Client.Create(goctx.TODO(), knativeServing, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
-	if err != nil {
-		t.Fatal(err)
-	}
+	// Operator should auto-install knative-serving, so wait on deployments
 	deployments := []string{"controller", "activator", "autoscaler", "webhook"}
 	for _, name := range deployments {
-		err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, name, 1, retryInterval, timeout)
+		err = e2eutil.WaitForDeployment(t, f.KubeClient, "knative-serving", name, 1, retryInterval, timeout)
 		if err != nil {
 			t.Fatal(err)
 		}

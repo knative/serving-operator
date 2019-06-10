@@ -21,4 +21,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: knative-serving-operator
-  namespace: knative-serving
+  namespace: default

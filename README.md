@@ -4,10 +4,8 @@ The following will install [Knative
 Serving](https://github.com/knative/serving) and configure it
 appropriately for your cluster in the `knative-serving` namespace:
 
-    kubectl create ns knative-serving
     kubectl apply -f deploy/crds/serving_v1alpha1_knativeserving_crd.yaml
-    kubectl apply -n knative-serving -f deploy/
-    kubectl apply -n knative-serving -f deploy/crds/serving_v1alpha1_knativeserving_cr.yaml
+    kubectl apply -f deploy/
 
 ## Prerequisites
 
@@ -29,8 +27,15 @@ It's not strictly required but does provide some handy tooling.
 ## The `KnativeServing` Custom Resource
 
 The installation of Knative Serving is triggered by the creation of
-[an `KnativeServing` custom
-resource](deploy/crds/serving_v1alpha1_knativeserving_cr.yaml).
+[a `KnativeServing` custom
+resource](deploy/crds/serving_v1alpha1_knativeserving_cr.yaml). When
+it starts, the operator will _automatically_ create one of these in
+the `knative-serving` namespace if it doesn't already exist.
+
+The operator will ignore all other `KnativeServing` resources. Only
+the one in the `knative-serving` namespace will trigger the
+installation, reconfiguration, or removal of the knative serving
+resources. 
 
 The optional `spec.config` field can be used to set the corresponding
 entries in the Knative Serving ConfigMaps. Conditions for a successful
@@ -47,7 +52,7 @@ conflicts.
 
 To uninstall Knative Serving, simply delete the `KnativeServing` resource.
 
-    kubectl delete ks --all
+    kubectl delete ks -n knative-serving
     
 ## Development
 
@@ -55,7 +60,7 @@ It can be convenient to run the operator outside of the cluster to
 test changes. The following command will build the operator and use
 your current "kube config" to connect to the cluster:
 
-    operator-sdk up local
+    operator-sdk up local --namespace=""
 
 Pass `--help` for further details on the various `operator-sdk`
 subcommands, and pass `--help` to the operator itself to see its
@@ -67,7 +72,7 @@ available options:
 
 To run end-to-end tests against your cluster:
 
-    operator-sdk test local ./test/e2e --namespace knative-serving
+    operator-sdk test local ./test/e2e --namespace default
 
 The `--namespace` parameter must match that of the `ServiceAccount`
 subject in the [role_binding.yaml](deploy/role_binding.yaml).
@@ -124,8 +129,8 @@ manifest in the bundle beneath
 [deploy/olm-catalog](deploy/olm-catalog/). You should apply its output
 in the OLM namespace:
 
-    OLM=$(kubectl get deploy --all-namespaces | grep olm-operator | awk '{print $1}')
-    ./hack/catalog.sh | kubectl apply -n $OLM -f -
+    OLM_NS=$(kubectl get deploy --all-namespaces | grep olm-operator | awk '{print $1}')
+    ./hack/catalog.sh | kubectl apply -n $OLM_NS -f -
 
 ### Using OLM on Minikube
 
@@ -140,7 +145,7 @@ installing OLM on it:
 Once all the pods in the `olm` namespace are running, install the
 operator like so:
     
-    ./hack/catalog.sh | kubectl apply -n $OLM -f -
+    ./hack/catalog.sh | kubectl apply -n $OLM_NS -f -
 
 Interacting with OLM is possible using `kubectl` but the OKD console
 is "friendlier". If you have docker installed, use [this
@@ -149,39 +154,23 @@ to fire it up on <http://localhost:9000>.
 
 #### Using kubectl
 
-To install Knative Serving into the `knative-serving` namespace, apply
-the following resources:
+To install Knative Serving into the `knative-serving` namespace,
+simply subscribe to the operator by running this script:
 
 ```
+OLM_NS=$(kubectl get og --all-namespaces | grep olm-operators | awk '{print $1}')
+OPERATOR_NS=$(kubectl get og --all-namespaces | grep global-operators | awk '{print $1}')
 cat <<-EOF | kubectl apply -f -
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: knative-serving
----
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  name: knative-serving
-  namespace: knative-serving
----
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
   name: knative-serving-operator-sub
   generateName: knative-serving-operator-
-  namespace: knative-serving
+  namespace: $OPERATOR_NS
 spec:
   source: knative-serving-operator
-  sourceNamespace: $OLM
+  sourceNamespace: $OLM_NS
   name: knative-serving-operator
   channel: alpha
----
-apiVersion: serving.knative.dev/v1alpha1
-kind: KnativeServing
-metadata:
-  name: knative-serving
-  namespace: knative-serving
 EOF
 ```
