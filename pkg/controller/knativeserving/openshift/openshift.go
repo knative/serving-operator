@@ -35,8 +35,8 @@ const (
 
 var (
 	extension = common.Extension{
-		Transformers: []mf.Transformer{ingress, egress, deploymentController, addUserToSCC},
-		PreInstalls:  []common.Extender{ensureMaistra, caBundleConfigMap},
+		Transformers: []mf.Transformer{ingress, egress, deploymentController},
+		PreInstalls:  []common.Extender{ensureMaistra, caBundleConfigMap, addUserToSCC},
 		PostInstalls: []common.Extender{ensureOpenshiftIngress},
 	}
 	log    = logf.Log.WithName("openshift")
@@ -205,7 +205,7 @@ func egress(u *unstructured.Unstructured) error {
 	return nil
 }
 
-func addUserToSCC(u *unstructured.Unstructured) error {
+func addUserToSCC(instance *servingv1alpha1.KnativeServing) error {
 	scc := &unstructured.Unstructured{}
 	scc.SetAPIVersion("security.openshift.io/v1")
 	scc.SetKind("SecurityContextConstraints")
