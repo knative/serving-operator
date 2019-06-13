@@ -2,6 +2,7 @@ package openshift
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
@@ -25,12 +26,17 @@ const (
 	maistraOperatorNamespace     = "istio-operator"
 	maistraControlPlaneNamespace = "istio-system"
 	caBundleConfigMapName        = "config-service-ca"
+
+	// The SA are added to priviledged for injection of istio-proxy https://maistra.io/docs/getting_started/application-requirements/
+	// Relaxing security constraints is only necessary during the OpenShift Service Mesh Technology Preview phase (as per the docs).
+	serviceAccountName = "system:serviceaccount:knative-serving:controller"
+	sccName            = "privileged"
 )
 
 var (
 	extension = common.Extension{
 		Transformers: []mf.Transformer{ingress, egress, deploymentController},
-		PreInstalls:  []common.Extender{ensureMaistra, caBundleConfigMap},
+		PreInstalls:  []common.Extender{ensureMaistra, caBundleConfigMap, addUserToSCC},
 		PostInstalls: []common.Extender{ensureOpenshiftIngress},
 	}
 	log    = logf.Log.WithName("openshift")
@@ -196,6 +202,35 @@ func egress(u *unstructured.Unstructured) error {
 			common.UpdateConfigMap(u, data, log)
 		}
 	}
+	return nil
+}
+
+func addUserToSCC(instance *servingv1alpha1.KnativeServing) error {
+	scc := &unstructured.Unstructured{}
+	scc.SetAPIVersion("security.openshift.io/v1")
+	scc.SetKind("SecurityContextConstraints")
+
+	err := api.Get(context.TODO(), client.ObjectKey{Name: sccName}, scc)
+	if err != nil {
+		return err
+	}
+	// Verify if SA has already been assigned to the SCC
+	existing, exists, _ := unstructured.NestedStringSlice(scc.UnstructuredContent(), "users")
+	if exists {
+		for _, e := range existing {
+			if e == serviceAccountName {
+				return nil
+			}
+		}
+		existing = append(existing, serviceAccountName)
+	}
+
+	unstructured.SetNestedStringSlice(scc.UnstructuredContent(), existing, "users")
+	err = api.Update(context.TODO(), scc)
+	if err != nil {
+		return err
+	}
+	log.Info(fmt.Sprintf("Added ServiceAccount %q to SecurityContextConstraints %q", serviceAccountName, sccName))
 	return nil
 }
 
