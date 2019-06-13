@@ -94,6 +94,12 @@ rules:
   - patch
   - watch
 - apiGroups:
+  - ""
+  resources:
+  - endpoints/restricted  # Permission for RestrictedEndpointsAdmission
+  verbs:
+  - create
+- apiGroups:
   - apps
   resources:
   - deployments
