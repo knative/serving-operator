@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -46,7 +47,7 @@ var (
 
 // Configure OpenShift if we're soaking in it
 func Configure(c client.Client, s *runtime.Scheme) (*common.Extension, error) {
-	if routeExists, err := kindExists(c, "route", "route.openshift.io/v1", ""); err != nil {
+	if routeExists, err := anyKindExists(c, "", schema.GroupVersionKind{"route.openshift.io", "v1", "route"}); err != nil {
 		return nil, err
 	} else if !routeExists {
 		// Not running in OpenShift
@@ -70,35 +71,41 @@ func ensureMaistra(instance *servingv1alpha1.KnativeServing) error {
 
 	log.Info("Ensuring Istio is installed in OpenShift")
 
-	if operatorExists, err := kindExists(api, "controlplane", "istio.openshift.com/v1alpha3", namespace); err != nil {
+	if operatorExists, err := maistraOperatorExists(namespace); err != nil {
 		return err
 	} else if !operatorExists {
-		if istioExists, err := kindExists(api, "virtualservice", "networking.istio.io/v1alpha3", namespace); err != nil {
+		if istioExists, err := istioExists(namespace); err != nil {
 			return err
 		} else if istioExists {
 			log.Info("Maistra Operator not present but Istio CRDs already installed - assuming Istio is already setup")
 			return nil
 		}
-		// Maistra operator not installed
-		if err := installMaistraOperator(api); err != nil {
+		// Maistra not installed
+		if err := installMaistra(api); err != nil {
 			return err
 		}
 	} else {
-		log.Info("Maistra Operator already installed")
-	}
-
-	if controlPlaneExists, err := itemsExist(api, "controlplane", "istio.openshift.com/v1alpha3", maistraControlPlaneNamespace); err != nil {
-		return err
-	} else if !controlPlaneExists {
-		// Maistra controlplane not installed
-		if err := installMaistraControlPlane(api); err != nil {
-			return err
-		}
-	} else {
-		log.Info("Maistra ControlPlane already installed")
+		log.Info("Maistra already installed")
 	}
 
 	return nil
+}
+
+func maistraOperatorExists(namespace string) (bool, error) {
+	return anyKindExists(api, namespace,
+		// Maistra >0.10
+		schema.GroupVersionKind{Group: "maistra.io", Version: "v1", Kind: "servicemeshcontrolplane"},
+		// Maistra 0.10
+		schema.GroupVersionKind{Group: "istio.openshift.com", Version: "v1alpha3", Kind: "controlplane"},
+		// Maistra <0.10
+		schema.GroupVersionKind{Group: "istio.openshift.com", Version: "v1alpha1", Kind: "installation"},
+	)
+}
+
+func istioExists(namespace string) (bool, error) {
+	return anyKindExists(api, namespace,
+		schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1alpha3", Kind: "virtualservice"},
+	)
 }
 
 // ensureOpenshiftIngress ensures knative-openshift-ingress operator is installed
@@ -120,6 +127,16 @@ func ensureOpenshiftIngress(instance *servingv1alpha1.KnativeServing) error {
 		}
 	} else {
 		log.Error(err, "Unable to create Knative OpenShift Ingress operator install manifest")
+		return err
+	}
+	return nil
+}
+
+func installMaistra(c client.Client) error {
+	if err := installMaistraOperator(api); err != nil {
+		return err
+	}
+	if err := installMaistraControlPlane(api); err != nil {
 		return err
 	}
 	return nil
@@ -299,17 +316,21 @@ func caBundleConfigMap(instance *servingv1alpha1.KnativeServing) error {
 	return nil
 }
 
-func kindExists(c client.Client, kind string, apiVersion string, namespace string) (bool, error) {
-	list := &unstructured.UnstructuredList{}
-	list.SetKind(kind)
-	list.SetAPIVersion(apiVersion)
-	if err := c.List(context.TODO(), &client.ListOptions{Namespace: namespace}, list); err != nil {
-		if meta.IsNoMatchError(err) {
-			return false, nil
+// anyKindExists returns true if any of the gvks (GroupVersionKind) exist
+func anyKindExists(c client.Client, namespace string, gvks ...schema.GroupVersionKind) (bool, error) {
+	for _, gvk := range gvks {
+		list := &unstructured.UnstructuredList{}
+		list.SetGroupVersionKind(gvk)
+		if err := c.List(context.TODO(), &client.ListOptions{Namespace: namespace}, list); err != nil {
+			if !meta.IsNoMatchError(err) {
+				return false, err
+			}
+		} else {
+			log.Info("Detected", "gvk", gvk.String())
+			return true, nil
 		}
-		return false, err
 	}
-	return true, nil
+	return false, nil
 }
 
 func itemsExist(c client.Client, kind string, apiVersion string, namespace string) (bool, error) {
