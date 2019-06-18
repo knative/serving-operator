@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/openshift-knative/knative-serving-operator/pkg/apis"
-	servingv1alpha1 "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1"
+	"github.com/knative/serving-operator/pkg/apis"
+	servingv1alpha1 "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

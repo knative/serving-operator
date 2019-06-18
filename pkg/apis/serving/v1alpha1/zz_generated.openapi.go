@@ -28,9 +28,9 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServing":       schema_pkg_apis_serving_v1alpha1_KnativeServing(ref),
-		"github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServingSpec":   schema_pkg_apis_serving_v1alpha1_KnativeServingSpec(ref),
-		"github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServingStatus": schema_pkg_apis_serving_v1alpha1_KnativeServingStatus(ref),
+		"github.com/knative/serving-operator/pkg/apis/serving/v1alpha1.KnativeServing":       schema_pkg_apis_serving_v1alpha1_KnativeServing(ref),
+		"github.com/knative/serving-operator/pkg/apis/serving/v1alpha1.KnativeServingSpec":   schema_pkg_apis_serving_v1alpha1_KnativeServingSpec(ref),
+		"github.com/knative/serving-operator/pkg/apis/serving/v1alpha1.KnativeServingStatus": schema_pkg_apis_serving_v1alpha1_KnativeServingStatus(ref),
 	}
 }
 
@@ -61,19 +61,19 @@ func schema_pkg_apis_serving_v1alpha1_KnativeServing(ref common.ReferenceCallbac
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServingSpec"),
+							Ref: ref("github.com/knative/serving-operator/pkg/apis/serving/v1alpha1.KnativeServingSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServingStatus"),
+							Ref: ref("github.com/knative/serving-operator/pkg/apis/serving/v1alpha1.KnativeServingStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServingSpec", "github.com/openshift-knative/knative-serving-operator/pkg/apis/serving/v1alpha1.KnativeServingStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/knative/serving-operator/pkg/apis/serving/v1alpha1.KnativeServingSpec", "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1.KnativeServingStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 

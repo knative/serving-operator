@@ -19,7 +19,7 @@ import (
 	"context"
 
 	mf "github.com/jcrossley3/manifestival"
-	"github.com/openshift-knative/knative-serving-operator/pkg/controller/knativeserving/common"
+	"github.com/knative/serving-operator/pkg/controller/knativeserving/common"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
