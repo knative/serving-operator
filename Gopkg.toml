@@ -57,6 +57,11 @@ required = [
   name = "sigs.k8s.io/controller-runtime"
   version = "=v0.1.10"
 
+[[override]]
+  name = "github.com/knative/test-infra"
+  # HEAD as of 2019-06-18
+  revision = "6c3132259e7b5062a719b393536c216397110e01"
+
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
