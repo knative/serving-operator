@@ -5,7 +5,7 @@ ENV OPERATOR=/usr/local/bin/knative-serving-operator \
     USER_NAME=knative-serving-operator
 
 # install operator binary
-COPY build/_output/bin/knative-serving-operator ${OPERATOR}
+COPY build/_output/bin/serving-operator ${OPERATOR}
 
 COPY build/bin /usr/local/bin
 RUN  /usr/local/bin/user_setup

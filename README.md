@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.com/openshift-knative/knative-serving-operator.svg)](https://travis-ci.com/openshift-knative/knative-serving-operator)
 
 # Knative Serving Operator
 
