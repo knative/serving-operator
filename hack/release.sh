@@ -14,18 +14,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Usage: REGISTRY=xxx ORG=yyy IMAGE=zzz ./hack/release.sh [--tag]
+
 set -ex
 
 pushd $(dirname "$0")/..
 
-readonly HUB_ORG="${HUB_ORG:-"openshift-knative"}"
-
-IMAGE=$(basename $(pwd))
+REGISTRY=${REGISTRY:-quay.io}
+ORG=${ORG:-openshift-knative}
+IMAGE=${IMAGE:-knative-serving-operator}
 
 eval VERSION=v$(grep Version version/version.go | awk '{print $3}')
-operator-sdk build quay.io/$HUB_ORG/$IMAGE:$VERSION
-docker push quay.io/$HUB_ORG/$IMAGE:$VERSION
-git tag -f $VERSION
-git push --tags --force
+
+TARGET=$REGISTRY/$ORG/$IMAGE:$VERSION
+
+operator-sdk build $TARGET
+docker push $TARGET
+
+if [ "$1" == "--tag" ]; then
+  git tag -f $VERSION
+  git push --tags --force
+fi
 
 popd
