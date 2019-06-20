@@ -1,4 +1,3 @@
-
 # Knative Serving Operator
 
 The following will install [Knative Serving](https://github.com/knative/serving)
