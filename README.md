@@ -1,13 +1,30 @@
 # Knative Serving Operator
 
+Knative Serving Operator is a project aiming to deploy and manage Knative Serving in an automated way.
+
 The following will install [Knative Serving](https://github.com/knative/serving)
 and configure it appropriately for your cluster in the `knative-serving`
 namespace:
 
 ```
-kubectl apply -f deploy/crds/serving_v1alpha1_knativeserving_crd.yaml
-kubectl apply -f deploy/
+kubectl apply -f config/crds/serving_v1alpha1_knativeserving_crd.yaml
 ```
+
+To install the operator from the source code, run the command:
+
+```
+ko apply -f config/
+```
+
+To install the operator from an existing image, change the value of `image` into
+`quay.io/openshift-knative/knative-serving-operator:v0.6.0` or any other valid
+operator image in the file config/operator.yaml, and run the following command:
+
+```
+kubectl apply -f config/
+```
+
+Please refer to [Building the Operator Image](#building-the-operator-image) to build your own image.
 
 To be clear, the operator will be deployed in the `default` namespace, and then
 it will install Knative Serving in the `knative-serving` namespace.
@@ -34,7 +51,7 @@ strictly required but does provide some handy tooling.
 ## The `KnativeServing` Custom Resource
 
 The installation of Knative Serving is triggered by the creation of
-[a `KnativeServing` custom resource](deploy/crds/serving_v1alpha1_knativeserving_cr.yaml).
+[a `KnativeServing` custom resource](config/crds/serving_v1alpha1_knativeserving_cr.yaml).
 When it starts, the operator will _automatically_ create one of these in the
 `knative-serving` namespace if it doesn't already exist.
 
@@ -87,27 +104,32 @@ operator-sdk test local ./test/e2e --namespace default
 ```
 
 The `--namespace` parameter must match that of the `ServiceAccount` subject in
-the [role_binding.yaml](deploy/role_binding.yaml).
+the [role_binding.yaml](config/role_binding.yaml).
 
-### Building the Operator Image
+## Building the Operator Image
 
-To build the operator,
+To build the operator with `ko`, configure your an environment variable `KO_DOCKER_REPO`
+as the docker repository to which developer images should be pushed
+(e.g. `gcr.io/[gcloud-project]`, `docker.io/[username]`, `quay.io/[repo-name]`, etc).
+
+Install `ko` with the following command, if it is not available on your machine:
 
 ```
-operator-sdk build quay.io/$REPO/knative-serving-operator:$VERSION
+go get -u github.com/google/ko/cmd/ko
 ```
 
-The image should match what's in [deploy/operator.yaml](deploy/operator.yaml)
+Then, build the operator image:
+
+```
+ko publish github.com/knative/serving-operator/cmd/manager -t $VERSION
+```
+
+You need to access the image by the name `KO_DOCKER_REPO/manager-[md5]:$VERSION`, which you
+are able to find in the output of the above `ko publish` command.
+
+The image should match what's in [config/operator.yaml](config/operator.yaml)
 and the `$VERSION` should match [version.go](version/version.go) and correspond
-to the contents of [deploy/resources](deploy/resources/).
-
-There is a handy script that will build and push an image to
-[quay.io](https://quay.io/repository/openshift-knative/knative-serving-operator)
-and tag the source:
-
-```
-./hack/release.sh
-```
+to the contents of [config/resources](config/resources/).
 
 ## Operator Framework
 
@@ -120,7 +142,7 @@ the
 The OLM requires special manifests that the operator-sdk can help generate.
 
 Create a `ClusterServiceVersion` for the version that corresponds to the
-manifest[s] beneath [deploy/resources](deploy/resources/). The
+manifest[s] beneath [config/resources](config/resources/). The
 `$PREVIOUS_VERSION` is the CSV yours will replace.
 
 ```
@@ -141,7 +163,7 @@ post-editing of the file it generates may be required:
 The [catalog.sh](hack/catalog.sh) script should yield a valid `ConfigMap` and
 `CatalogSource` comprised of the `ClusterServiceVersions`,
 `CustomResourceDefinitions`, and package manifest in the bundle beneath
-[deploy/olm-catalog](deploy/olm-catalog/). You should apply its output in the
+[config/olm-catalog](config/olm-catalog/). You should apply its output in the
 OLM namespace:
 
 ```
