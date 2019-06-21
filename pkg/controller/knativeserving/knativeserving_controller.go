@@ -19,6 +19,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	mf "github.com/jcrossley3/manifestival"
 	servingv1alpha1 "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1"
@@ -45,8 +47,6 @@ const (
 )
 
 var (
-	filename = flag.String("filename", "config/resources",
-		"The filename containing the YAML resources to apply")
 	recursive = flag.Bool("recursive", false,
 		"If filename is a directory, process all manifests recursively")
 	log = logf.Log.WithName("controller_knativeserving")
@@ -104,8 +104,10 @@ type ReconcileKnativeServing struct {
 
 // Create manifestival resources and KnativeServing, if necessary
 func (r *ReconcileKnativeServing) InjectClient(c client.Client) error {
-	m, err := mf.NewManifest(*filename, *recursive, c)
+	koDataDir := os.Getenv("KO_DATA_PATH")
+	m, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving-0.6.0.yaml"), *recursive, c)
 	if err != nil {
+		log.Error(err, "Failed to load manifest")
 		return err
 	}
 	r.config = m
