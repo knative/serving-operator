@@ -15,7 +15,7 @@
 # limitations under the License.
 
 DIR=${DIR:-$(cd $(dirname "$0")/.. && pwd)}
-NAME=${NAME:-$(ls $DIR/deploy/olm-catalog)}
+NAME=${NAME:-$(ls $DIR/config/olm-catalog)}
 
 x=( $(echo $NAME | tr '-' ' ') )
 DISPLAYNAME=${DISPLAYNAME:=${x[*]^}}
@@ -25,9 +25,9 @@ indent() {
   sed "s/^/$INDENT/" | sed "s/^${INDENT}\($1\)/${INDENT:0:-2}- \1/"
 }
 
-CRD=$(cat $(find $DIR/deploy/olm-catalog -name '*_crd.yaml' | sort -n) | grep -v -- "---" | indent apiVersion)
-CSV=$(cat $(find $DIR/deploy/olm-catalog -name '*version.yaml' | sort -n) | indent apiVersion)
-PKG=$(cat $DIR/deploy/olm-catalog/$NAME/*package.yaml | indent packageName)
+CRD=$(cat $(find $DIR/config/olm-catalog -name '*_crd.yaml' | sort -n) | grep -v -- "---" | indent apiVersion)
+CSV=$(cat $(find $DIR/config/olm-catalog -name '*version.yaml' | sort -n) | indent apiVersion)
+PKG=$(cat $DIR/config/olm-catalog/$NAME/*package.yaml | indent packageName)
 
 cat <<EOF | sed 's/^  *$//'
 kind: ConfigMap

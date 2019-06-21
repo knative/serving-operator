@@ -45,7 +45,7 @@ const (
 )
 
 var (
-	filename = flag.String("filename", "deploy/resources",
+	filename = flag.String("filename", "config/resources",
 		"The filename containing the YAML resources to apply")
 	recursive = flag.Bool("recursive", false,
 		"If filename is a directory, process all manifests recursively")
@@ -294,7 +294,7 @@ func (r *ReconcileKnativeServing) ignore(instance *servingv1alpha1.KnativeServin
 
 // If we can't find knative-serving/knative-serving, create it
 func (r *ReconcileKnativeServing) ensureKnativeServing() (err error) {
-	const path = "deploy/crds/serving_v1alpha1_knativeserving_cr.yaml"
+	const path = "config/crds/serving_v1alpha1_knativeserving_cr.yaml"
 	instance := &servingv1alpha1.KnativeServing{}
 	key := client.ObjectKey{Namespace: operand, Name: operand}
 	if err = r.client.Get(context.TODO(), key, instance); err != nil {
