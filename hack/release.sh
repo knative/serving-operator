@@ -14,18 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -ex
+source $(dirname $0)/../vendor/github.com/knative/test-infra/scripts/release.sh
 
-pushd $(dirname "$0")/..
+function build_release() {
+  # Run `generate-yamls.sh`, which should be versioned with the
+  # branch since the detail of building may change over time.
+  echo "call build release ....................."
+  local YAML_LIST="${REPO_ROOT_DIR}/.serving-operator-temp.yaml"
+  export TAG
+  $(dirname $0)/generate-yamls.sh "${REPO_ROOT_DIR}" "${YAML_LIST}"
+  YAMLS_TO_PUBLISH=$(cat "${YAML_LIST}" | tr '\n' ' ')
+  if (( ! PUBLISH_RELEASE )); then
+    # Copy the generated YAML files to the repo root dir if not publishing.
+    cp ${YAMLS_TO_PUBLISH} ${REPO_ROOT_DIR}
+  fi
+}
 
-readonly HUB_ORG="${HUB_ORG:-"openshift-knative"}"
-
-IMAGE=$(basename $(pwd))
-
-eval VERSION=v$(grep Version version/version.go | awk '{print $3}')
-operator-sdk build quay.io/$HUB_ORG/$IMAGE:$VERSION
-docker push quay.io/$HUB_ORG/$IMAGE:$VERSION
-git tag -f $VERSION
-git push --tags --force
-
-popd
+main $@
