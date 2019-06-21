@@ -1,6 +1,7 @@
 # Force dep to vendor the code generators, which aren't imported just used at dev time.
 required = [
   "k8s.io/code-generator/cmd/deepcopy-gen",
+  "k8s.io/code-generator/cmd/defaulter-gen",
   "k8s.io/code-generator/cmd/conversion-gen",
   "k8s.io/code-generator/cmd/client-gen",
   "k8s.io/code-generator/cmd/lister-gen",
@@ -77,17 +78,18 @@ required = [
   non-go = true
   unused-packages = true
 
-  [[prune.project]]
-    name = "k8s.io/code-generator"
-    non-go = false
+[[prune.project]]
+  name = "k8s.io/code-generator"
+  unused-packages = false
+  non-go = false
 
-  [[prune.project]]
-    name = "k8s.io/gengo"
-    non-go = false
+[[prune.project]]
+  name = "k8s.io/gengo"
+  non-go = false
 
-  [[prune.project]]
-    name = "github.com/knative/test-infra"
-    non-go = false
+[[prune.project]]
+  name = "github.com/knative/test-infra"
+  non-go = false
 
 [[constraint]]
   branch = "master"
