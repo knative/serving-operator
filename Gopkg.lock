@@ -33,14 +33,6 @@
   version = "v12.0.0"
 
 [[projects]]
-  digest = "1:5d72bbcc9c8667b11c3dc3cbe681c5a6f71e5096744c0bf7726ab5c6425d5dc4"
-  name = "github.com/BurntSushi/toml"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "3012a1dbe2e4bd1391d42b32f0577cb7bbc7f005"
-  version = "v0.3.1"
-
-[[projects]]
   digest = "1:0a111edd8693fd977f42a0c4f199a0efb13c20aec9da99ad8830c7bb6a87e8d6"
   name = "github.com/PuerkitoBio/purell"
   packages = ["."]
@@ -362,14 +354,6 @@
   version = "v0.3.7"
 
 [[projects]]
-  digest = "1:406338ad39ab2e37b7f4452906442a3dbf0eb3379dd1f06aafb5c07e769a5fbb"
-  name = "github.com/inconshreveable/mousetrap"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
-  version = "v1.0"
-
-[[projects]]
   branch = "master"
   digest = "1:dae0138fbbe600485b882ba294d569d4b438f2ebfa9bd0c4572990d1fa3aa795"
   name = "github.com/jcrossley3/manifestival"
@@ -415,14 +399,6 @@
   revision = "6c3132259e7b5062a719b393536c216397110e01"
 
 [[projects]]
-  digest = "1:58999a98719fddbac6303cb17e8d85b945f60b72f48e3a2df6b950b97fa926f1"
-  name = "github.com/konsorten/go-windows-terminal-sequences"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
-  version = "v1.0.2"
-
-[[projects]]
   branch = "master"
   digest = "1:df495c9184b4e6cbb9d55652236dbcbe72c65a1c8b6469da50722628cea474e7"
   name = "github.com/mailru/easyjson"
@@ -451,14 +427,6 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:f9f72e583aaacf1d1ac5d6121abd4afd3c690baa9e14e1d009df26bf831ba347"
-  name = "github.com/mitchellh/go-homedir"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "af06845cf3004701891bf4fdb884bfe4920b3727"
-  version = "v1.1.0"
-
-[[projects]]
   digest = "1:2f42fa12d6911c7b7659738758631bec870b7e9b4c6be5444f963cdcfccc191f"
   name = "github.com/modern-go/concurrent"
   packages = ["."]
@@ -483,24 +451,15 @@
   revision = "275768afc8f66b79aeb12debf94ffc85255104ad"
 
 [[projects]]
-  digest = "1:0fadb8f48ea2c0230075d956317e8a8d094582f87bb9076f06f57fc23b339dc8"
+  digest = "1:e0ef292e4dd3648c455a740f49547686ef9c5c70a5b2e92ee05daa13b83f43e1"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
-    "internal/pkg/scaffold",
-    "internal/pkg/scaffold/input",
-    "internal/pkg/scaffold/internal/deps",
-    "internal/util/fileutil",
-    "internal/util/k8sutil",
-    "internal/util/projutil",
-    "internal/util/yamlutil",
     "pkg/k8sutil",
     "pkg/leader",
     "pkg/log/zap",
     "pkg/metrics",
     "pkg/predicate",
     "pkg/restmapper",
-    "pkg/test",
-    "pkg/test/e2eutil",
     "version",
   ]
   pruneopts = "NUT"
@@ -606,14 +565,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:998e4640c25e00ccb7b2569bf94562283937b8afb3485c0e1a0a05a15330240d"
-  name = "github.com/sirupsen/logrus"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "8bdbc7bcc01dcbb8ec23dc8a28e332258d25251f"
-  version = "v1.4.1"
-
-[[projects]]
   digest = "1:90cf76d709ce9b057e7d75bd245bf7c1242d21ba4f908fb22c7a2a96d1dcc0ca"
   name = "github.com/spf13/afero"
   packages = [
@@ -623,14 +574,6 @@
   pruneopts = "NUT"
   revision = "f4711e4db9e9a1d3887343acb72b2bbfc2f686f5"
   version = "v1.2.1"
-
-[[projects]]
-  digest = "1:343d44e06621142ab09ae0c76c1799104cdfddd3ffb445d78b1adf8dc3ffaf3d"
-  name = "github.com/spf13/cobra"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
-  version = "v0.0.3"
 
 [[projects]]
   digest = "1:9d8420bbf131d1618bde6530af37c3799340d3762cc47210c1d9532a4c3a2779"
@@ -946,12 +889,11 @@
   revision = "05914d821849570fba9eacfb29466f2d8d3cd229"
 
 [[projects]]
-  digest = "1:e9f7fa79848e63962835ad3df85bb0fc3df46059bc9d8b84a946be894dd49e39"
+  digest = "1:8b06dd9f107e7f50eb439698af99f40028a85ae334060f3de0171f70fde86009"
   name = "k8s.io/apiextensions-apiserver"
   packages = [
     "pkg/apis/apiextensions",
     "pkg/apis/apiextensions/v1beta1",
-    "pkg/client/clientset/clientset/scheme",
   ]
   pruneopts = "NUT"
   revision = "0fe22c71c47604641d9aa352c785b7912c200562"
@@ -1011,11 +953,10 @@
   revision = "2b1284ed4c93a43499e781493253e2ac5959c4fd"
 
 [[projects]]
-  digest = "1:cc801a801d45d185262d10907ac1ebf0d41a1169d1e9c9953a395db3d3577417"
+  digest = "1:a722add191ac094916256c17ae1a66961801cd4dee3e26d3204c2fb1be520cc9"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
-    "discovery/cached",
     "dynamic",
     "kubernetes",
     "kubernetes/scheme",
@@ -1234,8 +1175,6 @@
     "github.com/operator-framework/operator-sdk/pkg/metrics",
     "github.com/operator-framework/operator-sdk/pkg/predicate",
     "github.com/operator-framework/operator-sdk/pkg/restmapper",
-    "github.com/operator-framework/operator-sdk/pkg/test",
-    "github.com/operator-framework/operator-sdk/pkg/test/e2eutil",
     "github.com/operator-framework/operator-sdk/version",
     "github.com/spf13/pflag",
     "k8s.io/api/apps/v1",
