@@ -1,6 +1,7 @@
 # Knative Serving Operator
 
-Knative Serving Operator is a project aiming to deploy and manage Knative Serving in an automated way.
+Knative Serving Operator is a project aiming to deploy and manage Knative
+Serving in an automated way.
 
 The following will install [Knative Serving](https://github.com/knative/serving)
 and configure it appropriately for your cluster in the `knative-serving`
@@ -24,7 +25,8 @@ operator image in the file config/operator.yaml, and run the following command:
 kubectl apply -f config/
 ```
 
-Please refer to [Building the Operator Image](#building-the-operator-image) to build your own image.
+Please refer to [Building the Operator Image](#building-the-operator-image) to
+build your own image.
 
 To be clear, the operator will be deployed in the `default` namespace, and then
 it will install Knative Serving in the `knative-serving` namespace.
@@ -108,9 +110,10 @@ the [role_binding.yaml](config/role_binding.yaml).
 
 ## Building the Operator Image
 
-To build the operator with `ko`, configure your an environment variable `KO_DOCKER_REPO`
-as the docker repository to which developer images should be pushed
-(e.g. `gcr.io/[gcloud-project]`, `docker.io/[username]`, `quay.io/[repo-name]`, etc).
+To build the operator with `ko`, configure your an environment variable
+`KO_DOCKER_REPO` as the docker repository to which developer images should be
+pushed (e.g. `gcr.io/[gcloud-project]`, `docker.io/[username]`,
+`quay.io/[repo-name]`, etc).
 
 Install `ko` with the following command, if it is not available on your machine:
 
@@ -124,8 +127,9 @@ Then, build the operator image:
 ko publish github.com/knative/serving-operator/cmd/manager -t $VERSION
 ```
 
-You need to access the image by the name `KO_DOCKER_REPO/manager-[md5]:$VERSION`, which you
-are able to find in the output of the above `ko publish` command.
+You need to access the image by the name
+`KO_DOCKER_REPO/manager-[md5]:$VERSION`, which you are able to find in the
+output of the above `ko publish` command.
 
 The image should match what's in [config/operator.yaml](config/operator.yaml)
 and the `$VERSION` should match [version.go](version/version.go) and correspond
