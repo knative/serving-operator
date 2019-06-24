@@ -1,3 +1,3 @@
-cr-manifest: "deploy/crds/serving_v1alpha1_knativeserving_cr.yaml"
+cr-manifest: "config/crds/serving_v1alpha1_knativeserving_cr.yaml"
 init-timeout: 120
-csv-path: "deploy/olm-catalog/knative-serving-operator/0.6.0/knative-serving-operator.v0.6.0.clusterserviceversion.yaml"
+csv-path: "config/olm-catalog/knative-serving-operator/0.6.0/knative-serving-operator.v0.6.0.clusterserviceversion.yaml"

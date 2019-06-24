@@ -62,7 +62,7 @@ export KO_DOCKER_REPO
 cd "${YAML_REPO_ROOT}"
 
 echo "Building Knative Serving Operator"
-ko resolve ${KO_YAML_FLAGS} -f deploy/ > "${SERVING_OPERATOR_YAML}"
+ko resolve ${KO_YAML_FLAGS} -f config/ > "${SERVING_OPERATOR_YAML}"
 
 # List generated YAML files. We have only one serving-operator.yaml so far.
 
