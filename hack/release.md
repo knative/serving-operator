@@ -56,10 +56,10 @@ Operator repository, specified by the `--branch` flag.
   `X.Y.Z`, where X, Y and Z are numbers.
 - `--branch` Defines the branch in Knative Serving operator repository from
   which the release will be built. If not passed, the `master` branch at HEAD
-  will be used. This branch must be created before the script is executed,
-  and must be in the form `release-X.Y`, where X and Y must match the numbers
-  used in the version passed in the `--version` flag. This flag has no effect
-  unless `--version` is also passed.
+  will be used. This branch must be created before the script is executed, and
+  must be in the form `release-X.Y`, where X and Y must match the numbers used
+  in the version passed in the `--version` flag. This flag has no effect unless
+  `--version` is also passed.
 - `--release-notes` Points to a markdown file containing a description of the
   release. This is optional but highly recommended. It has no effect unless
   `--version` is also passed.
@@ -72,8 +72,8 @@ Operator repository, specified by the `--branch` flag.
 
 The release will be published in the _Releases_ page of the Knative Serving
 Operator repository, with the title _Knative Serving Operator release vX.Y.Z_
-and the given release notes. It will also be tagged _vX.Y.Z_ (both on GitHub
-and as a git annotated tag).
+and the given release notes. It will also be tagged _vX.Y.Z_ (both on GitHub and
+as a git annotated tag).
 
 Example:
 
