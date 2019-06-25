@@ -296,12 +296,13 @@ func (r *ReconcileKnativeServing) ignore(instance *servingv1alpha1.KnativeServin
 
 // If we can't find knative-serving/knative-serving, create it
 func (r *ReconcileKnativeServing) ensureKnativeServing() (err error) {
-	const path = "config/crds/serving_v1alpha1_knativeserving_cr.yaml"
+	koDataDir := os.Getenv("KO_DATA_PATH")
+	const path = "serving_v1alpha1_knativeserving_cr.yaml"
 	instance := &servingv1alpha1.KnativeServing{}
 	key := client.ObjectKey{Namespace: operand, Name: operand}
 	if err = r.client.Get(context.TODO(), key, instance); err != nil {
 		var manifest mf.Manifest
-		manifest, err = mf.NewManifest(path, false, r.client)
+		manifest, err = mf.NewManifest(filepath.Join(koDataDir, path), false, r.client)
 		if err == nil {
 			// create namespace
 			err = manifest.Apply(&r.config.Resources[0])
