@@ -18,6 +18,7 @@ package common
 import (
 	mf "github.com/jcrossley3/manifestival"
 	servingv1alpha1 "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,7 +49,8 @@ func (platforms Platforms) Extend(c client.Client, scheme *runtime.Scheme) (resu
 	return
 }
 
-func (exts Extensions) Transform(instance *servingv1alpha1.KnativeServing) []mf.Transformer {
+func (exts Extensions) Transform(scheme *runtime.Scheme, instance *servingv1alpha1.KnativeServing) []mf.Transformer {
+	log.V(1).Info("Transforming", "instance", instance)
 	result := []mf.Transformer{
 		mf.InjectOwner(instance),
 		mf.InjectNamespace(instance.GetNamespace()),
@@ -56,8 +58,12 @@ func (exts Extensions) Transform(instance *servingv1alpha1.KnativeServing) []mf.
 	for _, extension := range exts {
 		result = append(result, extension.Transformers...)
 	}
-	// Let any config in instance override everything else
 	return append(result, func(u *unstructured.Unstructured) error {
+		// Update the deployment with the new registry and tag
+		if u.GetKind() == "Deployment" {
+			updateDeployment(scheme, instance, u)
+		}
+		// Let any config in instance override everything else
 		if u.GetKind() == "ConfigMap" {
 			if data, ok := instance.Spec.Config[u.GetName()[len(`config-`):]]; ok {
 				UpdateConfigMap(u, data, log)
@@ -65,6 +71,23 @@ func (exts Extensions) Transform(instance *servingv1alpha1.KnativeServing) []mf.
 		}
 		return nil
 	})
+}
+
+func updateDeployment(scheme *runtime.Scheme, instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured) error {
+	var deployment = &appsv1.Deployment{}
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, deployment)
+	if err != nil {
+		log.Error(err, "Error converting Unstructured to Deployment", "unstructured", u, "deployment", deployment)
+		return err
+	}
+
+	registry := instance.Spec.Registry
+	log.V(1).Info("Updating Deployment", "name", u.GetName(), "registry", registry)
+
+	UpdateDeploymentImage(deployment, &registry, log)
+	scheme.Convert(deployment, u, nil)
+	log.V(1).Info("Finished conversion", "name", u.GetName(), "unstructured", u.Object)
+	return nil
 }
 
 func (exts Extensions) PreInstall(instance *servingv1alpha1.KnativeServing) error {

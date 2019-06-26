@@ -28,6 +28,22 @@ const (
 	DeploymentsAvailable apis.ConditionType = "DeploymentsAvailable"
 )
 
+// Registry defines image overrides of knative images.
+// The default value is used as a default format to override for all knative deployments.
+// The override values are specific to each knative deployment.
+// +k8s:openapi-gen=true
+type Registry struct {
+	// The default image reference template to use for all knative deployment containers.
+	// It takes the form of example-registry.io/custom/path/${NAME}:custom-tag
+	// ${NAME} will be replaced by the deployment name.
+	// +optional
+	Default string `json:"default,omitempty"`
+
+	// A map of a container name to the full image location of the individual knative container.
+	// +optional
+	Override map[string]string `json:"override,omitempty"`
+}
+
 // KnativeServingSpec defines the desired state of KnativeServing
 // +k8s:openapi-gen=true
 type KnativeServingSpec struct {
@@ -38,6 +54,11 @@ type KnativeServingSpec struct {
 	// A means to override the corresponding entries in the upstream configmaps
 	// +optional
 	Config map[string]map[string]string `json:"config,omitempty"`
+
+	// A means to override the corresponding deployment images in the upstream deployments.
+	// If no registry is provided, the knative release images will be used.
+	// +optional
+	Registry Registry `json:"registry,omitempty"`
 }
 
 // KnativeServingStatus defines the observed state of KnativeServing

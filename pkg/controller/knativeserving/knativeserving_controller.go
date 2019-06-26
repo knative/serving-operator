@@ -196,7 +196,7 @@ func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServi
 		return err
 	}
 
-	err = r.config.Transform(extensions.Transform(instance)...)
+	err = r.config.Transform(extensions.Transform(r.scheme, instance)...)
 	if err == nil {
 		err = extensions.PreInstall(instance)
 		if err == nil {

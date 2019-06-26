@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-// Set some data in a configmap, only overwriting common keys if they differ
+// UpdateConfigMap set some data in a configmap, only overwriting common keys if they differ
 func UpdateConfigMap(cm *unstructured.Unstructured, data map[string]string, log logr.Logger) {
 	for k, v := range data {
 		message := []interface{}{"map", cm.GetName(), k, v}
