@@ -105,7 +105,7 @@ type ReconcileKnativeServing struct {
 // Create manifestival resources and KnativeServing, if necessary
 func (r *ReconcileKnativeServing) InjectClient(c client.Client) error {
 	koDataDir := os.Getenv("KO_DATA_PATH")
-	m, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving-0.6.0.yaml"), *recursive, c)
+	m, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving/"), *recursive, c)
 	if err != nil {
 		log.Error(err, "Failed to load manifest")
 		return err
