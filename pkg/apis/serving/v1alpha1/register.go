@@ -21,14 +21,37 @@ limitations under the License.
 package v1alpha1
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/scheme"
 )
+
+// Resource takes an unqualified resource and returns a Group qualified GroupResource
+func Resource(resource string) schema.GroupResource {
+	return SchemeGroupVersion.WithResource(resource).GroupResource()
+}
+
+// addKnownTypes adds the set of types defined in this package to the supplied
+// scheme.
+func addKnownTypes(s *runtime.Scheme) error {
+	s.AddKnownTypes(SchemeGroupVersion,
+		&KnativeServing{},
+		&KnativeServingList{})
+	metav1.AddToGroupVersion(s, SchemeGroupVersion)
+	return nil
+}
 
 var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: "serving.knative.dev", Version: "v1alpha1"}
 
+	// SchemeBuilderCR is the controller-runtime schemebuilder
+	// it is used to add go types to the GroupVersionKind scheme
+	SchemeBuilderCR = &scheme.Builder{GroupVersion: SchemeGroupVersion}
+
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
-	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
+	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
+
+	AddToScheme = SchemeBuilder.AddToScheme
 )
