@@ -130,12 +130,15 @@ func (r *ReconcileKnativeServing) Reconcile(request reconcile.Request) (reconcil
 			if isInteresting(request) {
 				r.config.DeleteAll()
 			}
+			reqLogger.V(1).Info("No KnativeServing")
 			return reconcile.Result{}, nil
 		}
+		reqLogger.Error(err, "Error getting KnativeServing")
 		return reconcile.Result{}, err
 	}
 
 	if !isInteresting(request) {
+		reqLogger.V(1).Info("Not interesting KnativeServing", "request", request.String)
 		return reconcile.Result{}, r.ignore(instance)
 	}
 
@@ -156,6 +159,8 @@ func (r *ReconcileKnativeServing) Reconcile(request reconcile.Request) (reconcil
 
 // Initialize status conditions
 func (r *ReconcileKnativeServing) initStatus(instance *servingv1alpha1.KnativeServing) error {
+	log.V(1).Info("initStatus", "status", instance.Status)
+
 	if len(instance.Status.Conditions) == 0 {
 		instance.Status.InitializeConditions()
 		if err := r.updateStatus(instance); err != nil {
@@ -180,6 +185,7 @@ func (r *ReconcileKnativeServing) updateStatus(instance *servingv1alpha1.Knative
 
 // Apply the embedded resources
 func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServing) error {
+	log.V(1).Info("install", "status", instance.Status)
 	if instance.Status.IsDeploying() {
 		return nil
 	}
@@ -214,6 +220,7 @@ func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServi
 
 // Check for all deployments available
 func (r *ReconcileKnativeServing) checkDeployments(instance *servingv1alpha1.KnativeServing) error {
+	log.V(1).Info("checkDeployments", "status", instance.Status)
 	defer r.updateStatus(instance)
 	available := func(d *appsv1.Deployment) bool {
 		for _, c := range d.Status.Conditions {
