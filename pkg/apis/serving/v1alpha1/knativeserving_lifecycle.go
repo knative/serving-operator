@@ -25,13 +25,13 @@ var conditions = apis.NewLivingConditionSet(
 )
 
 // GetConditions implements apis.ConditionsAccessor
-func (s *KnativeServingStatus) GetConditions() apis.Conditions {
-	return s.Conditions
+func (is *KnativeServingStatus) GetConditions() apis.Conditions {
+	return is.Conditions
 }
 
 // SetConditions implements apis.ConditionsAccessor
-func (s *KnativeServingStatus) SetConditions(c apis.Conditions) {
-	s.Conditions = c
+func (is *KnativeServingStatus) SetConditions(c apis.Conditions) {
+	is.Conditions = c
 }
 
 func (is *KnativeServingStatus) IsReady() bool {
