@@ -73,6 +73,10 @@ required = [
   name = "github.com/jcrossley3/manifestival"
   branch = "master"
 
+[[constraint]]
+  name = "knative.dev/pkg"
+  branch = "master"
+
 [prune]
   go-tests = true
   non-go = true
@@ -91,6 +95,7 @@ required = [
   name = "github.com/knative/test-infra"
   non-go = false
 
-[[constraint]]
-  branch = "master"
-  name = "github.com/knative/pkg"
+[[prune.project]]
+  name = "knative.dev/pkg"
+  non-go = false
+  unused-packages = false
