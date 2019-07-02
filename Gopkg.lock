@@ -1103,10 +1103,22 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:3c393927d627423c692f266bca75f0ad75e1aa263c121ff31a937bb498650f8b"
+  name = "knative.dev/caching"
+  packages = [
+    "pkg/apis/caching",
+    "pkg/apis/caching/v1alpha1",
+  ]
+  pruneopts = "NUT"
+  revision = "55b45efbc4dbbafd5b9010daa023d1ce9edb0ec7"
+
+[[projects]]
+  branch = "master"
   digest = "1:c52d9005360d444a40d9102248365aecb89b85f85e26abaeb5dc0988bcda3ecf"
   name = "knative.dev/pkg"
   packages = [
     "apis",
+    "kmeta",
     "kmp",
   ]
   pruneopts = "T"
@@ -1218,6 +1230,7 @@
     "k8s.io/gengo/args",
     "k8s.io/kube-openapi/cmd/openapi-gen",
     "k8s.io/kube-openapi/pkg/common",
+    "knative.dev/caching/pkg/apis/caching/v1alpha1",
     "knative.dev/pkg/apis",
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",

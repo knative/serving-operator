@@ -23,6 +23,7 @@ import (
 	servingv1alpha1 "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	caching "knative.dev/caching/pkg/apis/caching/v1alpha1"
 )
 
 var (
@@ -41,6 +42,16 @@ func UpdateDeploymentImage(deployment *appsv1.Deployment, registry *servingv1alp
 		}
 	}
 	log.V(1).Info("Finished updating images", "deployment", deployment.GetName())
+}
+
+// UpdateImageSpec updates the image of a with a new registry and tag
+func UpdateImageSpec(image *caching.Image, registry *servingv1alpha1.Registry, log logr.Logger) {
+	newImage := getNewImage(registry, image.Name)
+	if newImage != "" {
+		log.V(1).Info(fmt.Sprintf("Updating image from: %v, to: %v", image.Spec.Image, newImage))
+		image.Spec.Image = newImage
+	}
+	log.V(1).Info("Finished updating image", "image", image.GetName())
 }
 
 func getNewImage(registry *servingv1alpha1.Registry, containerName string) string {

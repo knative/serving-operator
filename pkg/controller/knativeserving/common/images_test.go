@@ -115,11 +115,53 @@ func runUpdateDeploymentImageTest(t *testing.T, tt updateDeploymentImageTest) {
 	log := logf.Log.WithName(tt.name)
 	logf.SetLogger(logf.ZapLogger(true))
 
-	UpdateImage(&deployment, &tt.registry, log)
+	UpdateDeploymentImage(&deployment, &tt.registry, log)
 
 	for i, expected := range tt.expected {
 		assertEqual(t, deployment.Spec.Template.Spec.Containers[i].Image, expected)
 	}
+}
+
+type updateImageSpecTest struct {
+	name     string
+	in       string
+	registry servingv1alpha1.Registry
+	expected string
+}
+
+var updateImageSpecTests = []updateImageSpecTest{
+	{
+		name: "UsesNameFromDefault",
+		in:   "gcr.io/knative-releases/github.com/knative/serving/cmd/queue@sha256:1e40c99ff5977daa2d69873fff604c6d09651af1f9ff15aadf8849b3ee77ab45",
+		registry: servingv1alpha1.Registry{
+			Default: "new-registry.io/test/path/${NAME}:new-tag",
+		},
+		expected: "new-registry.io/test/path/UsesNameFromDefault:new-tag",
+	},
+}
+
+func TestUpdateImageSpec(t *testing.T) {
+	for _, tt := range updateImageSpecTests {
+		t.Run(tt.name, func(t *testing.T) {
+			runUpdateImageSpecTest(t, tt)
+		})
+	}
+}
+func runUpdateImageSpecTest(t *testing.T, tt updateImageSpecTest) {
+	image := caching.Image{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.name,
+		},
+		Spec: caching.ImageSpec{
+			Image: tt.in,
+		},
+	}
+	log := logf.Log.WithName(tt.name)
+	logf.SetLogger(logf.ZapLogger(true))
+
+	UpdateImageSpec(&image, &tt.registry, log)
+
+	assertEqual(t, image.Spec.Image, tt.expected)
 }
 
 func assertEqual(t *testing.T, actual, expected string) {
