@@ -21,7 +21,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	apis "github.com/knative/pkg/apis"
+	apis "knative.dev/pkg/apis"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 

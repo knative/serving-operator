@@ -16,7 +16,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"github.com/knative/pkg/apis"
+	"knative.dev/pkg/apis"
 )
 
 var conditions = apis.NewLivingConditionSet(

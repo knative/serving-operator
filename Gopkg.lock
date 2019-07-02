@@ -386,17 +386,6 @@
   version = "v1.1.6"
 
 [[projects]]
-  branch = "master"
-  digest = "1:f97f930f2261ad2ae307a85f0f8a30a16bb909dbb12c586b05139e513fa702e4"
-  name = "github.com/knative/pkg"
-  packages = [
-    "apis",
-    "kmp",
-  ]
-  pruneopts = "NUT"
-  revision = "9e0db8f0a7f47def18cf65e0859066d5e0377304"
-
-[[projects]]
   digest = "1:eeebb49b9a2eb1dd46487913c8155bce627f8657b0ef6aa1d30acb729e277f1c"
   name = "github.com/knative/test-infra"
   packages = [
@@ -1113,6 +1102,17 @@
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
 [[projects]]
+  branch = "master"
+  digest = "1:c52d9005360d444a40d9102248365aecb89b85f85e26abaeb5dc0988bcda3ecf"
+  name = "knative.dev/pkg"
+  packages = [
+    "apis",
+    "kmp",
+  ]
+  pruneopts = "T"
+  revision = "7b4cf0bfe593195857597c822a1fbce8ce198dea"
+
+[[projects]]
   digest = "1:b7ca84cccb4630cbd53eef277cf73ac87d7bbcc9ae3e72b8cf414be381853dcc"
   name = "sigs.k8s.io/controller-runtime"
   packages = [
@@ -1178,7 +1178,6 @@
     "github.com/go-logr/logr",
     "github.com/go-openapi/spec",
     "github.com/jcrossley3/manifestival",
-    "github.com/knative/pkg/apis",
     "github.com/knative/test-infra/scripts",
     "github.com/knative/test-infra/tools/dep-collector",
     "github.com/openshift/api/config/v1",
@@ -1219,6 +1218,7 @@
     "k8s.io/gengo/args",
     "k8s.io/kube-openapi/cmd/openapi-gen",
     "k8s.io/kube-openapi/pkg/common",
+    "knative.dev/pkg/apis",
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",
     "sigs.k8s.io/controller-runtime/pkg/controller",
