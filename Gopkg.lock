@@ -120,6 +120,14 @@
   version = "v2.9.1"
 
 [[projects]]
+  digest = "1:4304cca260ab815326ca42d9c28fb843342748267034c51963e13f5e54e727d1"
+  name = "github.com/evanphx/json-patch"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "026c730a0dcc5d11f93f1cf1cc65b01247ea7b6f"
+  version = "v4.5.0"
+
+[[projects]]
   digest = "1:81466b4218bf6adddac2572a30ac733a9255919bc2f470b4827a317bd4ee1756"
   name = "github.com/ghodss/yaml"
   packages = ["."]
@@ -953,10 +961,11 @@
   revision = "2b1284ed4c93a43499e781493253e2ac5959c4fd"
 
 [[projects]]
-  digest = "1:a722add191ac094916256c17ae1a66961801cd4dee3e26d3204c2fb1be520cc9"
+  digest = "1:fb577bee8b3873d0554f2d4b000777f634bc7286ad16c075e39bd11e20007976"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
+    "discovery/fake",
     "dynamic",
     "kubernetes",
     "kubernetes/scheme",
@@ -1005,6 +1014,7 @@
     "rest",
     "rest/watch",
     "restmapper",
+    "testing",
     "third_party/forked/golang/template",
     "tools/auth",
     "tools/cache",
@@ -1186,10 +1196,20 @@
     "k8s.io/apimachinery/pkg/api/meta",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
+    "k8s.io/apimachinery/pkg/labels",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
+    "k8s.io/apimachinery/pkg/runtime/serializer",
     "k8s.io/apimachinery/pkg/types",
+    "k8s.io/apimachinery/pkg/util/runtime",
+    "k8s.io/apimachinery/pkg/watch",
+    "k8s.io/client-go/discovery",
+    "k8s.io/client-go/discovery/fake",
     "k8s.io/client-go/plugin/pkg/client/auth",
+    "k8s.io/client-go/rest",
+    "k8s.io/client-go/testing",
+    "k8s.io/client-go/tools/cache",
+    "k8s.io/client-go/util/flowcontrol",
     "k8s.io/code-generator/cmd/client-gen",
     "k8s.io/code-generator/cmd/conversion-gen",
     "k8s.io/code-generator/cmd/deepcopy-gen",

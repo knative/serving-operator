@@ -58,6 +58,7 @@ type KnativeServingStatus struct {
 	Conditions apis.Conditions `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
+// +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // KnativeServing is the Schema for the knativeservings API
@@ -80,5 +81,5 @@ type KnativeServingList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&KnativeServing{}, &KnativeServingList{})
+	SchemeBuilderCR.Register(&KnativeServing{}, &KnativeServingList{})
 }
