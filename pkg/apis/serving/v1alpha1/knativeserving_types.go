@@ -16,8 +16,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"knative.dev/pkg/apis"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"knative.dev/pkg/apis"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -27,6 +27,23 @@ const (
 	InstallSucceeded     apis.ConditionType = "InstallSucceeded"
 	DeploymentsAvailable apis.ConditionType = "DeploymentsAvailable"
 )
+
+// Registry defines image overrides of knative images.
+// This affects both apps/v1.Deployment and caching.internal.knative.dev/v1alpha1.Image.
+// The default value is used as a default format to override for all knative deployments.
+// The override values are specific to each knative deployment.
+// +k8s:openapi-gen=true
+type Registry struct {
+	// The default image reference template to use for all knative images.
+	// It takes the form of example-registry.io/custom/path/${NAME}:custom-tag
+	// ${NAME} will be replaced by the deployment container name, or caching.internal.knative.dev/v1alpha1/Image name.
+	// +optional
+	Default string `json:"default,omitempty"`
+
+	// A map of a container name or image name to the full image location of the individual knative image.
+	// +optional
+	Override map[string]string `json:"override,omitempty"`
+}
 
 // KnativeServingSpec defines the desired state of KnativeServing
 // +k8s:openapi-gen=true
@@ -38,6 +55,11 @@ type KnativeServingSpec struct {
 	// A means to override the corresponding entries in the upstream configmaps
 	// +optional
 	Config map[string]map[string]string `json:"config,omitempty"`
+
+	// A means to override the corresponding deployment images in the upstream.
+	// If no registry is provided, the knative release images will be used.
+	// +optional
+	Registry Registry `json:"registry,omitempty"`
 }
 
 // KnativeServingStatus defines the observed state of KnativeServing

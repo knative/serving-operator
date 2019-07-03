@@ -51,6 +51,20 @@ spec:
               description: A means to override the corresponding entries in the upstream
                 configmaps
               type: object
+            registry:
+              description: A means to override the corresponding deployment images in the upstream.
+                This affects both apps/v1.Deployment and caching.internal.knative.dev/v1alpha1.Image.
+              type: object
+              properties:
+                default:
+                  description: The default image reference template to use for all knative images.
+                    Takes the form of example-registry.io/custom/path/${NAME}:custom-tag
+                  type: string
+                override:
+                  description: A map of a container name or image name to the full image location of the individual knative image.
+                  type: object
+                  additionalProperties:
+                    type: string
           type: object
         status:
           description: Status defines the observed state of KnativeServing
