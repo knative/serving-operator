@@ -87,6 +87,7 @@ The following command will build the operator and use your current "kube config"
 to connect to the cluster:
 
 ```
+export KO_DATA_PATH=cmd/manager/kodata/
 operator-sdk up local --namespace=""
 ```
 
