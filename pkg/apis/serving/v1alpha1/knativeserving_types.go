@@ -45,6 +45,12 @@ type Registry struct {
 	Override map[string]string `json:"override,omitempty"`
 }
 
+// KnativeIngressGateway override the knative-ingress-gateway
+type KnativeIngressGateway struct {
+	// A map of values to replace the "selector" values in the knative-ingress-gateway.
+	Selector map[string]string `json:"selector,omitempty"`
+}
+
 // KnativeServingSpec defines the desired state of KnativeServing
 // +k8s:openapi-gen=true
 type KnativeServingSpec struct {
@@ -60,6 +66,9 @@ type KnativeServingSpec struct {
 	// If no registry is provided, the knative release images will be used.
 	// +optional
 	Registry Registry `json:"registry,omitempty"`
+
+	// A means to override the knative-ingress-gateway
+	KnativeIngressGateway KnativeIngressGateway `json:"knative-ingress-gateway,omitempty"`
 }
 
 // KnativeServingStatus defines the observed state of KnativeServing
