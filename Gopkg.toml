@@ -8,6 +8,7 @@ required = [
   "k8s.io/code-generator/cmd/informer-gen",
   "k8s.io/kube-openapi/cmd/openapi-gen",
   "k8s.io/gengo/args",
+  "knative.dev/pkg/codegen/cmd/injection-gen",
   "knative.dev/caching/pkg/apis/caching/v1alpha1",
   "github.com/knative/test-infra/scripts",
   "github.com/knative/test-infra/tools/dep-collector",
@@ -100,3 +101,8 @@ required = [
   name = "knative.dev/pkg"
   non-go = false
   unused-packages = false
+
+[[prune.project]]
+  name = "k8s.io/code-generator"
+  unused-packages = false
+  non-go = false
