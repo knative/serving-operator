@@ -46,9 +46,9 @@ kubectl apply -f https://raw.githubusercontent.com/knative/serving/v0.6.0/third_
 
 ### Operator SDK
 
-This operator was created using the
-[operator-sdk](https://github.com/operator-framework/operator-sdk/). It's not
-strictly required but does provide some handy tooling.
+This operator was originally created using the
+[operator-sdk](https://github.com/operator-framework/operator-sdk/).
+It's not strictly required but does provide some handy tooling.
 
 ## The `KnativeServing` Custom Resource
 
@@ -87,26 +87,10 @@ The following command will build the operator and use your current "kube config"
 to connect to the cluster:
 
 ```
-operator-sdk up local --namespace=""
+./hack/run-local.sh
 ```
 
-Pass `--help` for further details on the various `operator-sdk` subcommands, and
-pass `--help` to the operator itself to see its available options:
-
-```
-operator-sdk up local --operator-flags "--help"
-```
-
-### Testing
-
-To run end-to-end tests against your cluster:
-
-```
-operator-sdk test local ./test/e2e --namespace default
-```
-
-The `--namespace` parameter must match that of the `ServiceAccount` subject in
-the [role_binding.yaml](config/role_binding.yaml).
+Pass `--help` for further details on the various subcommands
 
 ## Building the Operator Image
 
