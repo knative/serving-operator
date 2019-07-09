@@ -37,6 +37,11 @@ ${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
   "serving:v1alpha1" \
   --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt
 
+${KNATIVE_CODEGEN_PKG}/hack/generate-knative.sh "injection" \
+  github.com/knative/serving-operator/pkg/client github.com/knative/serving-operator/pkg/apis \
+  "serving:v1alpha1" \
+  --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt
+
 # Depends on generate-groups.sh to install bin/deepcopy-gen
 ${GOPATH}/bin/deepcopy-gen \
   -O zz_generated.deepcopy \
