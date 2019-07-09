@@ -1,5 +1,7 @@
 # Knative Serving Operator
 
+IS CLA OK FOR THIS PR?
+
 Knative Serving Operator is a project aiming to deploy and manage Knative
 Serving in an automated way.
 
