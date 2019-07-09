@@ -47,8 +47,8 @@ kubectl apply -f https://raw.githubusercontent.com/knative/serving/v0.6.0/third_
 ### Operator SDK
 
 This operator was originally created using the
-[operator-sdk](https://github.com/operator-framework/operator-sdk/).
-It's not strictly required but does provide some handy tooling.
+[operator-sdk](https://github.com/operator-framework/operator-sdk/). It's not
+strictly required but does provide some handy tooling.
 
 ## The `KnativeServing` Custom Resource
 
