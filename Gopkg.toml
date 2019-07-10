@@ -1,48 +1,24 @@
-# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
-# for detailed Gopkg.toml documentation.
-
+# Force dep to vendor the code generators, which aren't imported just used at dev time.
 required = [
-  "k8s.io/apimachinery/pkg/util/sets/types",
   "k8s.io/code-generator/cmd/deepcopy-gen",
   "k8s.io/code-generator/cmd/defaulter-gen",
+  "k8s.io/code-generator/cmd/conversion-gen",
   "k8s.io/code-generator/cmd/client-gen",
   "k8s.io/code-generator/cmd/lister-gen",
   "k8s.io/code-generator/cmd/informer-gen",
+  "k8s.io/kube-openapi/cmd/openapi-gen",
+  "k8s.io/gengo/args",
   "knative.dev/pkg/codegen/cmd/injection-gen",
-  # TODO(#4549): Drop this when we drop our patches.
-  "k8s.io/kubernetes/pkg/version",
-  "github.com/knative/caching/pkg/apis/caching",
+  "knative.dev/caching/pkg/apis/caching/v1alpha1",
   "github.com/knative/test-infra/scripts",
   "github.com/knative/test-infra/tools/dep-collector",
-  # For load testing.
-  "github.com/rakyll/hey"
+  "sigs.k8s.io/controller-tools/pkg/crd/generator",
 ]
 
 [[override]]
-  name = "gopkg.in/yaml.v2"
-  version = "v2.2.1"
-
-[[override]]
-  name = "knative.dev/pkg"
-  branch = "master"
-
-[[override]]
-  name = "go.uber.org/zap"
-  revision = "67bc79d13d155c02fd008f721863ff8cc5f30659"
-
-[[constraint]]
-  name = "github.com/knative/caching"
-  # HEAD as of 2019-06-26
-  revision = "aa9bd3961c44b5c8a772cf44dc5364d381d935cf"
-
-#[[constraint]]
-#  name = "github.com/google/go-containerregistry"
-  # HEAD as of 2019-06-19
-#  revision = "abf9ef06abd9f532944e28e8942644ea4b710a40"
-
-#[[constraint]]
-#  name = "github.com/jetstack/cert-manager"
-#  revision = "45fbfcd16cdd6a6a73c79f26d67ce72a2886c746"
+  name = "k8s.io/code-generator"
+  # revision for tag "kubernetes-1.13.1"
+  revision = "c2090bec4d9b1fb25de3812f868accc2bc9ecbae"
 
 [[override]]
   name = "k8s.io/kube-openapi"
@@ -54,29 +30,40 @@ required = [
 
 [[override]]
   name = "sigs.k8s.io/controller-tools"
-  version = "v0.1.8"
+  revision = "9d55346c2bde73fb3326ac22eac2e5210a730207"
 
 [[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.12.6"
+  # revision for tag "kubernetes-1.13.1"
+  revision = "05914d821849570fba9eacfb29466f2d8d3cd229"
+
+[[override]]
+  name = "k8s.io/apiextensions-apiserver"
+  # revision for tag "kubernetes-1.13.1"
+  revision = "0fe22c71c47604641d9aa352c785b7912c200562"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.12.6"
-
-[[override]]
-  name = "k8s.io/code-generator"
-  version = "kubernetes-1.12.6"
+  # revision for tag "kubernetes-1.13.1"
+  revision = "2b1284ed4c93a43499e781493253e2ac5959c4fd"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.12.6"
+  # revision for tag "kubernetes-1.13.1"
+  revision = "8d9ed539ba3134352c586810e749e58df4e94e4f"
 
 [[override]]
-  name = "github.com/rogpeppe/go-internal"
-  # HEAD as of 2019-01-09
-  # Needed because release 1.0.0 does not contain a LICENSE file
-  revision = "4bbc89b6501cca7dd6b5557d78d70c8d2c6e8b97"
+  name = "github.com/coreos/prometheus-operator"
+  version = "=v0.29.0"
+
+[[override]]
+  name = "sigs.k8s.io/controller-runtime"
+  version = "=v0.1.10"
+
+[[override]]
+  name = "github.com/knative/test-infra"
+  # HEAD as of 2019-06-18
+  revision = "6c3132259e7b5062a719b393536c216397110e01"
 
 [[override]]
   name = "contrib.go.opencensus.io/exporter/stackdriver"
@@ -88,31 +75,24 @@ required = [
   name = "github.com/census-instrumentation/opencensus-proto"
   version = "v0.1.0"
 
-[[override]]
-  name = "sigs.k8s.io/controller-runtime"
-  version = "=v0.1.9"
+[[constraint]]
+  name = "github.com/operator-framework/operator-sdk"
+  # The version rule is used for a specific release and the master branch for in between releases.
+  # branch = "master" #osdk_branch_annotation
+  version = "=v0.8.0" #osdk_version_annotation
 
-[[override]]
-  name = "github.com/coreos/prometheus-operator"
-  version = "=v0.28.0"
+[[constraint]]
+  name = "github.com/jcrossley3/manifestival"
+  branch = "master"
 
-# Added for the custom-metrics-apiserver specifically
-[[override]]
-  name = "github.com/kubernetes-incubator/custom-metrics-apiserver"
-  revision = "b7016fc85e1c960758aef23e1d456a66997d1e26"
-
-[[override]]
-  name = "k8s.io/apiserver"
-  version = "kubernetes-1.12.6"
-
-[[override]]
-  name = "k8s.io/metrics"
-  version = "kubernetes-1.12.6"
+[[constraint]]
+  name = "knative.dev/pkg"
+  branch = "master"
 
 [prune]
   go-tests = true
-  unused-packages = true
   non-go = true
+  unused-packages = true
 
 [[prune.project]]
   name = "k8s.io/code-generator"
@@ -120,8 +100,7 @@ required = [
   non-go = false
 
 [[prune.project]]
-  name = "github.com/knative/caching"
-  unused-packages = false
+  name = "k8s.io/gengo"
   non-go = false
 
 [[prune.project]]
@@ -129,10 +108,11 @@ required = [
   non-go = false
 
 [[prune.project]]
-  name = "bitbucket.org/ww/goautoneg"
+  name = "knative.dev/pkg"
   non-go = false
+  unused-packages = false
 
 [[prune.project]]
-  name = "knative.dev/pkg"
+  name = "k8s.io/code-generator"
   unused-packages = false
   non-go = false
