@@ -105,7 +105,7 @@ type ReconcileKnativeServing struct {
 // Create manifestival resources and KnativeServing, if necessary
 func (r *ReconcileKnativeServing) InjectClient(c client.Client) error {
 	koDataDir := os.Getenv("KO_DATA_PATH")
-	m, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving/"), *recursive, c)
+	m, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving/"), *recursive, common.ClusterConfig)
 	if err != nil {
 		log.Error(err, "Failed to load manifest")
 		return err
@@ -128,7 +128,7 @@ func (r *ReconcileKnativeServing) Reconcile(request reconcile.Request) (reconcil
 	if err := r.client.Get(context.TODO(), request.NamespacedName, instance); err != nil {
 		if errors.IsNotFound(err) {
 			if isInteresting(request) {
-				r.config.DeleteAll()
+				r.config.DeleteAll(nil)
 			}
 			reqLogger.V(1).Info("No KnativeServing")
 			return reconcile.Result{}, nil
@@ -260,17 +260,17 @@ func (r *ReconcileKnativeServing) deleteObsoleteResources(instance *servingv1alp
 	resource.SetName("knative-ingressgateway")
 	resource.SetAPIVersion("v1")
 	resource.SetKind("Service")
-	if err := r.config.Delete(resource); err != nil {
+	if err := r.config.Delete(resource, nil); err != nil {
 		return err
 	}
 	resource.SetAPIVersion("apps/v1")
 	resource.SetKind("Deployment")
-	if err := r.config.Delete(resource); err != nil {
+	if err := r.config.Delete(resource, nil); err != nil {
 		return err
 	}
 	resource.SetAPIVersion("autoscaling/v1")
 	resource.SetKind("HorizontalPodAutoscaler")
-	if err := r.config.Delete(resource); err != nil {
+	if err := r.config.Delete(resource, nil); err != nil {
 		return err
 	}
 	// config-controller from 0.5
@@ -278,7 +278,7 @@ func (r *ReconcileKnativeServing) deleteObsoleteResources(instance *servingv1alp
 	resource.SetName("config-controller")
 	resource.SetAPIVersion("v1")
 	resource.SetKind("ConfigMap")
-	if err := r.config.Delete(resource); err != nil {
+	if err := r.config.Delete(resource, nil); err != nil {
 		return err
 	}
 	return nil
@@ -309,7 +309,7 @@ func (r *ReconcileKnativeServing) ensureKnativeServing() (err error) {
 	key := client.ObjectKey{Namespace: operand, Name: operand}
 	if err = r.client.Get(context.TODO(), key, instance); err != nil {
 		var manifest mf.Manifest
-		manifest, err = mf.NewManifest(filepath.Join(koDataDir, path), false, r.client)
+		manifest, err = mf.NewManifest(filepath.Join(koDataDir, path), false, common.ClusterConfig)
 		if err == nil {
 			// create namespace
 			err = manifest.Apply(&r.config.Resources[0])

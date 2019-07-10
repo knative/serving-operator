@@ -128,7 +128,7 @@ func ensureOpenshiftIngress(instance *servingv1alpha1.KnativeServing) error {
 	namespace := instance.GetNamespace()
 	const path = "config/resources/openshift-ingress/openshift-ingress-0.0.4.yaml"
 	log.Info("Ensuring Knative OpenShift Ingress operator is installed")
-	if manifest, err := mf.NewManifest(path, false, api); err == nil {
+	if manifest, err := mf.NewManifest(path, false, common.ClusterConfig); err == nil {
 		transforms := []mf.Transformer{mf.InjectOwner(instance)}
 		if len(namespace) > 0 {
 			transforms = append(transforms, mf.InjectNamespace(namespace))
@@ -160,7 +160,7 @@ func installMaistra(c client.Client) error {
 func installMaistraOperator(c client.Client) error {
 	const path = "config/resources/maistra/maistra-operator-0.10.yaml"
 	log.Info("Installing Maistra operator")
-	if manifest, err := mf.NewManifest(path, false, c); err == nil {
+	if manifest, err := mf.NewManifest(path, false, common.ClusterConfig); err == nil {
 		if err = ensureNamespace(c, maistraOperatorNamespace); err != nil {
 			log.Error(err, "Unable to create Maistra operator namespace", "namespace", maistraOperatorNamespace)
 			return err
@@ -182,7 +182,7 @@ func installMaistraOperator(c client.Client) error {
 func installMaistraControlPlane(c client.Client) error {
 	const path = "config/resources/maistra/maistra-controlplane-0.10.0.yaml"
 	log.Info("Installing Maistra ControlPlane")
-	if manifest, err := mf.NewManifest(path, false, c); err == nil {
+	if manifest, err := mf.NewManifest(path, false, common.ClusterConfig); err == nil {
 		if err = ensureNamespace(c, maistraControlPlaneNamespace); err != nil {
 			log.Error(err, "Unable to create Maistra ControlPlane namespace", "namespace", maistraControlPlaneNamespace)
 			return err

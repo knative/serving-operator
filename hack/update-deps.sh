@@ -30,3 +30,8 @@ rm -rf $(find vendor/ -name '*_test.go')
 rm -fr vendor/github.com/knative/test-infra/devstats
 
 remove_broken_symlinks ./vendor
+
+# Since knative.dev/pkg only supports kubernetes 1.12.x and operator is currently using kubernetes 1.13.x,
+# we need to patch knative.dev/pkg in order to match the parameters for the test cases.
+find ./vendor/knative.dev/pkg/client/clientset -type f -exec \
+  sed -i '' -e 's/c.ns, name, data, subresources.../c.ns, name, pt, data, subresources.../g' {} \;
