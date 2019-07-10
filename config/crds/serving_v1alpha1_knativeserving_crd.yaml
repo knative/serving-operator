@@ -51,6 +51,10 @@ spec:
               description: A means to override the corresponding entries in the upstream
                 configmaps
               type: object
+            ignore:
+              description: A means to prevent installation of the knative services.
+                By default knative serving will be installed. Setting ignore to true, will cause the operator not to install knative serving.
+              type: boolean
             knative-ingress-gateway:
               description: A means to override the knative-ingress-gateway
               type: object

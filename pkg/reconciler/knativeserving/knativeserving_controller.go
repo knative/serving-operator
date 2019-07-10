@@ -157,6 +157,11 @@ func (r *ReconcileKnativeServing) Reconcile(request reconcile.Request) (reconcil
 		return reconcile.Result{}, r.ignore(instance)
 	}
 
+	if instance.Spec.Ignore {
+		reqLogger.V(1).Info("KnativeServing is intentionally ignored")
+		return reconcile.Result{}, r.itentionallyIgnore(instance)
+	}
+
 	stages := []func(*servingv1alpha1.KnativeServing) error{
 		r.initStatus,
 		r.install,
@@ -314,6 +319,12 @@ func (r *ReconcileKnativeServing) ignore(instance *servingv1alpha1.KnativeServin
 		err = r.updateStatus(instance)
 	}
 	return
+}
+
+// Reflect our ignorance in the KnativeServing status
+func (r *ReconcileKnativeServing) itentionallyIgnore(instance *servingv1alpha1.KnativeServing) (err error) {
+	instance.Status.MarkIgnored("Intentionally ignored")
+	return r.updateStatus(instance)
 }
 
 // If we can't find knative-serving/knative-serving, create it

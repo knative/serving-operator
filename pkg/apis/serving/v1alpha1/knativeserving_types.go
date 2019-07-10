@@ -67,6 +67,11 @@ type KnativeServingSpec struct {
 	// +optional
 	Registry Registry `json:"registry,omitempty"`
 
+	// A means to prevent installation of the knative services.
+	// By default knative serving will be installed. Setting ignore to true, will cause the operator not to install knative serving.
+	// +optional
+	Ignore bool `json:"ignore,omitempty"`
+
 	// A means to override the knative-ingress-gateway
 	KnativeIngressGateway KnativeIngressGateway `json:"knative-ingress-gateway,omitempty"`
 }
