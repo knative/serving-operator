@@ -15,7 +15,7 @@ spec:
       serviceAccountName: knative-serving-operator
       containers:
         - name: knative-serving-operator
-          image: github.com/knative/serving-operator/cmd/manager
+          image: knative.dev/serving-operator/cmd/manager
           imagePullPolicy: IfNotPresent
           env:
             - name: WATCH_NAMESPACE
