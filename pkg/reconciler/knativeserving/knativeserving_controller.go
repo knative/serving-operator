@@ -23,9 +23,9 @@ import (
 	"path/filepath"
 
 	mf "github.com/jcrossley3/manifestival"
-	servingv1alpha1 "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1"
-	"github.com/knative/serving-operator/pkg/reconciler/knativeserving/common"
-	"github.com/knative/serving-operator/version"
+	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
+	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
+	"knative.dev/serving-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/predicate"
 	appsv1 "k8s.io/api/apps/v1"

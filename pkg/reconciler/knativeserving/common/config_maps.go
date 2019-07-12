@@ -18,7 +18,7 @@ package common
 import (
 	"github.com/go-logr/logr"
 	mf "github.com/jcrossley3/manifestival"
-	servingv1alpha1 "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1"
+	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 

@@ -5,7 +5,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	servingv1alpha1 "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1"
+	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

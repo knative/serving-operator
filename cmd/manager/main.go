@@ -24,9 +24,8 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
-	"github.com/knative/serving-operator/pkg/apis"
-	"github.com/knative/serving-operator/pkg/reconciler"
+	"knative.dev/serving-operator/pkg/apis"
+	"knative.dev/serving-operator/pkg/reconciler"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"

@@ -19,14 +19,14 @@ limitations under the License.
 package fake
 
 import (
-	clientset "github.com/knative/serving-operator/pkg/client/clientset/versioned"
-	servingv1alpha1 "github.com/knative/serving-operator/pkg/client/clientset/versioned/typed/serving/v1alpha1"
-	fakeservingv1alpha1 "github.com/knative/serving-operator/pkg/client/clientset/versioned/typed/serving/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/testing"
+	clientset "knative.dev/serving-operator/pkg/client/clientset/versioned"
+	servingv1alpha1 "knative.dev/serving-operator/pkg/client/clientset/versioned/typed/serving/v1alpha1"
+	fakeservingv1alpha1 "knative.dev/serving-operator/pkg/client/clientset/versioned/typed/serving/v1alpha1/fake"
 )
 
 // NewSimpleClientset returns a clientset that will respond with the provided objects.

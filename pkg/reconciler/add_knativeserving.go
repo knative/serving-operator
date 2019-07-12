@@ -16,7 +16,7 @@ limitations under the License.
 package reconciler
 
 import (
-	"github.com/knative/serving-operator/pkg/reconciler/knativeserving"
+	"knative.dev/serving-operator/pkg/reconciler/knativeserving"
 )
 
 func init() {
