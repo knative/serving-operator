@@ -17,8 +17,22 @@ package common
 
 import (
 	"github.com/go-logr/logr"
+	mf "github.com/jcrossley3/manifestival"
+	servingv1alpha1 "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
+
+func ConfigMapTransform(instance *servingv1alpha1.KnativeServing, log logr.Logger) mf.Transformer {
+	return func(u *unstructured.Unstructured) error {
+		// Let any config in instance override everything else
+		if u.GetKind() == "ConfigMap" {
+			if data, ok := instance.Spec.Config[u.GetName()[len(`config-`):]]; ok {
+				UpdateConfigMap(u, data, log)
+			}
+		}
+		return nil
+	}
+}
 
 // UpdateConfigMap set some data in a configmap, only overwriting common keys if they differ
 func UpdateConfigMap(cm *unstructured.Unstructured, data map[string]string, log logr.Logger) {
