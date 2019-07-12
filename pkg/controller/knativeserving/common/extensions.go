@@ -55,6 +55,7 @@ func (exts Extensions) Transform(scheme *runtime.Scheme, instance *servingv1alph
 		ConfigMapTransform(instance, log),
 		DeploymentTransform(scheme, instance, log),
 		ImageTransform(scheme, instance, log),
+		GatewayTransform(scheme, instance, log),
 	}
 	for _, extension := range exts {
 		result = append(result, extension.Transformers...)
