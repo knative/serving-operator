@@ -108,7 +108,7 @@ go get -u github.com/google/ko/cmd/ko
 Then, build the operator image:
 
 ```
-ko publish github.com/knative/serving-operator/cmd/manager -t $VERSION
+ko publish knative.dev/serving-operator/cmd/manager -t $VERSION
 ```
 
 You need to access the image by the name

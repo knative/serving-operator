@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"strings"
 
-	servingv1alpha1 "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1"
-	"github.com/knative/serving-operator/pkg/reconciler/knativeserving/common"
 	configv1 "github.com/openshift/api/config/v1"
+	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
+	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 
 	mf "github.com/jcrossley3/manifestival"
 	appsv1 "k8s.io/api/apps/v1"

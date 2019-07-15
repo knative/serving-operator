@@ -16,7 +16,7 @@ limitations under the License.
 package knativeserving
 
 import (
-	"github.com/knative/serving-operator/pkg/reconciler/knativeserving/minikube"
+	"knative.dev/serving-operator/pkg/reconciler/knativeserving/minikube"
 )
 
 func init() {

@@ -19,10 +19,10 @@ limitations under the License.
 package versioned
 
 import (
-	servingv1alpha1 "github.com/knative/serving-operator/pkg/client/clientset/versioned/typed/serving/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
+	servingv1alpha1 "knative.dev/serving-operator/pkg/client/clientset/versioned/typed/serving/v1alpha1"
 )
 
 type Interface interface {

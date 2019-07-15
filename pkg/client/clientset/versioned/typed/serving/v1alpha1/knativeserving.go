@@ -21,12 +21,12 @@ package v1alpha1
 import (
 	"time"
 
-	v1alpha1 "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1"
-	scheme "github.com/knative/serving-operator/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	rest "k8s.io/client-go/rest"
+	v1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
+	scheme "knative.dev/serving-operator/pkg/client/clientset/versioned/scheme"
 )
 
 // KnativeServingsGetter has a method to return a KnativeServingInterface.
