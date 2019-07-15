@@ -16,7 +16,7 @@ limitations under the License.
 package knativeserving
 
 import (
-	"github.com/knative/serving-operator/pkg/controller/knativeserving/openshift"
+	"github.com/knative/serving-operator/pkg/reconciler/knativeserving/openshift"
 )
 
 func init() {

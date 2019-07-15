@@ -13,12 +13,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package knativeserving
+package reconciler
 
 import (
-	"github.com/knative/serving-operator/pkg/controller/knativeserving/minikube"
+	"github.com/knative/serving-operator/pkg/reconciler/knativeserving"
 )
 
 func init() {
-	platforms = append(platforms, minikube.Configure)
+	// AddToManagerFuncs is a list of functions to create controllers and add them to a manager.
+	AddToManagerFuncs = append(AddToManagerFuncs, knativeserving.Add)
 }

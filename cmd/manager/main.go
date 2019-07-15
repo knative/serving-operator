@@ -26,7 +26,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/knative/serving-operator/pkg/apis"
-	"github.com/knative/serving-operator/pkg/controller"
+	"github.com/knative/serving-operator/pkg/reconciler"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -119,7 +119,7 @@ func main() {
 	}
 
 	// Setup all Controllers
-	if err := controller.AddToManager(mgr); err != nil {
+	if err := reconciler.AddToManager(mgr); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

@@ -24,7 +24,7 @@ import (
 
 	mf "github.com/jcrossley3/manifestival"
 	servingv1alpha1 "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1"
-	"github.com/knative/serving-operator/pkg/controller/knativeserving/common"
+	"github.com/knative/serving-operator/pkg/reconciler/knativeserving/common"
 	"github.com/knative/serving-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/predicate"
