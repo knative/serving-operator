@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	servingv1alpha1 "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1"
-	"github.com/knative/serving-operator/pkg/controller/knativeserving/common"
+	"github.com/knative/serving-operator/pkg/reconciler/knativeserving/common"
 	configv1 "github.com/openshift/api/config/v1"
 
 	mf "github.com/jcrossley3/manifestival"
