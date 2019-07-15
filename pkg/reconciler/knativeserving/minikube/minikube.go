@@ -19,6 +19,7 @@ import (
 	"context"
 
 	mf "github.com/jcrossley3/manifestival"
+	restclient "k8s.io/client-go/rest"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -37,7 +38,7 @@ var (
 )
 
 // Configure minikube if we're soaking in it
-func Configure(c client.Client, _ *runtime.Scheme) (*common.Extension, error) {
+func Configure(c client.Client, _ *runtime.Scheme, clientConfig *restclient.Config) (*common.Extension, error) {
 	node := &v1.Node{}
 	if err := c.Get(context.TODO(), types.NamespacedName{Name: "minikube"}, node); err != nil {
 		if !errors.IsNotFound(err) {

@@ -34,6 +34,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
+	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -111,6 +112,12 @@ func main() {
 
 	log.Info("Registering Components.")
 
+	clientConfig, err := clientcmd.BuildConfigFromFlags("", "")
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
@@ -118,7 +125,7 @@ func main() {
 	}
 
 	// Setup all Controllers
-	if err := reconciler.AddToManager(mgr); err != nil {
+	if err := reconciler.AddToManager(mgr, clientConfig); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

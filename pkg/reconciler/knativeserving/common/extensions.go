@@ -17,6 +17,7 @@ package common
 
 import (
 	mf "github.com/jcrossley3/manifestival"
+	restclient "k8s.io/client-go/rest"
 	"k8s.io/apimachinery/pkg/runtime"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,7 +26,7 @@ import (
 
 var log = logf.Log.WithName("common")
 
-type Platforms []func(client.Client, *runtime.Scheme) (*Extension, error)
+type Platforms []func(client.Client, *runtime.Scheme, *restclient.Config) (*Extension, error)
 type Extender func(*servingv1alpha1.KnativeServing) error
 type Extensions []Extension
 type Extension struct {
@@ -34,9 +35,9 @@ type Extension struct {
 	PostInstalls []Extender
 }
 
-func (platforms Platforms) Extend(c client.Client, scheme *runtime.Scheme) (result Extensions, err error) {
+func (platforms Platforms) Extend(c client.Client, scheme *runtime.Scheme, clientConfig *restclient.Config) (result Extensions, err error) {
 	for _, fn := range platforms {
-		ext, err := fn(c, scheme)
+		ext, err := fn(c, scheme, clientConfig)
 		if err != nil {
 			return result, err
 		}

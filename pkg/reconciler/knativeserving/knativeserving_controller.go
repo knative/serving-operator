@@ -28,6 +28,7 @@ import (
 	"knative.dev/serving-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/predicate"
+	restclient "k8s.io/client-go/rest"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -56,13 +57,13 @@ var (
 
 // Add creates a new KnativeServing Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
+func Add(mgr manager.Manager, clientConfig *restclient.Config) error {
+	return add(mgr, newReconciler(mgr, clientConfig))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileKnativeServing{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+func newReconciler(mgr manager.Manager, clientConfig *restclient.Config) reconcile.Reconciler {
+	return &ReconcileKnativeServing{client: mgr.GetClient(), scheme: mgr.GetScheme(), clientConfig: clientConfig}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -100,12 +101,13 @@ type ReconcileKnativeServing struct {
 	client client.Client
 	scheme *runtime.Scheme
 	config mf.Manifest
+	clientConfig *restclient.Config
 }
 
 // Create manifestival resources and KnativeServing, if necessary
 func (r *ReconcileKnativeServing) InjectClient(c client.Client) error {
 	koDataDir := os.Getenv("KO_DATA_PATH")
-	m, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving/"), *recursive, c)
+	m, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving/"), *recursive, r.clientConfig)
 	if err != nil {
 		log.Error(err, "Failed to load manifest")
 		return err
@@ -128,7 +130,7 @@ func (r *ReconcileKnativeServing) Reconcile(request reconcile.Request) (reconcil
 	if err := r.client.Get(context.TODO(), request.NamespacedName, instance); err != nil {
 		if errors.IsNotFound(err) {
 			if isInteresting(request) {
-				r.config.DeleteAll()
+				r.config.DeleteAll(nil)
 			}
 			reqLogger.V(1).Info("No KnativeServing")
 			return reconcile.Result{}, nil
@@ -191,7 +193,7 @@ func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServi
 	}
 	defer r.updateStatus(instance)
 
-	extensions, err := platforms.Extend(r.client, r.scheme)
+	extensions, err := platforms.Extend(r.client, r.scheme, r.clientConfig)
 	if err != nil {
 		return err
 	}
@@ -260,17 +262,17 @@ func (r *ReconcileKnativeServing) deleteObsoleteResources(instance *servingv1alp
 	resource.SetName("knative-ingressgateway")
 	resource.SetAPIVersion("v1")
 	resource.SetKind("Service")
-	if err := r.config.Delete(resource); err != nil {
+	if err := r.config.Delete(resource, nil); err != nil {
 		return err
 	}
 	resource.SetAPIVersion("apps/v1")
 	resource.SetKind("Deployment")
-	if err := r.config.Delete(resource); err != nil {
+	if err := r.config.Delete(resource, nil); err != nil {
 		return err
 	}
 	resource.SetAPIVersion("autoscaling/v1")
 	resource.SetKind("HorizontalPodAutoscaler")
-	if err := r.config.Delete(resource); err != nil {
+	if err := r.config.Delete(resource, nil); err != nil {
 		return err
 	}
 	// config-controller from 0.5
@@ -278,7 +280,7 @@ func (r *ReconcileKnativeServing) deleteObsoleteResources(instance *servingv1alp
 	resource.SetName("config-controller")
 	resource.SetAPIVersion("v1")
 	resource.SetKind("ConfigMap")
-	if err := r.config.Delete(resource); err != nil {
+	if err := r.config.Delete(resource, nil); err != nil {
 		return err
 	}
 	return nil
@@ -309,7 +311,7 @@ func (r *ReconcileKnativeServing) ensureKnativeServing() (err error) {
 	key := client.ObjectKey{Namespace: operand, Name: operand}
 	if err = r.client.Get(context.TODO(), key, instance); err != nil {
 		var manifest mf.Manifest
-		manifest, err = mf.NewManifest(filepath.Join(koDataDir, path), false, r.client)
+		manifest, err = mf.NewManifest(filepath.Join(koDataDir, path), false, r.clientConfig)
 		if err == nil {
 			// create namespace
 			err = manifest.Apply(&r.config.Resources[0])

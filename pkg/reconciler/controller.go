@@ -17,15 +17,16 @@ package reconciler
 
 import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	restclient "k8s.io/client-go/rest"
 )
 
 // AddToManagerFuncs is a list of functions to add all Controllers to the Manager
-var AddToManagerFuncs []func(manager.Manager) error
+var AddToManagerFuncs []func(manager.Manager, *restclient.Config) error
 
 // AddToManager adds all Controllers to the Manager
-func AddToManager(m manager.Manager) error {
+func AddToManager(m manager.Manager, clientConfig *restclient.Config) error {
 	for _, f := range AddToManagerFuncs {
-		if err := f(m); err != nil {
+		if err := f(m, clientConfig); err != nil {
 			return err
 		}
 	}
