@@ -93,6 +93,13 @@ spec:
                       name:
                         description: The name of the secret.
                         type: string
+            knative-dependency:
+              description: Dependencies for installing knative serving, operator need to check whether
+                dependencies are met before invoking install knative serving.
+              type: array
+              items:
+                type: string
+                description: Dependent component name
           type: object
         status:
           description: Status defines the observed state of KnativeServing

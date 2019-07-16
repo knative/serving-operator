@@ -133,6 +133,11 @@ func (in *KnativeServingSpec) DeepCopyInto(out *KnativeServingSpec) {
 	in.Registry.DeepCopyInto(&out.Registry)
 	in.KnativeIngressGateway.DeepCopyInto(&out.KnativeIngressGateway)
 	in.ClusterLocalGateway.DeepCopyInto(&out.ClusterLocalGateway)
+	if in.KnativeDependency != nil {
+		in, out := &in.KnativeDependency, &out.KnativeDependency
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

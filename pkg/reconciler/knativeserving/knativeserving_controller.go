@@ -115,6 +115,7 @@ func (r *Reconciler) reconcile(ctx context.Context, ks *servingv1alpha1.KnativeS
 	ks.SetGroupVersionKind(servingv1alpha1.SchemeGroupVersion.WithKind("KnativeServing"))
 	stages := []func(*mf.Manifest, *servingv1alpha1.KnativeServing) error{
 		r.initStatus,
+		r.depCheck,
 		r.install,
 		r.checkDeployments,
 		r.deleteObsoleteResources,
@@ -165,6 +166,19 @@ func (r *Reconciler) initStatus(_ *mf.Manifest, instance *servingv1alpha1.Knativ
 			return err
 		}
 	}
+	return nil
+}
+
+// Dependencies check before install
+func (r *Reconciler) depCheck(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) error {
+	r.Logger.Debug("dependency checking")
+	// check whether dependencies are satisfied
+	if err := common.ValidateDependency(r.KubeClientSet,
+		instance.Spec.KnativeDependency, r.Logger); err != nil {
+		instance.Status.MarkDependencyMissing(err.Error())
+		return err
+	}
+	instance.Status.MarkDependenciesMet()
 	return nil
 }
 

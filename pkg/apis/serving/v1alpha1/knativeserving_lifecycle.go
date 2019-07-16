@@ -22,6 +22,7 @@ import (
 var conditions = apis.NewLivingConditionSet(
 	DeploymentsAvailable,
 	InstallSucceeded,
+	DependenciesMet,
 )
 
 // GetConditions implements apis.ConditionsAccessor
@@ -78,4 +79,15 @@ func (is *KnativeServingStatus) MarkDeploymentsNotReady() {
 		DeploymentsAvailable,
 		"NotReady",
 		"Waiting on deployments")
+}
+
+func (is *KnativeServingStatus) MarkDependenciesMet() {
+	conditions.Manage(is).MarkTrue(DependenciesMet)
+}
+
+func (is *KnativeServingStatus) MarkDependencyMissing(msg string) {
+	conditions.Manage(is).MarkFalse(
+		DependenciesMet,
+		"Error",
+		"Dependency should be resolved to proceed: %s", msg)
 }
