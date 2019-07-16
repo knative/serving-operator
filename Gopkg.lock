@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  digest = "1:3b5de90cf2eca5a95b357689109d543554d8026da0bbd4cc5a231c1bb65109f9"
+  digest = "1:a05394516d4a2741a077dc3e32bbf42ce9d14583ede436bfcf09baf3cad80329"
   name = "cloud.google.com/go"
   packages = [
     "compute/metadata",
@@ -12,8 +12,8 @@
     "trace/apiv2",
   ]
   pruneopts = "NUT"
-  revision = "cdaaf98f9226c39dc162b8e55083b2fbc67b4674"
-  version = "v0.43.0"
+  revision = "2b2aeece7979f19ee2809459e0411b337d02661a"
+  version = "v0.44.0"
 
 [[projects]]
   digest = "1:642cf8e80572f9dc0677b0f241c8ab2e715c9dccc215270ea873c86ddca0062c"
@@ -24,15 +24,15 @@
   version = "v0.1.0"
 
 [[projects]]
-  digest = "1:f091d5e3183a972fc45c4279cec2d97e13262bfda5b85cda3280cb41475e1415"
+  digest = "1:c1e8c027918e8a7cf79327f35ca2919cb997ecaa928116e3c2b470d06d0e9c12"
   name = "contrib.go.opencensus.io/exporter/stackdriver"
   packages = [
     ".",
     "monitoredresource",
   ]
   pruneopts = "NUT"
-  revision = "6850d2e00d7dfe4886f7e4773bf9f05e39296d92"
-  version = "v0.12.4"
+  revision = "bf39ce456bd8c6e2e3e37ef9775ed8b10628feca"
+  version = "v0.12.5"
 
 [[projects]]
   digest = "1:618123482859bf198813cf43954ba85c1d73c06157187e3f39d40cac2d6ec89b"
@@ -74,7 +74,7 @@
   version = "1.0.0"
 
 [[projects]]
-  digest = "1:292d411ce00424be150fa0ea5d256bd9e8162d6c20a837e45abd341f7fc8ce6b"
+  digest = "1:16ad6ac8e97d613f1053b2fd9abdebfd4d8f78abf909f6d8ba134b944cfa2458"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -110,8 +110,8 @@
     "service/sts/stsiface",
   ]
   pruneopts = "NUT"
-  revision = "b024dccbed5bf4ecdf4718113f282c0ef972a776"
-  version = "v1.21.8"
+  revision = "14379de571db1ac1b08f2f723a1acc1810c4dd0d"
+  version = "v1.22.2"
 
 [[projects]]
   digest = "1:707ebe952a8b3d00b343c01536c79c73771d100f63ec6babeaed5c79e2b8a8dd"
@@ -381,12 +381,12 @@
   version = "v0.3.7"
 
 [[projects]]
-  branch = "master"
-  digest = "1:64609ee187eff61f8e4d2723f8fde9d0282ce19f8ad830528869f0f33a42ff39"
+  branch = "client-go"
+  digest = "1:81d7c90d8779b1d1c11f919616b27ca9fdad600e20f63f7810a40cead3cfab9f"
   name = "github.com/jcrossley3/manifestival"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "78b6b04ae6ff35401397219bbbf0e97cd349712e"
+  revision = "d4530429d4c0708da344a6ff5a63d7971d05b67b"
 
 [[projects]]
   digest = "1:1f2aebae7e7c856562355ec0198d8ca2fa222fb05e5b1b66632a1fce39631885"
@@ -652,14 +652,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a78248ec09fef1350f61ec7a833e6f1b4f84d35ff8e1bf9a976c967c764d15e2"
+  digest = "1:1797af05bdcb4e1bf36b2971de3a9379a9d89211b7f116efdfda6127376d7f64"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "cbf593c0f2f39034e9104bbf77e2ec7c48c98fc5"
+  revision = "51ab0e2deafac1f46c46ad59cf0921be2f180c3d"
 
 [[projects]]
   digest = "1:66a2f252a58b4fbbad0e4e180e1d85a83c222b6bce09c3dcdef3dc87c72eda7c"
@@ -697,7 +697,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:aa5bc3c668f07e9663277ab8d8e4f914326c8c893b77e7bee5c53c67e2374c37"
+  digest = "1:396e96dc205fbf29bb19476a102a9ab3be4ed685cae2825149884bf1fd3a4b91"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -714,7 +714,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "e9bb7d36c0606a2c422dffe30db7d628ebeb9302"
+  revision = "6d4652c779c4add9e1a69db058dabafddba21c37"
 
 [[projects]]
   branch = "master"
@@ -732,7 +732,7 @@
     "transport/http/internal/propagation",
   ]
   pruneopts = "NUT"
-  revision = "4c197b2a726769bfd12605f577c8c05ad81f8021"
+  revision = "dec2ee309f5b09fc59bc40676447c15736284d78"
 
 [[projects]]
   digest = "1:a955e7c44c2be14b61aa2ddda744edfdfbc6817e993703a16e303c277ba84449"
@@ -1143,12 +1143,12 @@
   revision = "e17681d19d3ac4837a019ece36c2a0ec31ffe985"
 
 [[projects]]
-  digest = "1:43099cc4ed575c40f80277c7ba7168df37d0c663bdc4f541325430bd175cce8a"
+  digest = "1:c05ad592787fc6cdacf8c5309d826561aa4a7d9e4e7ea28660dfb2c77ff68ab0"
   name = "k8s.io/klog"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "d98d8acdac006fb39831f1b25640813fef9c314f"
-  version = "v0.3.3"
+  revision = "3ca30a56d8a775276f9cdae009ba326fdc05af7f"
+  version = "v0.4.0"
 
 [[projects]]
   digest = "1:0dac10b488f2671c15738b662478d665b0c0ec7cae3362669dec172147331ce5"
@@ -1169,11 +1169,11 @@
     "pkg/apis/caching/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "9dbdb2f91c257e4b41c3e387959b32cce588daf4"
+  revision = "19b6c0c4b2c3c4a8791658a0674c4589cf78031b"
 
 [[projects]]
   branch = "master"
-  digest = "1:bb229ac008f2b7ddcd122f857584627de4cf78f31f3001ca79560f48659db88f"
+  digest = "1:f2debf8e777276b61a457f5b5790bf52a16f5a5db59721e0679d32d730b7a649"
   name = "knative.dev/pkg"
   packages = [
     "apis",
@@ -1207,7 +1207,7 @@
     "test/zipkin",
   ]
   pruneopts = "T"
-  revision = "2b848f71969c997809a2dbea8351eaadb23e9bc9"
+  revision = "53034608f64e82c8e892d46197f687edb6f78b93"
 
 [[projects]]
   digest = "1:eeebb49b9a2eb1dd46487913c8155bce627f8657b0ef6aa1d30acb729e277f1c"
