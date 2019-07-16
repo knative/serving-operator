@@ -18,6 +18,8 @@ package common
 import (
 	mf "github.com/jcrossley3/manifestival"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -25,7 +27,7 @@ import (
 
 var log = logf.Log.WithName("common")
 
-type Platforms []func(client.Client, *runtime.Scheme) (*Extension, error)
+type Platforms []func(client.Client, kubernetes.Interface, dynamic.Interface, *runtime.Scheme) (*Extension, error)
 type Extender func(*servingv1alpha1.KnativeServing) error
 type Extensions []Extension
 type Extension struct {
@@ -34,9 +36,9 @@ type Extension struct {
 	PostInstalls []Extender
 }
 
-func (platforms Platforms) Extend(c client.Client, scheme *runtime.Scheme) (result Extensions, err error) {
+func (platforms Platforms) Extend(c client.Client, kubeClientSet kubernetes.Interface, dynamicClientSet dynamic.Interface, scheme *runtime.Scheme) (result Extensions, err error) {
 	for _, fn := range platforms {
-		ext, err := fn(c, scheme)
+		ext, err := fn(c, kubeClientSet, dynamicClientSet, scheme)
 		if err != nil {
 			return result, err
 		}

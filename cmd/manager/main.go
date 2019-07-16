@@ -118,7 +118,7 @@ func main() {
 	}
 
 	// Setup all Controllers
-	if err := reconciler.AddToManager(mgr); err != nil {
+	if err := reconciler.AddToManager(mgr, cfg); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
