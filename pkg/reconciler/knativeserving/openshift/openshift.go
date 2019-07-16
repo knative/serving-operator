@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"os"
 	"strings"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -57,10 +58,10 @@ var (
 		PreInstalls:  []common.Extender{ensureMaistra, caBundleConfigMap, addUserToSCC},
 		PostInstalls: []common.Extender{ensureOpenshiftIngress},
 	}
-	log    = logf.Log.WithName("openshift")
-	api    client.Client
-	scheme *runtime.Scheme
-	kubeClientSet kubernetes.Interface
+	log              = logf.Log.WithName("openshift")
+	api              client.Client
+	scheme           *runtime.Scheme
+	kubeClientSet    kubernetes.Interface
 	dynamicClientSet dynamic.Interface
 )
 
@@ -77,6 +78,11 @@ func Configure(c client.Client, kc kubernetes.Interface, dc dynamic.Interface, s
 	if err := configv1.Install(s); err != nil {
 		log.Error(err, "Unable to register scheme")
 		return nil, err
+	}
+
+	// DISABLE_OPENSHIFT_INGRESS disables installation of openshift-ingress. It is basically used for troubleshooting.
+	if strings.ToLower(os.Getenv("DISABLE_OPENSHIFT_INGRESS")) == "true" {
+		extension.PostInstalls = []common.Extender{}
 	}
 
 	api = c
