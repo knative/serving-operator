@@ -19,12 +19,12 @@ import (
 	"context"
 
 	mf "github.com/jcrossley3/manifestival"
-	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
