@@ -13,22 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package reconciler
+package common
 
-import (
-	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-)
+import restclient "k8s.io/client-go/rest"
 
-// AddToManagerFuncs is a list of functions to add all Controllers to the Manager
-var AddToManagerFuncs []func(manager.Manager, *rest.Config) error
-
-// AddToManager adds all Controllers to the Manager
-func AddToManager(m manager.Manager, config *rest.Config) error {
-	for _, f := range AddToManagerFuncs {
-		if err := f(m, config); err != nil {
-			return err
-		}
-	}
-	return nil
-}
+var ClusterConfig *restclient.Config

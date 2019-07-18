@@ -17,8 +17,8 @@ package knativeserving
 
 import (
 	"context"
-	"flag"
 	"fmt"
+	"knative.dev/pkg/logging"
 	"os"
 	"path/filepath"
 
@@ -27,7 +27,6 @@ import (
 	"knative.dev/pkg/injection/clients/dynamicclient"
 	"knative.dev/pkg/injection/clients/kubeclient"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
-	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 	"knative.dev/serving-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/predicate"
@@ -44,20 +43,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-)
-
-const (
-	operand = "knative-serving"
-)
-
-var (
-	recursive = flag.Bool("recursive", false,
-		"If filename is a directory, process all manifests recursively")
-	log = logf.Log.WithName("controller_knativeserving")
-	// Platform-specific behavior to affect the installation
-	platforms common.Platforms
 )
 
 // Add creates a new KnativeServing Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -236,6 +222,9 @@ func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServi
 // Check for all deployments available
 func (r *ReconcileKnativeServing) checkDeployments(instance *servingv1alpha1.KnativeServing) error {
 	log.V(1).Info("checkDeployments", "status", instance.Status)
+	logger := logging.FromContext(context.TODO())
+	logger.Info("Let us do a checkDeployments.")
+
 	defer r.updateStatus(instance)
 	available := func(d *appsv1.Deployment) bool {
 		for _, c := range d.Status.Conditions {

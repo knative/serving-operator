@@ -18,6 +18,10 @@ spec:
           image: knative.dev/serving-operator/cmd/manager
           imagePullPolicy: IfNotPresent
           env:
+            - name: SYSTEM_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
             - name: WATCH_NAMESPACE
               value: ""
             - name: POD_NAME
@@ -26,3 +30,16 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "knative-serving-operator"
+            - name: CONFIG_LOGGING_NAME
+              value: config-logging
+            - name: METRICS_DOMAIN
+              value: knative.dev/serving-operator
+            - name: CONFIG_OBSERVABILITY_NAME
+              value: config-observability
+          volumeMounts:
+            - name: config-logging
+              mountPath: /etc/config-logging
+      volumes:
+        - name: config-logging
+          configMap:
+              name: config-logging
