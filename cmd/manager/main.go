@@ -21,8 +21,11 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+
+	"k8s.io/apimachinery/pkg/util/wait"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"knative.dev/serving-operator/pkg/apis"
 	"knative.dev/serving-operator/pkg/reconciler"
@@ -91,10 +94,15 @@ func main() {
 
 	ctx := context.TODO()
 
+	// We sometimes startup faster than we can reach kube-api. Poll on failure to prevent us terminating
 	// Become the leader before proceeding
-	err = leader.Become(ctx, "knative-serving-operator-lock")
-	if err != nil {
-		log.Error(err, "")
+	if perr := wait.PollImmediate(time.Second, 60*time.Second, func() (bool, error) {
+		if err = leader.Become(ctx, "knative-serving-operator-lock"); err != nil {
+			log.Error(err, "")
+		}
+		return err == nil, nil
+	}); perr != nil {
+		log.Error(err, "Timed out attempting to become leader")
 		os.Exit(1)
 	}
 
