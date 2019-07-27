@@ -252,7 +252,9 @@ func (r *ReconcileKnativeServing) checkDeployments(instance *servingv1alpha1.Kna
 			if err := r.client.Get(context.TODO(), key, deployment); err != nil {
 				instance.Status.MarkDeploymentsNotReady()
 				if errors.IsNotFound(err) {
-					return nil
+					// maybe deployments deleted manually
+					log.Info("checkDeployments", u.GetName(), " not found, maybe deleted manually")
+					instance.Status.MarkInstallFailed("deployments missed")
 				}
 				return err
 			}
