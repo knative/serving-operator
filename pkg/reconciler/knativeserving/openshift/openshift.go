@@ -18,9 +18,10 @@ package openshift
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	"strings"
 
 	configv1 "github.com/openshift/api/config/v1"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
@@ -57,10 +58,10 @@ var (
 		PreInstalls:  []common.Extender{ensureMaistra, caBundleConfigMap, addUserToSCC},
 		PostInstalls: []common.Extender{ensureOpenshiftIngress},
 	}
-	log    = logf.Log.WithName("openshift")
-	api    client.Client
-	scheme *runtime.Scheme
-	kubeClientSet kubernetes.Interface
+	log              = logf.Log.WithName("openshift")
+	api              client.Client
+	scheme           *runtime.Scheme
+	kubeClientSet    kubernetes.Interface
 	dynamicClientSet dynamic.Interface
 )
 

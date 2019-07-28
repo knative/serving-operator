@@ -20,8 +20,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	mf "github.com/jcrossley3/manifestival"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"

@@ -23,22 +23,22 @@ import (
 	"path/filepath"
 
 	mf "github.com/jcrossley3/manifestival"
+	"knative.dev/pkg/injection"
+	"knative.dev/pkg/injection/clients/dynamicclient"
+	"knative.dev/pkg/injection/clients/kubeclient"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 	"knative.dev/serving-operator/version"
-	"knative.dev/pkg/injection/clients/dynamicclient"
-	"knative.dev/pkg/injection/clients/kubeclient"
-	"knative.dev/pkg/injection"
 
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 	"github.com/operator-framework/operator-sdk/pkg/predicate"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -104,12 +104,12 @@ type ReconcileKnativeServing struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
 
-	kubeClientSet kubernetes.Interface
+	kubeClientSet    kubernetes.Interface
 	dynamicClientSet dynamic.Interface
-	client client.Client
-	scheme *runtime.Scheme
-	config mf.Manifest
-	clientConfig *rest.Config
+	client           client.Client
+	scheme           *runtime.Scheme
+	config           mf.Manifest
+	clientConfig     *rest.Config
 }
 
 // Create manifestival resources and KnativeServing, if necessary
