@@ -15,11 +15,15 @@ package knativeserving
 
 import (
 	"context"
-	v1 "k8s.io/api/core/v1"
+	"reflect"
+
+	mf "github.com/jcrossley3/manifestival"
 	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
@@ -27,19 +31,15 @@ import (
 	appsv1listers "k8s.io/client-go/listers/apps/v1"
 	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 
-	"knative.dev/serving-operator/version"
-	mf "github.com/jcrossley3/manifestival"
+	"knative.dev/pkg/apis"
 	"knative.dev/pkg/controller"
-	"knative.dev/pkg/logging"
 	"knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	listers "knative.dev/serving-operator/pkg/client/listers/serving/v1alpha1"
 	"knative.dev/serving-operator/pkg/reconciler"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
+	"knative.dev/serving-operator/version"
 )
 
 const (
@@ -67,21 +67,18 @@ type Reconciler struct {
 // Check that our Reconciler implements controller.Reconciler
 var _ controller.Reconciler = (*Reconciler)(nil)
 
-func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
+func (r *Reconciler) Reconcile(ctx context.Context, key string) error {
 	// Convert the namespace/name string into a distinct namespace and name
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		c.Logger.Errorf("invalid resource key: %s", key)
+		r.Logger.Errorf("invalid resource key: %s", key)
 		return nil
 	}
-	logger := logging.FromContext(ctx)
-	logger.Info("Let us do a reconcile.")
-
-	// Get the Route resource with this namespace/name.
-	original, err := c.knativeServingLister.KnativeServings(namespace).Get(name)
+	// Get the KnativeServing resource with this namespace/name.
+	original, err := r.knativeServingLister.KnativeServings(namespace).Get(name)
 	if apierrs.IsNotFound(err) {
 		// The resource may no longer exist, in which case we stop processing.
-		logger.Errorf("route %q in work queue no longer exists", key)
+		r.Logger.Errorf("KnativeServing %q in work queue no longer exists", key)
 		return nil
 	} else if err != nil {
 		return err
@@ -91,37 +88,27 @@ func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
 
 	// Reconcile this copy of the route and then write back any status
 	// updates regardless of whether the reconciliation errored out.
-	reconcileErr := c.reconcile(ctx, knativeServing)
+	reconcileErr := r.reconcile(ctx, knativeServing)
 	if equality.Semantic.DeepEqual(original.Status, knativeServing.Status) {
 		// If we didn't change anything then don't call updateStatus.
 		// This is important because the copy we loaded from the informer's
 		// cache may be stale and we don't want to overwrite a prior update
 		// to status with this stale state.
-	} else if _, err = c.updateStatus(knativeServing); err != nil {
-		logger.Warnw("Failed to update route status", zap.Error(err))
-		c.Recorder.Eventf(knativeServing, corev1.EventTypeWarning, "UpdateFailed",
-			"Failed to update status for Route %q: %v", knativeServing.Name, err)
+	} else if _, err = r.updateStatus(ctx, knativeServing); err != nil {
+		r.Logger.Warnw("Failed to update knativeServing status", zap.Error(err))
+		r.Recorder.Eventf(knativeServing, corev1.EventTypeWarning, "UpdateFailed",
+			"Failed to update status for KnativeServing %q: %v", knativeServing.Name, err)
 		return err
 	}
 	if reconcileErr != nil {
-		c.Recorder.Event(knativeServing, corev1.EventTypeWarning, "InternalError", reconcileErr.Error())
+		r.Recorder.Event(knativeServing, corev1.EventTypeWarning, "InternalError", reconcileErr.Error())
 		return reconcileErr
-	}
-	// TODO(mattmoor): Remove this after 0.7 cuts.
-	// If the spec has changed, then assume we need an upgrade and issue a patch to trigger
-	// the webhook to upgrade via defaulting.  Status updates do not trigger this due to the
-	// use of the /status resource.
-	if !equality.Semantic.DeepEqual(original.Spec, knativeServing.Spec) {
-		routes := v1alpha1.SchemeGroupVersion.WithResource("routes")
-		if err := c.MarkNeedsUpgrade(routes, knativeServing.Namespace, knativeServing.Name); err != nil {
-			return err
-		}
 	}
 	return nil
 }
 
-func (c *Reconciler) updateStatus(desired *v1alpha1.KnativeServing) (*v1alpha1.KnativeServing, error) {
-	ks, err := c.knativeServingLister.KnativeServings(desired.Namespace).Get(desired.Name)
+func (r *Reconciler) updateStatus(ctx context.Context, desired *v1alpha1.KnativeServing) (*v1alpha1.KnativeServing, error) {
+	ks, err := r.knativeServingLister.KnativeServings(desired.Namespace).Get(desired.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -132,19 +119,19 @@ func (c *Reconciler) updateStatus(desired *v1alpha1.KnativeServing) (*v1alpha1.K
 	// Don't modify the informers copy
 	existing := ks.DeepCopy()
 	existing.Status = desired.Status
-	return c.KnativeServingClientSet.ServingV1alpha1().KnativeServings(desired.Namespace).UpdateStatus(existing)
+	return r.KnativeServingClientSet.ServingV1alpha1().KnativeServings(desired.Namespace).UpdateStatus(existing)
 }
 
-func (c *Reconciler) reconcile(ctx context.Context, ks *v1alpha1.KnativeServing) error {
-	stages := []func(context.Context, *v1alpha1.KnativeServing) error{
-		c.initStatus,
-		c.install,
-		c.checkDeployments,
-		c.deleteObsoleteResources,
+func (r *Reconciler) reconcile(ctx context.Context, ks *v1alpha1.KnativeServing) error {
+	stages := []func(*v1alpha1.KnativeServing) error{
+		r.initStatus,
+		r.install,
+		r.checkDeployments,
+		r.deleteObsoleteResources,
 	}
 
 	for _, stage := range stages {
-		if err := stage(ctx, ks); err != nil {
+		if err := stage(ks); err != nil {
 			return err
 		}
 	}
@@ -152,46 +139,49 @@ func (c *Reconciler) reconcile(ctx context.Context, ks *v1alpha1.KnativeServing)
 }
 
 // Initialize status conditions
-func (r *Reconciler) initStatus(ctx context.Context, instance *v1alpha1.KnativeServing) error {
-	logger := logging.FromContext(ctx)
-	logger.Info("initStatus, the status is %s", instance.Status)
-
+func (r *Reconciler) initStatus(instance *v1alpha1.KnativeServing) error {
 	if len(instance.Status.Conditions) == 0 {
 		instance.Status.InitializeConditions()
-		if err := r.updateStatusInit(instance); err != nil {
+		r.Logger.Info("Called initStatus. Let us do updateStatus to find the error")
+		if err := r.updateStatusSubresource(instance); err != nil {
 			return err
 		}
+	} else {
+		r.Logger.Info("not calling of updateStatus in initStatus.")
 	}
 	return nil
 }
 
 // Update the status subresource
-func (r *Reconciler) updateStatusInit(instance *v1alpha1.KnativeServing) error {
-
-	// Account for https://github.com/kubernetes-sigs/controller-runtime/issues/406
+func (r *Reconciler) updateStatusSubresource(instance *v1alpha1.KnativeServing) error {
+	r.Logger.Info("Let us do updateStatusSubresource to find the error")
 	gvk := instance.GroupVersionKind()
+	r.Logger.Info("GVK is %s.", gvk.String())
 	defer instance.SetGroupVersionKind(gvk)
 
-	if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+	if _, err := r.KnativeServingClientSet.ServingV1alpha1().KnativeServings(instance.Namespace).
+		UpdateStatus(instance); err != nil {
 		return err
 	}
 	return nil
 }
 
 // Apply the embedded resources
-func (r *Reconciler) install(ctx context.Context, instance *v1alpha1.KnativeServing) error {
-	logger := logging.FromContext(ctx)
-	logger.Info("install, the status is %s", instance.Status)
-	if instance.Status.IsDeploying() {
+func (r *Reconciler) install(instance *v1alpha1.KnativeServing) error {
+	if instance.Status.IsInstalled() {
+		r.Logger.Info("called instacne deploying returned %s", instance.Status)
 		return nil
 	}
-	defer r.updateStatus(instance)
+	r.Logger.Info("Called install. Let us do updateStatus to find the error status %s.", instance.Status)
+	defer r.updateStatusSubresource(instance)
 
+	r.Logger.Info("Called install extension")
 	extensions, err := platforms.Extend(r.client, r.kubeClientSet, r.dynamicClientSet, r.scheme)
 	if err != nil {
 		return err
 	}
 
+	r.Logger.Info("Called install transform")
 	err = r.config.Transform(extensions.Transform(r.scheme, instance)...)
 	if err == nil {
 		err = extensions.PreInstall(instance)
@@ -202,6 +192,7 @@ func (r *Reconciler) install(ctx context.Context, instance *v1alpha1.KnativeServ
 			}
 		}
 	}
+	r.Logger.Info("Called install check error")
 	if err != nil {
 		instance.Status.MarkInstallFailed(err.Error())
 		return err
@@ -209,89 +200,92 @@ func (r *Reconciler) install(ctx context.Context, instance *v1alpha1.KnativeServ
 
 	// Update status
 	instance.Status.Version = version.Version
-	logger.Info("Install succeeded, the version is %s", version.Version)
+	r.Logger.Info("Install succeeded, the version is %s", version.Version)
 	instance.Status.MarkInstallSucceeded()
 	return nil
 }
 
-// Check for all deployments available
-func (r *Reconciler) checkDeployments(ctx context.Context, instance *v1alpha1.KnativeServing) error {
-	logger := logging.FromContext(ctx)
-	logger.Infof("Let us do a checkDeployments. the status is %s", instance.Status)
-	logger.Info("The namespace for KnativeServing is %s", instance.Namespace)
-
-	defer r.updateStatus(instance)
+func (r *Reconciler) checkDeployments(instance *v1alpha1.KnativeServing) error {
+	r.Logger.Info("Called checkDeployments. Let us do updateStatus to find the error")
+	defer r.updateStatusSubresource(instance)
 	available := func(d *appsv1.Deployment) bool {
-		for _, c := range d.Status.Conditions {
-			if c.Type == appsv1.DeploymentAvailable && c.Status == v1.ConditionTrue {
+		for _, cd := range d.Status.Conditions {
+			if cd.Type == appsv1.DeploymentAvailable && cd.Status == corev1.ConditionTrue {
 				return true
 			}
 		}
 		return false
 	}
-	deployment := &appsv1.Deployment{}
 
-	logger.Infof("how many resources: %d.", len(r.config.Resources))
 	for _, u := range r.config.Resources {
 		if u.GetKind() == "Deployment" {
-			logger.Infof("check resource namespace is: %s.", u.GetNamespace())
-			logger.Infof("check resource name is: %d.", u.GetName())
-		}
-	}
-	for _, u := range r.config.Resources {
-		if u.GetKind() == "Deployment" {
-			logger.Infof("resource namespace is: %s.", u.GetNamespace())
-			logger.Infof("resource name is: %d.", u.GetName())
-			key := client.ObjectKey{Namespace: u.GetNamespace(), Name: u.GetName()}
-			if err := r.client.Get(ctx, key, deployment); err != nil {
-				instance.Status.MarkDeploymentsNotReady()
-				if errors.IsNotFound(err) {
-					logger.Infof("return resource error not found")
+			if dep, err := r.deploymentLister.Deployments(u.GetNamespace()).Get(u.GetName()); err != nil {
+				if apierrs.IsNotFound(err) {
+					resource := apis.KindToResource(u.GroupVersionKind())
+					_, err := r.dynamicClientSet.Resource(resource).Namespace(u.GetNamespace()).Create(&u,
+						metav1.CreateOptions{})
+					if err != nil {
+						return err
+					}
+					return nil
+				} else {
+					return err
+				}
+			} else {
+				if !available(dep) {
+					r.Logger.Infof("The deployments are not available")
+					instance.Status.MarkDeploymentsNotReady()
 					return nil
 				}
-				logger.Infof("return resource error")
-				return err
 			}
-			if !available(deployment) {
-				instance.Status.MarkDeploymentsNotReady()
-				logger.Infof("return resource nil is: %s.")
-				return nil
-			}
+
 		}
 	}
-	logger.Infof("All deployments are available")
+	r.Logger.Infof("All deployments are available")
 	instance.Status.MarkDeploymentsAvailable()
 	return nil
 }
 
 // Delete obsolete resources from previous versions
-func (r *Reconciler) deleteObsoleteResources(ctx context.Context, instance *v1alpha1.KnativeServing) error {
+func (r *Reconciler) deleteObsoleteResources(instance *v1alpha1.KnativeServing) error {
 	// istio-system resources from 0.3
 	resource := &unstructured.Unstructured{}
 	resource.SetNamespace("istio-system")
 	resource.SetName("knative-ingressgateway")
 	resource.SetAPIVersion("v1")
 	resource.SetKind("Service")
-	if err := r.config.Delete(resource); err != nil {
-		return err
+	if err := r.dynamicClientSet.Resource(apis.KindToResource(resource.GroupVersionKind())).Namespace(resource.GetNamespace()).
+		Delete(resource.GetName(), &metav1.DeleteOptions{}); err != nil {
+		if !apierrs.IsNotFound(err) {
+			return err
+		}
 	}
 	resource.SetAPIVersion("apps/v1")
 	resource.SetKind("Deployment")
-	if err := r.config.Delete(resource); err != nil {
-		return err
+	if err := r.dynamicClientSet.Resource(apis.KindToResource(resource.GroupVersionKind())).Namespace(resource.GetNamespace()).
+		Delete(resource.GetName(), &metav1.DeleteOptions{}); err != nil {
+		if !apierrs.IsNotFound(err) {
+			return err
+		}
 	}
 	resource.SetAPIVersion("autoscaling/v1")
 	resource.SetKind("HorizontalPodAutoscaler")
-	if err := r.config.Delete(resource); err != nil {
-		return err
+	if err := r.dynamicClientSet.Resource(apis.KindToResource(resource.GroupVersionKind())).Namespace(resource.GetNamespace()).
+		Delete(resource.GetName(), &metav1.DeleteOptions{}); err != nil {
+		if !apierrs.IsNotFound(err) {
+			return err
+		}
 	}
 	// config-controller from 0.5
 	resource.SetNamespace(instance.GetNamespace())
 	resource.SetName("config-controller")
 	resource.SetAPIVersion("v1")
 	resource.SetKind("ConfigMap")
-	if err := r.config.Delete(resource); err != nil {
-		return err
+	if err := r.dynamicClientSet.Resource(apis.KindToResource(resource.GroupVersionKind())).Namespace(resource.GetNamespace()).
+		Delete(resource.GetName(), &metav1.DeleteOptions{}); err != nil {
+		if !apierrs.IsNotFound(err) {
+			return err
+		}
 	}
 	return nil
 }

@@ -38,4 +38,9 @@ initialize $@ --skip-istio-addon
 #kubectl logs deployment/knative-serving-operator
 
 # If we got this far, the operator installed Knative Serving
+
+header "Running tests for Knative Serving Operator"
+
+go_test_e2e -timeout=20m ./test/e2e || failed=1
+
 success

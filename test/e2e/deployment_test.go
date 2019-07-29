@@ -1,5 +1,7 @@
+// +build e2e
+
 /*
-Copyright 2017 The Kubernetes Authors.
+Copyright 2019 The Knative Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,5 +16,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package config contains libraries for initializing rest configs for talking to the Kubernetes API
-package config
+package e2e
+
+import (
+	"testing"
+
+	"knative.dev/pkg/test/logstream"
+)
+
+func TestDeployment(t *testing.T) {
+	t.Parallel()
+	cancel := logstream.Start(t)
+	defer cancel()
+	Setup(t)
+}
