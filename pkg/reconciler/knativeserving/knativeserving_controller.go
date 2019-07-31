@@ -120,7 +120,7 @@ type ReconcileKnativeServing struct {
 // Create manifestival resources and KnativeServing, if necessary
 func (r *ReconcileKnativeServing) InjectClient(c client.Client) error {
 	koDataDir := os.Getenv("KO_DATA_PATH")
-	m, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving/"), *recursive, c)
+	m, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving/"), *recursive, r.clientConfig)
 	if err != nil {
 		log.Error(err, "Failed to load manifest")
 		return err
@@ -151,7 +151,7 @@ func (r *ReconcileKnativeServing) Reconcile(request reconcile.Request) (reconcil
 	if err != nil {
 		if errors.IsNotFound(err) {
 			if isInteresting(request) {
-				r.config.DeleteAll()
+				r.config.DeleteAll(&metav1.DeleteOptions{})
 			}
 			reqLogger.V(1).Info("No KnativeServing")
 			return reconcile.Result{}, nil
@@ -280,17 +280,17 @@ func (r *ReconcileKnativeServing) deleteObsoleteResources(instance *servingv1alp
 	resource.SetName("knative-ingressgateway")
 	resource.SetAPIVersion("v1")
 	resource.SetKind("Service")
-	if err := r.config.Delete(resource); err != nil {
+	if err := r.config.Delete(resource, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	resource.SetAPIVersion("apps/v1")
 	resource.SetKind("Deployment")
-	if err := r.config.Delete(resource); err != nil {
+	if err := r.config.Delete(resource, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	resource.SetAPIVersion("autoscaling/v1")
 	resource.SetKind("HorizontalPodAutoscaler")
-	if err := r.config.Delete(resource); err != nil {
+	if err := r.config.Delete(resource, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	// config-controller from 0.5
@@ -298,7 +298,7 @@ func (r *ReconcileKnativeServing) deleteObsoleteResources(instance *servingv1alp
 	resource.SetName("config-controller")
 	resource.SetAPIVersion("v1")
 	resource.SetKind("ConfigMap")
-	if err := r.config.Delete(resource); err != nil {
+	if err := r.config.Delete(resource, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	return nil
@@ -327,7 +327,7 @@ func (r *ReconcileKnativeServing) ensureKnativeServing() error {
 	const path = "serving_v1alpha1_knativeserving_cr.yaml"
 
 	if _, err := r.servingClient.ServingV1alpha1().KnativeServings(operand).Get(operand, metav1.GetOptions{}); err != nil {
-		manifest, err := mf.NewManifest(filepath.Join(koDataDir, path), false, r.client)
+		manifest, err := mf.NewManifest(filepath.Join(koDataDir, path), false, r.clientConfig)
 		if err != nil {
 			return err
 		}
