@@ -22,17 +22,21 @@ import (
 	"os"
 	"path/filepath"
 
-	mf "github.com/jcrossley3/manifestival"
 	"knative.dev/pkg/injection"
 	"knative.dev/pkg/injection/clients/dynamicclient"
 	"knative.dev/pkg/injection/clients/kubeclient"
+	servingclient "knative.dev/serving-operator/pkg/client/injection/client"
+
+	mf "github.com/jcrossley3/manifestival"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
+	serving "knative.dev/serving-operator/pkg/client/clientset/versioned"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 	"knative.dev/serving-operator/version"
 
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
@@ -106,6 +110,7 @@ type ReconcileKnativeServing struct {
 
 	kubeClientSet    kubernetes.Interface
 	dynamicClientSet dynamic.Interface
+	servingClient    serving.Interface
 	client           client.Client
 	scheme           *runtime.Scheme
 	config           mf.Manifest
@@ -126,6 +131,7 @@ func (r *ReconcileKnativeServing) InjectClient(c client.Client) error {
 
 	r.kubeClientSet = kubeclient.Get(ctx)
 	r.dynamicClientSet = dynamicclient.Get(ctx)
+	r.servingClient = servingclient.Get(ctx)
 	return r.ensureKnativeServing()
 }
 
@@ -139,8 +145,10 @@ func (r *ReconcileKnativeServing) Reconcile(request reconcile.Request) (reconcil
 	reqLogger.Info("Reconciling KnativeServing")
 
 	// Fetch the KnativeServing instance
-	instance := &servingv1alpha1.KnativeServing{}
-	if err := r.client.Get(context.TODO(), request.NamespacedName, instance); err != nil {
+	instance, err := r.servingClient.ServingV1alpha1().KnativeServings(request.Namespace).Get(request.Name, metav1.GetOptions{})
+	// TODO(markusthoemmes): This is annoying...
+	instance.SetGroupVersionKind(servingv1alpha1.SchemeGroupVersion.WithKind("KnativeServing"))
+	if err != nil {
 		if errors.IsNotFound(err) {
 			if isInteresting(request) {
 				r.config.DeleteAll()
@@ -187,14 +195,12 @@ func (r *ReconcileKnativeServing) initStatus(instance *servingv1alpha1.KnativeSe
 
 // Update the status subresource
 func (r *ReconcileKnativeServing) updateStatus(instance *servingv1alpha1.KnativeServing) error {
-
-	// Account for https://github.com/kubernetes-sigs/controller-runtime/issues/406
-	gvk := instance.GroupVersionKind()
-	defer instance.SetGroupVersionKind(gvk)
-
-	if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+	afterUpdate, err := r.servingClient.ServingV1alpha1().KnativeServings(instance.Namespace).UpdateStatus(instance)
+	if err != nil {
 		return err
 	}
+	// TODO(markusthoemmes): We shouldn't rely on mutability and return the updated entities from functions instead.
+	afterUpdate.DeepCopyInto(instance)
 	return nil
 }
 
@@ -245,11 +251,10 @@ func (r *ReconcileKnativeServing) checkDeployments(instance *servingv1alpha1.Kna
 		}
 		return false
 	}
-	deployment := &appsv1.Deployment{}
 	for _, u := range r.config.Resources {
 		if u.GetKind() == "Deployment" {
-			key := client.ObjectKey{Namespace: u.GetNamespace(), Name: u.GetName()}
-			if err := r.client.Get(context.TODO(), key, deployment); err != nil {
+			deployment, err := r.kubeClientSet.AppsV1().Deployments(u.GetNamespace()).Get(u.GetName(), metav1.GetOptions{})
+			if err != nil {
 				instance.Status.MarkDeploymentsNotReady()
 				if errors.IsNotFound(err) {
 					return nil
@@ -317,24 +322,24 @@ func (r *ReconcileKnativeServing) ignore(instance *servingv1alpha1.KnativeServin
 }
 
 // If we can't find knative-serving/knative-serving, create it
-func (r *ReconcileKnativeServing) ensureKnativeServing() (err error) {
+func (r *ReconcileKnativeServing) ensureKnativeServing() error {
 	koDataDir := os.Getenv("KO_DATA_PATH")
 	const path = "serving_v1alpha1_knativeserving_cr.yaml"
-	instance := &servingv1alpha1.KnativeServing{}
-	key := client.ObjectKey{Namespace: operand, Name: operand}
-	if err = r.client.Get(context.TODO(), key, instance); err != nil {
-		var manifest mf.Manifest
-		manifest, err = mf.NewManifest(filepath.Join(koDataDir, path), false, r.client)
-		if err == nil {
-			// create namespace
-			err = manifest.Apply(&r.config.Resources[0])
+
+	if _, err := r.servingClient.ServingV1alpha1().KnativeServings(operand).Get(operand, metav1.GetOptions{}); err != nil {
+		manifest, err := mf.NewManifest(filepath.Join(koDataDir, path), false, r.client)
+		if err != nil {
+			return err
 		}
-		if err == nil {
-			err = manifest.Transform(mf.InjectNamespace(operand))
+		if err := manifest.Apply(&r.config.Resources[0]); err != nil {
+			return err
 		}
-		if err == nil {
-			err = manifest.ApplyAll()
+		if err := manifest.Transform(mf.InjectNamespace(operand)); err != nil {
+			return err
+		}
+		if err := manifest.ApplyAll(); err != nil {
+			return err
 		}
 	}
-	return
+	return nil
 }
