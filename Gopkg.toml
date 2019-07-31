@@ -53,10 +53,6 @@ required = [
   revision = "8d9ed539ba3134352c586810e749e58df4e94e4f"
 
 [[override]]
-  name = "github.com/coreos/prometheus-operator"
-  version = "=v0.29.0"
-
-[[override]]
   name = "sigs.k8s.io/controller-runtime"
   version = "=v0.1.10"
 
@@ -64,12 +60,6 @@ required = [
   name = "github.com/knative/test-infra"
   # HEAD as of 2019-06-18
   revision = "6c3132259e7b5062a719b393536c216397110e01"
-
-[[constraint]]
-  name = "github.com/operator-framework/operator-sdk"
-  # The version rule is used for a specific release and the master branch for in between releases.
-  # branch = "master" #osdk_branch_annotation
-  version = "=v0.8.0" #osdk_version_annotation
 
 [[constraint]]
   name = "github.com/jcrossley3/manifestival"
