@@ -721,9 +721,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:382bb5a7fb4034db3b6a2d19e5a4a6bcf52f4750530603c01ca18a172fa3089b"
+  digest = "1:a2fc247e64b5dafd3251f12d396ec85f163d5bb38763c4997856addddf6e78d8"
   name = "golang.org/x/sync"
-  packages = ["semaphore"]
+  packages = [
+    "errgroup",
+    "semaphore",
+  ]
   pruneopts = "NUT"
   revision = "112230192c580c3556b8cee6403af37a4fc5f28c"
 
@@ -1287,6 +1290,16 @@
     "logging/logkey",
     "metrics",
     "metrics/metricskey",
+    "ptr",
+    "system",
+    "test",
+    "test/helpers",
+    "test/ingress",
+    "test/logging",
+    "test/logstream",
+    "test/monitoring",
+    "test/spoof",
+    "test/zipkin",
   ]
   pruneopts = "T"
   revision = "d5915547d9db02c20f3dd1a16a1f62698ea43781"
@@ -1374,6 +1387,7 @@
     "github.com/operator-framework/operator-sdk/pkg/predicate",
     "github.com/operator-framework/operator-sdk/pkg/restmapper",
     "github.com/operator-framework/operator-sdk/version",
+    "github.com/pkg/errors",
     "github.com/spf13/pflag",
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
@@ -1387,15 +1401,18 @@
     "k8s.io/apimachinery/pkg/runtime/serializer",
     "k8s.io/apimachinery/pkg/types",
     "k8s.io/apimachinery/pkg/util/runtime",
+    "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/discovery",
     "k8s.io/client-go/discovery/fake",
     "k8s.io/client-go/dynamic",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/plugin/pkg/client/auth",
+    "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/testing",
     "k8s.io/client-go/tools/cache",
+    "k8s.io/client-go/tools/clientcmd",
     "k8s.io/client-go/util/flowcontrol",
     "k8s.io/code-generator/cmd/client-gen",
     "k8s.io/code-generator/cmd/conversion-gen",
@@ -1415,6 +1432,9 @@
     "knative.dev/pkg/injection/clients/dynamicclient",
     "knative.dev/pkg/injection/clients/kubeclient",
     "knative.dev/pkg/logging",
+    "knative.dev/pkg/test",
+    "knative.dev/pkg/test/logging",
+    "knative.dev/pkg/test/logstream",
     "knative.dev/test-infra/scripts",
     "knative.dev/test-infra/tools/dep-collector",
     "sigs.k8s.io/controller-runtime/pkg/client",
