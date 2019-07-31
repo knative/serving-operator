@@ -440,16 +440,6 @@
   version = "v1.1.6"
 
 [[projects]]
-  digest = "1:eeebb49b9a2eb1dd46487913c8155bce627f8657b0ef6aa1d30acb729e277f1c"
-  name = "github.com/knative/test-infra"
-  packages = [
-    "scripts",
-    "tools/dep-collector",
-  ]
-  pruneopts = "UT"
-  revision = "6c3132259e7b5062a719b393536c216397110e01"
-
-[[projects]]
   branch = "master"
   digest = "1:927762c6729b4e72957ba3310e485ed09cf8451c5a637a52fd016a9fe09e7936"
   name = "github.com/mailru/easyjson"
@@ -1289,6 +1279,8 @@
     "configmap",
     "controller",
     "injection",
+    "injection/clients/dynamicclient",
+    "injection/clients/kubeclient",
     "kmeta",
     "kmp",
     "logging",
@@ -1298,6 +1290,16 @@
   ]
   pruneopts = "T"
   revision = "d5915547d9db02c20f3dd1a16a1f62698ea43781"
+
+[[projects]]
+  digest = "1:eeebb49b9a2eb1dd46487913c8155bce627f8657b0ef6aa1d30acb729e277f1c"
+  name = "knative.dev/test-infra"
+  packages = [
+    "scripts",
+    "tools/dep-collector",
+  ]
+  pruneopts = "UT"
+  revision = "6c3132259e7b5062a719b393536c216397110e01"
 
 [[projects]]
   digest = "1:b7ca84cccb4630cbd53eef277cf73ac87d7bbcc9ae3e72b8cf414be381853dcc"
@@ -1365,8 +1367,6 @@
     "github.com/go-logr/logr",
     "github.com/go-openapi/spec",
     "github.com/jcrossley3/manifestival",
-    "github.com/knative/test-infra/scripts",
-    "github.com/knative/test-infra/tools/dep-collector",
     "github.com/openshift/api/config/v1",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/leader",
@@ -1391,6 +1391,8 @@
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/discovery",
     "k8s.io/client-go/discovery/fake",
+    "k8s.io/client-go/dynamic",
+    "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/plugin/pkg/client/auth",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/testing",
@@ -1411,7 +1413,11 @@
     "knative.dev/pkg/codegen/cmd/injection-gen",
     "knative.dev/pkg/controller",
     "knative.dev/pkg/injection",
+    "knative.dev/pkg/injection/clients/dynamicclient",
+    "knative.dev/pkg/injection/clients/kubeclient",
     "knative.dev/pkg/logging",
+    "knative.dev/test-infra/scripts",
+    "knative.dev/test-infra/tools/dep-collector",
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",
     "sigs.k8s.io/controller-runtime/pkg/controller",

@@ -15,7 +15,7 @@
 # limitations under the License.
 
 # This script provides helper methods to perform cluster actions.
-source $(dirname $0)/../vendor/github.com/knative/test-infra/scripts/e2e-tests.sh
+source $(dirname $0)/../vendor/knative.dev/test-infra/scripts/e2e-tests.sh
 
 # Latest serving release. This is intentionally hardcoded for now, but
 # will need the ability to test against the latest successful serving
