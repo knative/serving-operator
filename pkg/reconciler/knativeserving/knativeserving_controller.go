@@ -72,7 +72,7 @@ func Add(mgr manager.Manager, clientConfig *rest.Config) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager, clientConfig *rest.Config) reconcile.Reconciler {
-	return &ReconcileKnativeServing{client: mgr.GetClient(), scheme: mgr.GetScheme(), clientConfig: clientConfig}
+	return &ReconcileKnativeServing{scheme: mgr.GetScheme(), clientConfig: clientConfig}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -111,7 +111,6 @@ type ReconcileKnativeServing struct {
 	kubeClientSet    kubernetes.Interface
 	dynamicClientSet dynamic.Interface
 	servingClient    serving.Interface
-	client           client.Client
 	scheme           *runtime.Scheme
 	config           mf.Manifest
 	clientConfig     *rest.Config
@@ -212,7 +211,7 @@ func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServi
 	}
 	defer r.updateStatus(instance)
 
-	extensions, err := platforms.Extend(r.client, r.kubeClientSet, r.dynamicClientSet, r.scheme)
+	extensions, err := platforms.Extend(r.kubeClientSet, r.dynamicClientSet, r.scheme)
 	if err != nil {
 		return err
 	}
