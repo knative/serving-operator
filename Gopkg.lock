@@ -441,14 +441,6 @@
   version = "1.0.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:8ab1e86d749c43948e91318ee9f22f3efe422451ede826e9ad7bd7ffcd686367"
-  name = "github.com/openshift/api"
-  packages = ["config/v1"]
-  pruneopts = "NUT"
-  revision = "f15120709e0ac8de84e11616d8f0cac54e8f52e3"
-
-[[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
   name = "github.com/pborman/uuid"
   packages = ["."]
@@ -1183,7 +1175,6 @@
     "configmap",
     "controller",
     "injection",
-    "injection/clients/dynamicclient",
     "injection/clients/kubeclient",
     "kmeta",
     "kmp",
@@ -1249,7 +1240,6 @@
     "github.com/jcrossley3/manifestival",
     "github.com/knative/test-infra/scripts",
     "github.com/knative/test-infra/tools/dep-collector",
-    "github.com/openshift/api/config/v1",
     "github.com/spf13/pflag",
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
@@ -1266,7 +1256,6 @@
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/discovery",
     "k8s.io/client-go/discovery/fake",
-    "k8s.io/client-go/dynamic",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/plugin/pkg/client/auth",
     "k8s.io/client-go/rest",
@@ -1287,7 +1276,6 @@
     "knative.dev/pkg/codegen/cmd/injection-gen",
     "knative.dev/pkg/controller",
     "knative.dev/pkg/injection",
-    "knative.dev/pkg/injection/clients/dynamicclient",
     "knative.dev/pkg/injection/clients/kubeclient",
     "knative.dev/pkg/logging",
     "sigs.k8s.io/controller-runtime/pkg/client",
