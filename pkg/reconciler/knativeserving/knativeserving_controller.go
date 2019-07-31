@@ -38,7 +38,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -72,7 +71,7 @@ func Add(mgr manager.Manager, clientConfig *rest.Config) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager, clientConfig *rest.Config) reconcile.Reconciler {
-	return &ReconcileKnativeServing{scheme: mgr.GetScheme(), clientConfig: clientConfig}
+	return &ReconcileKnativeServing{clientConfig: clientConfig}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -111,7 +110,6 @@ type ReconcileKnativeServing struct {
 	kubeClientSet    kubernetes.Interface
 	dynamicClientSet dynamic.Interface
 	servingClient    serving.Interface
-	scheme           *runtime.Scheme
 	config           mf.Manifest
 	clientConfig     *rest.Config
 }
@@ -131,6 +129,7 @@ func (r *ReconcileKnativeServing) InjectClient(c client.Client) error {
 	r.kubeClientSet = kubeclient.Get(ctx)
 	r.dynamicClientSet = dynamicclient.Get(ctx)
 	r.servingClient = servingclient.Get(ctx)
+
 	return r.ensureKnativeServing()
 }
 
@@ -211,12 +210,12 @@ func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServi
 	}
 	defer r.updateStatus(instance)
 
-	extensions, err := platforms.Extend(r.kubeClientSet, r.dynamicClientSet, r.scheme)
+	extensions, err := platforms.Extend(r.kubeClientSet, r.dynamicClientSet)
 	if err != nil {
 		return err
 	}
 
-	err = r.config.Transform(extensions.Transform(r.scheme, instance)...)
+	err = r.config.Transform(extensions.Transform(instance)...)
 	if err == nil {
 		err = extensions.PreInstall(instance)
 		if err == nil {

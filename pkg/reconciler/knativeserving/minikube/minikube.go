@@ -23,7 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
@@ -36,7 +35,7 @@ var (
 )
 
 // Configure minikube if we're soaking in it
-func Configure(kubeClientSet kubernetes.Interface, _ dynamic.Interface, _ *runtime.Scheme) (*common.Extension, error) {
+func Configure(kubeClientSet kubernetes.Interface, _ dynamic.Interface) (*common.Extension, error) {
 	if _, err := kubeClientSet.CoreV1().Nodes().Get("minikube", metav1.GetOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
 			log.Error(err, "Unable to query for minikube node")
