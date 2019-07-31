@@ -205,9 +205,6 @@ func (r *ReconcileKnativeServing) updateStatus(instance *servingv1alpha1.Knative
 // Apply the embedded resources
 func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServing) error {
 	log.V(1).Info("install", "status", instance.Status)
-	if instance.Status.IsDeploying() {
-		return nil
-	}
 	defer r.updateStatus(instance)
 
 	extensions, err := platforms.Extend(r.kubeClientSet, r.dynamicClientSet)
