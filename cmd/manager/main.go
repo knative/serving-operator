@@ -60,12 +60,6 @@ func main() {
 
 	printVersion()
 
-	namespace, found := os.LookupEnv("WATCH_NAMESPACE")
-	if !found {
-		log.Info("Failed to get watch namespace")
-		os.Exit(1)
-	}
-
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -75,7 +69,6 @@ func main() {
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
-		Namespace:      namespace,
 		MapperProvider: restmapper.NewDynamicRESTMapper,
 	})
 	if err != nil {
