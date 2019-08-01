@@ -181,8 +181,8 @@ func collectReferences(f *ast.File) references {
 	return refs
 }
 
-// collectImports returns all the imports in f, keyed by their package name as
-// determined by pathToName. Unnamed imports (., _) and "C" are ignored.
+// collectImports returns all the imports in f.
+// Unnamed imports (., _) and "C" are ignored.
 func collectImports(f *ast.File) []*importInfo {
 	var imports []*importInfo
 	for _, imp := range f.Imports {
@@ -272,7 +272,7 @@ func (p *pass) loadPackageNames(imports []*importInfo) error {
 		unknown = append(unknown, imp.importPath)
 	}
 
-	names, err := p.env.getResolver().loadPackageNames(unknown, p.srcDir)
+	names, err := p.env.GetResolver().loadPackageNames(unknown, p.srcDir)
 	if err != nil {
 		return err
 	}
@@ -444,7 +444,7 @@ func apply(fset *token.FileSet, f *ast.File, fixes []*importFix) bool {
 		case setImportName:
 			// Find the matching import path and change the name.
 			for _, spec := range f.Imports {
-				path := strings.Trim(spec.Path.Value, `""`)
+				path := strings.Trim(spec.Path.Value, `"`)
 				if path == fix.info.importPath {
 					spec.Name = &ast.Ident{
 						Name:    fix.info.name,
@@ -514,7 +514,7 @@ func fixImportsDefault(fset *token.FileSet, f *ast.File, filename string, env *P
 	return err
 }
 
-// getFixes gets the getFixes that need to be made to f in order to fix the imports.
+// getFixes gets the import fixes that need to be made to f in order to fix the imports.
 // It does not modify the ast.
 func getFixes(fset *token.FileSet, f *ast.File, filename string, env *ProcessEnv) ([]*importFix, error) {
 	abs, err := filepath.Abs(filename)
@@ -595,7 +595,7 @@ type ProcessEnv struct {
 	// Logf is the default logger for the ProcessEnv.
 	Logf func(format string, args ...interface{})
 
-	resolver resolver
+	resolver Resolver
 }
 
 func (e *ProcessEnv) env() []string {
@@ -617,7 +617,7 @@ func (e *ProcessEnv) env() []string {
 	return env
 }
 
-func (e *ProcessEnv) getResolver() resolver {
+func (e *ProcessEnv) GetResolver() Resolver {
 	if e.resolver != nil {
 		return e.resolver
 	}
@@ -631,7 +631,7 @@ func (e *ProcessEnv) getResolver() resolver {
 		e.resolver = &gopathResolver{env: e}
 		return e.resolver
 	}
-	e.resolver = &moduleResolver{env: e}
+	e.resolver = &ModuleResolver{env: e}
 	return e.resolver
 }
 
@@ -700,20 +700,23 @@ func addStdlibCandidates(pass *pass, refs references) {
 	}
 }
 
-// A resolver does the build-system-specific parts of goimports.
-type resolver interface {
+// A Resolver does the build-system-specific parts of goimports.
+type Resolver interface {
 	// loadPackageNames loads the package names in importPaths.
 	loadPackageNames(importPaths []string, srcDir string) (map[string]string, error)
 	// scan finds (at least) the packages satisfying refs. The returned slice is unordered.
 	scan(refs references) ([]*pkg, error)
 }
 
-// gopathResolver implements resolver for GOPATH and module workspaces using go/packages.
+// gopackagesResolver implements resolver for GOPATH and module workspaces using go/packages.
 type goPackagesResolver struct {
 	env *ProcessEnv
 }
 
 func (r *goPackagesResolver) loadPackageNames(importPaths []string, srcDir string) (map[string]string, error) {
+	if len(importPaths) == 0 {
+		return nil, nil
+	}
 	cfg := r.env.newPackagesConfig(packages.LoadFiles)
 	pkgs, err := packages.Load(cfg, importPaths...)
 	if err != nil {
@@ -758,7 +761,7 @@ func (r *goPackagesResolver) scan(refs references) ([]*pkg, error) {
 }
 
 func addExternalCandidates(pass *pass, refs references, filename string) error {
-	dirScan, err := pass.env.getResolver().scan(refs)
+	dirScan, err := pass.env.GetResolver().scan(refs)
 	if err != nil {
 		return err
 	}
@@ -867,7 +870,7 @@ func (r *gopathResolver) loadPackageNames(importPaths []string, srcDir string) (
 	return names, nil
 }
 
-// importPathToNameGoPath finds out the actual package name, as declared in its .go files.
+// importPathToName finds out the actual package name, as declared in its .go files.
 // If there's a problem, it returns "".
 func importPathToName(env *ProcessEnv, importPath, srcDir string) (packageName string) {
 	// Fast path for standard library without going to disk.
@@ -887,8 +890,8 @@ func importPathToName(env *ProcessEnv, importPath, srcDir string) (packageName s
 }
 
 // packageDirToName is a faster version of build.Import if
-// the only thing desired is the package name. It uses build.FindOnly
-// to find the directory and then only parses one file in the package,
+// the only thing desired is the package name. Given a directory,
+// packageDirToName then only parses one file in the package,
 // trusting that the files in the directory are consistent.
 func packageDirToName(dir string) (packageName string, err error) {
 	d, err := os.Open(dir)
