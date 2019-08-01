@@ -3,30 +3,34 @@
 Knative Serving Operator is a project aiming to deploy and manage Knative
 Serving in an automated way.
 
-The following steps will install [Knative Serving](https://github.com/knative/serving)
-and configure it appropriately for your cluster in the `knative-serving`
-namespace. Please make sure the [prerequisites](#Prerequisites) are installed first.
+The following steps will install
+[Knative Serving](https://github.com/knative/serving) and configure it
+appropriately for your cluster in the `knative-serving` namespace. Please make
+sure the [prerequisites](#Prerequisites) are installed first.
 
-1. Install the [KnativeServing custom resource](#the-knativeserving-custom-resource)
-    ```
-    kubectl apply -f config/crds/serving_v1alpha1_knativeserving_crd.yaml
-    ```
+1. Install the
+   [KnativeServing custom resource](#the-knativeserving-custom-resource)
+
+   ```
+   kubectl apply -f config/crds/serving_v1alpha1_knativeserving_crd.yaml
+   ```
 
 2. Install the operator
 
-    To install from source code, run the command:
+   To install from source code, run the command:
 
-    ```
-    ko apply -f config/
-    ```
+   ```
+   ko apply -f config/
+   ```
 
-    To install from an existing image, change the value of `image` into
-    `quay.io/openshift-knative/knative-serving-operator:v0.6.0` or any other valid
-    operator image in the file config/operator.yaml, and run the following command:
+   To install from an existing image, change the value of `image` into
+   `quay.io/openshift-knative/knative-serving-operator:v0.6.0` or any other
+   valid operator image in the file config/operator.yaml, and run the following
+   command:
 
-    ```
-    kubectl apply -f config/
-    ```
+   ```
+   kubectl apply -f config/
+   ```
 
 Please refer to [Building the Operator Image](#building-the-operator-image) to
 build your own image.
