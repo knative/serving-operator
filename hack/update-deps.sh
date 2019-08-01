@@ -18,7 +18,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-source $(dirname $0)/../vendor/github.com/knative/test-infra/scripts/library.sh
+source $(dirname $0)/../vendor/knative.dev/test-infra/scripts/library.sh
 
 cd ${REPO_ROOT_DIR}
 
@@ -27,6 +27,6 @@ dep ensure
 
 rm -rf $(find vendor/ -name 'OWNERS')
 rm -rf $(find vendor/ -name '*_test.go')
-rm -fr vendor/github.com/knative/test-infra/devstats
+rm -fr vendor/knative.dev/test-infra/devstats
 
 remove_broken_symlinks ./vendor

@@ -20,6 +20,9 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+
 	configv1 "github.com/openshift/api/config/v1"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
@@ -55,13 +58,15 @@ var (
 		PreInstalls:  []common.Extender{ensureMaistra, caBundleConfigMap, addUserToSCC},
 		PostInstalls: []common.Extender{ensureOpenshiftIngress},
 	}
-	log    = logf.Log.WithName("openshift")
-	api    client.Client
-	scheme *runtime.Scheme
+	log              = logf.Log.WithName("openshift")
+	api              client.Client
+	scheme           *runtime.Scheme
+	kubeClientSet    kubernetes.Interface
+	dynamicClientSet dynamic.Interface
 )
 
 // Configure OpenShift if we're soaking in it
-func Configure(c client.Client, s *runtime.Scheme) (*common.Extension, error) {
+func Configure(c client.Client, kc kubernetes.Interface, dc dynamic.Interface, s *runtime.Scheme) (*common.Extension, error) {
 	if routeExists, err := anyKindExists(c, "", schema.GroupVersionKind{"route.openshift.io", "v1", "route"}); err != nil {
 		return nil, err
 	} else if !routeExists {
@@ -77,6 +82,8 @@ func Configure(c client.Client, s *runtime.Scheme) (*common.Extension, error) {
 
 	api = c
 	scheme = s
+	kubeClientSet = kc
+	dynamicClientSet = dc
 	return &extension, nil
 }
 
@@ -96,7 +103,7 @@ func ensureMaistra(instance *servingv1alpha1.KnativeServing) error {
 			return nil
 		}
 		// Maistra not installed
-		if err := installMaistra(api); err != nil {
+		if err := installMaistra(api, kubeClientSet); err != nil {
 			return err
 		}
 	} else {
@@ -147,21 +154,21 @@ func ensureOpenshiftIngress(instance *servingv1alpha1.KnativeServing) error {
 	return nil
 }
 
-func installMaistra(c client.Client) error {
-	if err := installMaistraOperator(api); err != nil {
+func installMaistra(c client.Client, kc kubernetes.Interface) error {
+	if err := installMaistraOperator(api, kc); err != nil {
 		return err
 	}
-	if err := installMaistraControlPlane(api); err != nil {
+	if err := installMaistraControlPlane(api, kc); err != nil {
 		return err
 	}
 	return nil
 }
 
-func installMaistraOperator(c client.Client) error {
+func installMaistraOperator(c client.Client, kc kubernetes.Interface) error {
 	const path = "config/resources/maistra/maistra-operator-0.10.yaml"
 	log.Info("Installing Maistra operator")
 	if manifest, err := mf.NewManifest(path, false, c); err == nil {
-		if err = ensureNamespace(c, maistraOperatorNamespace); err != nil {
+		if err = ensureNamespace(kc, maistraOperatorNamespace); err != nil {
 			log.Error(err, "Unable to create Maistra operator namespace", "namespace", maistraOperatorNamespace)
 			return err
 		}
@@ -179,11 +186,11 @@ func installMaistraOperator(c client.Client) error {
 	return nil
 }
 
-func installMaistraControlPlane(c client.Client) error {
+func installMaistraControlPlane(c client.Client, kc kubernetes.Interface) error {
 	const path = "config/resources/maistra/maistra-controlplane-0.10.0.yaml"
 	log.Info("Installing Maistra ControlPlane")
 	if manifest, err := mf.NewManifest(path, false, c); err == nil {
-		if err = ensureNamespace(c, maistraControlPlaneNamespace); err != nil {
+		if err = ensureNamespace(kc, maistraControlPlaneNamespace); err != nil {
 			log.Error(err, "Unable to create Maistra ControlPlane namespace", "namespace", maistraControlPlaneNamespace)
 			return err
 		}
@@ -348,20 +355,9 @@ func anyKindExists(c client.Client, namespace string, gvks ...schema.GroupVersio
 	return false, nil
 }
 
-func itemsExist(c client.Client, kind string, apiVersion string, namespace string) (bool, error) {
-	list := &unstructured.UnstructuredList{}
-	list.SetKind(kind)
-	list.SetAPIVersion(apiVersion)
-	if err := c.List(context.TODO(), &client.ListOptions{Namespace: namespace}, list); err != nil {
-		return false, err
-	}
-	return len(list.Items) > 0, nil
-}
-
-func ensureNamespace(c client.Client, ns string) error {
-	namespace := &v1.Namespace{}
-	namespace.Name = ns
-	if err := c.Create(context.TODO(), namespace); err != nil {
+func ensureNamespace(kc kubernetes.Interface, ns string) error {
+	nsSpec := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ns}}
+	if _, err := kc.CoreV1().Namespaces().Create(nsSpec); err != nil {
 		if errors.IsAlreadyExists(err) {
 			return nil
 		}

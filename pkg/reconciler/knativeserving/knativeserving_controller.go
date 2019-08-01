@@ -23,6 +23,9 @@ import (
 	"path/filepath"
 
 	mf "github.com/jcrossley3/manifestival"
+	"knative.dev/pkg/injection"
+	"knative.dev/pkg/injection/clients/dynamicclient"
+	"knative.dev/pkg/injection/clients/kubeclient"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 	"knative.dev/serving-operator/version"
@@ -33,6 +36,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -56,13 +62,13 @@ var (
 
 // Add creates a new KnativeServing Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
+func Add(mgr manager.Manager, clientConfig *rest.Config) error {
+	return add(mgr, newReconciler(mgr, clientConfig))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileKnativeServing{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+func newReconciler(mgr manager.Manager, clientConfig *rest.Config) reconcile.Reconciler {
+	return &ReconcileKnativeServing{client: mgr.GetClient(), scheme: mgr.GetScheme(), clientConfig: clientConfig}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -97,9 +103,13 @@ var _ reconcile.Reconciler = &ReconcileKnativeServing{}
 type ReconcileKnativeServing struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
-	config mf.Manifest
+
+	kubeClientSet    kubernetes.Interface
+	dynamicClientSet dynamic.Interface
+	client           client.Client
+	scheme           *runtime.Scheme
+	config           mf.Manifest
+	clientConfig     *rest.Config
 }
 
 // Create manifestival resources and KnativeServing, if necessary
@@ -111,6 +121,11 @@ func (r *ReconcileKnativeServing) InjectClient(c client.Client) error {
 		return err
 	}
 	r.config = m
+
+	ctx, _ := injection.Default.SetupInformers(context.TODO(), r.clientConfig)
+
+	r.kubeClientSet = kubeclient.Get(ctx)
+	r.dynamicClientSet = dynamicclient.Get(ctx)
 	return r.ensureKnativeServing()
 }
 
@@ -191,7 +206,7 @@ func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServi
 	}
 	defer r.updateStatus(instance)
 
-	extensions, err := platforms.Extend(r.client, r.scheme)
+	extensions, err := platforms.Extend(r.client, r.kubeClientSet, r.dynamicClientSet, r.scheme)
 	if err != nil {
 		return err
 	}

@@ -17,6 +17,5 @@
 DIR=${DIR:-$(cd $(dirname "$0")/.. && pwd)}
 
 export KO_DATA_PATH=${KO_DATA_PATH:-$DIR/cmd/manager/kodata}
-export WATCH_NAMESPACE=""
 
 go run $DIR/cmd/manager $@
