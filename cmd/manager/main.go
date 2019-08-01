@@ -26,7 +26,6 @@ import (
 	"knative.dev/serving-operator/pkg/apis"
 	"knative.dev/serving-operator/pkg/reconciler"
 
-	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
@@ -73,13 +72,6 @@ func main() {
 	}
 
 	ctx := context.TODO()
-
-	// Become the leader before proceeding
-	err = leader.Become(ctx, "knative-serving-operator-lock")
-	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
