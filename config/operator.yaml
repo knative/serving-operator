@@ -18,8 +18,6 @@ spec:
           image: knative.dev/serving-operator/cmd/manager
           imagePullPolicy: IfNotPresent
           env:
-            - name: WATCH_NAMESPACE
-              value: ""
             - name: POD_NAME
               valueFrom:
                 fieldRef:
