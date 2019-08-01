@@ -16,8 +16,6 @@ limitations under the License.
 package e2e
 
 import (
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/test/logstream"
 	"knative.dev/serving-operator/test"
@@ -42,8 +40,7 @@ func TestKnativeServingDeploymentRecreationReady(t *testing.T) {
 			test.ServingOperatorNamespace)
 	} else {
 		// Delete a random deployment to see if they will be recreated.
-		//deployment := dpList.Items[rand.Intn(len(dpList.Items))]
-		for i, deployment := range dpList.Items {
+		for _, deployment := range dpList.Items {
 			err := clients.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Delete(deployment.Name,
 				&metav1.DeleteOptions{})
 			if err != nil {
@@ -51,17 +48,12 @@ func TestKnativeServingDeploymentRecreationReady(t *testing.T) {
 					deployment.Namespace, deployment.Name, err)
 			}
 			_, err = resources.WaitForDeploymentAvailable(clients, deployment.Name, deployment.Namespace,
-				resources.IsDeploymentAvailable)
+				resources.IsDeploymentAvailable, test.ServingOperatorName)
 			if err != nil {
 				t.Fatalf("The deployment %s/%s failed to reach the desired state: %v",
 					deployment.Namespace, deployment.Name, err)
 			}
 			t.Logf("The deployment %s/%s reached the desired state.", deployment.Namespace, deployment.Name)
-			if i < len(dpList.Items) - 1 {
-				// When the deployment revives, wait additional 20 seconds for it to be stabilized, before
-				// delete another deployment.
-				time.Sleep(20 * time.Second)
-			}
 		}
 	}
 }

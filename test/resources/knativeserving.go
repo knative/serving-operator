@@ -64,8 +64,10 @@ func IsKnativeServingReady(s *v1alpha1.KnativeServing) (bool, error) {
 
 // WaitForDeploymentAvailable polls the status of the deployment called name
 // from client every `interval` until `inState` returns `true` indicating it
-// is done, returns an error or timeout.
-func WaitForDeploymentAvailable(clients *test.Clients, name, namespace string, inState func(s *v1.Deployment) (bool, error)) (*v1.Deployment, error) {
+// is done, returns an error or timeout. ownerKnativeServing specifies the
+// name of the owner KnativeServing, since we verify the state of KnativeServing as well.
+func WaitForDeploymentAvailable(clients *test.Clients, name, namespace string, inState func(s *v1.Deployment) (bool, error),
+	ownerKnativeServing string) (*v1.Deployment, error) {
 	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitForKnativeServingState/%s/%s", name,
 		"DeploymentIsAvailable"))
 	defer span.End()
@@ -79,6 +81,13 @@ func WaitForDeploymentAvailable(clients *test.Clients, name, namespace string, i
 	if waitErr != nil {
 		return dep, errors.Wrapf(waitErr, "Deployment %q is not in desired state, got: %+v", name, dep)
 	}
+
+	_, err := WaitForKnativeServingState(clients.KnativeServingAlphaClient, ownerKnativeServing,
+		IsKnativeServingReady)
+	if err != nil {
+		return dep, err
+	}
+
 	return dep, nil
 }
 
