@@ -16,16 +16,16 @@ limitations under the License.
 package e2e
 
 import (
+	"testing"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/test/logstream"
 	"knative.dev/serving-operator/test"
 	"knative.dev/serving-operator/test/resources"
-	"testing"
 )
 
 // TestKnativeServingDeploymentRecreationReady verifies whether the deployment is recreated, if it is deleted.
 func TestKnativeServingDeploymentRecreationReady(t *testing.T) {
-	t.Parallel()
 	cancel := logstream.Start(t)
 	defer cancel()
 	clients := Setup(t)
@@ -38,22 +38,22 @@ func TestKnativeServingDeploymentRecreationReady(t *testing.T) {
 	if len(dpList.Items) == 0 {
 		t.Fatalf("No deployment under the namespace %q was found",
 			test.ServingOperatorNamespace)
-	} else {
-		// Delete a random deployment to see if they will be recreated.
-		for _, deployment := range dpList.Items {
-			err := clients.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Delete(deployment.Name,
-				&metav1.DeleteOptions{})
-			if err != nil {
-				t.Fatalf("Failed to delete deployment %s/%s: %v",
-					deployment.Namespace, deployment.Name, err)
-			}
-			_, err = resources.WaitForDeploymentAvailable(clients, deployment.Name, deployment.Namespace,
-				resources.IsDeploymentAvailable, test.ServingOperatorName)
-			if err != nil {
-				t.Fatalf("The deployment %s/%s failed to reach the desired state: %v",
-					deployment.Namespace, deployment.Name, err)
-			}
-			t.Logf("The deployment %s/%s reached the desired state.", deployment.Namespace, deployment.Name)
+	}
+	// Delete the deployments one by one to see if they will be recreated.
+	for _, deployment := range dpList.Items {
+		if err := clients.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Delete(deployment.Name,
+			&metav1.DeleteOptions{}); err != nil {
+			t.Fatalf("Failed to delete deployment %s/%s: %v", deployment.Namespace, deployment.Name, err)
 		}
+		if _, err = resources.WaitForDeploymentAvailable(clients, deployment.Name, deployment.Namespace,
+			resources.IsDeploymentAvailable); err != nil {
+			t.Fatalf("The deployment %s/%s failed to reach the desired state: %v",
+				deployment.Namespace, deployment.Name, err)
+		}
+		if _, err := resources.WaitForKnativeServingState(clients.KnativeServingAlphaClient, test.ServingOperatorName,
+			resources.IsKnativeServingReady); err != nil {
+			t.Fatalf("KnativeService %q failed to reach the desired state: %v", test.ServingOperatorName, err)
+		}
+		t.Logf("The deployment %s/%s reached the desired state.", deployment.Namespace, deployment.Name)
 	}
 }

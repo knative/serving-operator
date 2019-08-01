@@ -25,7 +25,6 @@ import (
 
 // TestKnativeServingReady verifies whether KnativeServing is ready after the operator is installed.
 func TestKnativeServingReady(t *testing.T) {
-	t.Parallel()
 	cancel := logstream.Start(t)
 	defer cancel()
 	clients := Setup(t)
