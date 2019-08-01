@@ -16,15 +16,20 @@ package e2e
 import (
 	"testing"
 
+	// Mysteriously required to support GCP auth (required by k8s libs).
+	// Apparently just importing it is enough. @_@ side effects @_@.
+	// https://github.com/kubernetes/client-go/issues/242
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	pkgTest "knative.dev/pkg/test"
 	"knative.dev/serving-operator/test"
 )
 
+// Setup creates the client objects needed in the e2e tests.
 func Setup(t *testing.T) *test.Clients {
 	return SetupWithNamespace(t, test.ServingOperatorNamespace)
 }
 
+// SetupWithNamespace creates the client objects needed in the e2e tests under the specified namespace.
 func SetupWithNamespace(t *testing.T, namespace string) *test.Clients {
 	clients, err := test.NewClients(
 		pkgTest.Flags.Kubeconfig,

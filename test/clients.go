@@ -33,6 +33,7 @@ type Clients struct {
 	KnativeServingAlphaClient *KnativeServingAlphaClients
 }
 
+// KnativeServingAlphaClients holds instances of interfaces for making requests to knativeserving clients
 type KnativeServingAlphaClients struct {
 	KnativeServings    servingv1alpha1.KnativeServingInterface
 }
@@ -91,6 +92,7 @@ func newKnativeServingAlphaClients(cfg *rest.Config, namespace string) (*Knative
 	}, nil
 }
 
+// Delete will delete all knativeservings, if clients has been successfully initialized.
 func (clients *KnativeServingAlphaClients) Delete(knativeservings []string) error {
 	deletions := []struct {
 		client interface {

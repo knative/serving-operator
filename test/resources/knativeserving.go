@@ -16,13 +16,12 @@ limitations under the License.
 
 // knativeserving.go provides methods to perform actions on the KnativeServing resource.
 
-package v1alpha1
+package resources
 
 import (
 	"context"
 	"fmt"
 	"time"
-
 
 	v1 "k8s.io/api/apps/v1"
 	va1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,8 +38,11 @@ const (
 	timeout  = 2 * time.Minute
 )
 
-func WaitForKnativeServingState(client *test.KnativeServingAlphaClients, name string, inState func(s *v1alpha1.KnativeServing) (bool, error), desc string) (*v1alpha1.KnativeServing, error) {
-	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitForKnativeServingState/%s/%s", name, desc))
+// WaitForKnativeServingState polls the status of the KnativeServing called name
+// from client every `interval` until `inState` returns `true` indicating it
+// is done, returns an error or timeout.
+func WaitForKnativeServingState(client *test.KnativeServingAlphaClients, name string, inState func(s *v1alpha1.KnativeServing) (bool, error)) (*v1alpha1.KnativeServing, error) {
+	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitForKnativeServingState/%s/%s", name, "KnativeServingIsReady"))
 	defer span.End()
 
 	var lastState *v1alpha1.KnativeServing
@@ -55,18 +57,14 @@ func WaitForKnativeServingState(client *test.KnativeServingAlphaClients, name st
 	return lastState, nil
 }
 
+// IsKnativeServingReady will check the status conditions of the KnativeServing and return true if the KnativeServing is ready.
 func IsKnativeServingReady(s *v1alpha1.KnativeServing) (bool, error) {
 	return s.Status.IsReady(), nil
 }
 
-func ListDeployment (clients *test.Clients, namespace string) (*v1.DeploymentList, error) {
-	return clients.KubeClient.Kube.AppsV1().Deployments(namespace).List(metav1.ListOptions{})
-}
-
-func DeleteDeployment(client *test.Clients, deployment v1.Deployment) error {
-	return client.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Delete(deployment.Name, &va1.DeleteOptions{})
-}
-
+// WaitForDeploymentAvailable polls the status of the deployment called name
+// from client every `interval` until `inState` returns `true` indicating it
+// is done, returns an error or timeout.
 func WaitForDeploymentAvailable(clients *test.Clients, name, namespace string, inState func(s *v1.Deployment) (bool, error)) (*v1.Deployment, error) {
 	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitForKnativeServingState/%s/%s", name,
 		"DeploymentIsAvailable"))
@@ -84,6 +82,7 @@ func WaitForDeploymentAvailable(clients *test.Clients, name, namespace string, i
 	return dep, nil
 }
 
+// IsDeploymentAvailable will check the status conditions of the deployment and return true if the deployment is available.
 func IsDeploymentAvailable(d *v1.Deployment) (bool, error) {
 	for _, dc := range d.Status.Conditions {
 		return dc.Type == "Available" && dc.Status == "True", nil

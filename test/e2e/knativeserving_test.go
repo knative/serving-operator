@@ -20,9 +20,10 @@ import (
 
 	"knative.dev/pkg/test/logstream"
 	"knative.dev/serving-operator/test"
-	"knative.dev/serving-operator/test/v1alpha1"
+	"knative.dev/serving-operator/test/resources"
 )
 
+// TestKnativeServingReady verifies whether KnativeServing is ready after the operator is installed.
 func TestKnativeServingReady(t *testing.T) {
 	t.Parallel()
 	cancel := logstream.Start(t)
@@ -36,8 +37,8 @@ func TestKnativeServingReady(t *testing.T) {
 		KnativeServing: test.ServingOperatorName,
 	}
 
-	if _, err := v1alpha1.WaitForKnativeServingState(clients.KnativeServingAlphaClient, names.KnativeServing,
-		v1alpha1.IsKnativeServingReady, "KnativeServingIsReady"); err != nil {
-		t.Fatalf("KnativeService %v failed to reach the desired state: %v", names.KnativeServing, err)
+	if _, err := resources.WaitForKnativeServingState(clients.KnativeServingAlphaClient, names.KnativeServing,
+		resources.IsKnativeServingReady); err != nil {
+		t.Fatalf("KnativeService %q failed to reach the desired state: %v", names.KnativeServing, err)
 	}
 }
