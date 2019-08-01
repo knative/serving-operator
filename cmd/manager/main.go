@@ -26,7 +26,6 @@ import (
 	"knative.dev/serving-operator/pkg/apis"
 	"knative.dev/serving-operator/pkg/reconciler"
 
-	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	"github.com/spf13/pflag"
@@ -44,10 +43,6 @@ var (
 var log = logf.Log.WithName("cmd")
 
 func main() {
-	// Add the zap logger flag set to the CLI. The flag set must
-	// be added before calling pflag.Parse().
-	pflag.CommandLine.AddFlagSet(zap.FlagSet())
-
 	// Add flags registered by imported packages (e.g. glog and
 	// controller-runtime)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -62,7 +57,7 @@ func main() {
 	// implementing the logr.Logger interface. This logger will
 	// be propagated through the whole operator, generating
 	// uniform and structured logs.
-	logf.SetLogger(zap.Logger())
+	logf.SetLogger(logf.ZapLogger(true))
 
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
