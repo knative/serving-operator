@@ -35,7 +35,7 @@ type Clients struct {
 
 // KnativeServingAlphaClients holds instances of interfaces for making requests to knativeserving clients
 type KnativeServingAlphaClients struct {
-	KnativeServings    servingv1alpha1.KnativeServingInterface
+	KnativeServings servingv1alpha1.KnativeServingInterface
 }
 
 // NewClients instantiates and returns several clientsets required for making request to the
@@ -88,7 +88,7 @@ func newKnativeServingAlphaClients(cfg *rest.Config, namespace string) (*Knative
 	}
 
 	return &KnativeServingAlphaClients{
-		KnativeServings:   cs.ServingV1alpha1().KnativeServings(namespace),
+		KnativeServings: cs.ServingV1alpha1().KnativeServings(namespace),
 	}, nil
 }
 

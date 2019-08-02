@@ -18,5 +18,5 @@ package test
 
 // ResourceNames holds names of various resources.
 type ResourceNames struct {
-	KnativeServing        string
+	KnativeServing string
 }

@@ -23,12 +23,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	va1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	va1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"github.com/pkg/errors"
 	"knative.dev/pkg/test/logging"
 	"knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	"knative.dev/serving-operator/test"
@@ -78,7 +78,7 @@ func WaitForDeploymentAvailable(clients *test.Clients, name, namespace string, i
 	})
 
 	if waitErr != nil {
-		return dep, errors.Wrapf(waitErr, "Deployment %q is not in desired status for the condition type Available," +
+		return dep, errors.Wrapf(waitErr, "Deployment %q is not in desired status for the condition type Available,"+
 			"got: %+q; want %+q", name, getDeploymentStatus(dep), "True")
 	}
 
