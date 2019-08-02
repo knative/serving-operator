@@ -24,6 +24,7 @@ import (
 	"time"
 
 	v1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	va1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -77,7 +78,8 @@ func WaitForDeploymentAvailable(clients *test.Clients, name, namespace string, i
 	})
 
 	if waitErr != nil {
-		return dep, errors.Wrapf(waitErr, "Deployment %q is not in desired state, got: %+v", name, dep)
+		return dep, errors.Wrapf(waitErr, "Deployment %q is not in desired status for the condition type Available," +
+			"got: %+q; want %+q", name, getDeploymentStatus(dep), "True")
 	}
 
 	return dep, nil
@@ -85,8 +87,14 @@ func WaitForDeploymentAvailable(clients *test.Clients, name, namespace string, i
 
 // IsDeploymentAvailable will check the status conditions of the deployment and return true if the deployment is available.
 func IsDeploymentAvailable(d *v1.Deployment) (bool, error) {
+	return getDeploymentStatus(d) == "True", nil
+}
+
+func getDeploymentStatus(d *v1.Deployment) corev1.ConditionStatus {
 	for _, dc := range d.Status.Conditions {
-		return dc.Type == "Available" && dc.Status == "True", nil
+		if dc.Type == "Available" {
+			return dc.Status
+		}
 	}
-	return false, nil
+	return "unknown"
 }

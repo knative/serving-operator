@@ -22,6 +22,6 @@ package test
 const (
 	// ServingOperatorNamespace is the default namespace for serving operator e2e tests
 	ServingOperatorNamespace = "knative-serving"
-	// ServingOperatorNamespace is the default operator name for serving operator e2e tests
+	// ServingOperatorName is the default operator name for serving operator e2e tests
 	ServingOperatorName = "knative-serving"
 )
