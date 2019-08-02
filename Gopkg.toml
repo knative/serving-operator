@@ -6,13 +6,10 @@ required = [
   "k8s.io/code-generator/cmd/client-gen",
   "k8s.io/code-generator/cmd/lister-gen",
   "k8s.io/code-generator/cmd/informer-gen",
-  "k8s.io/kube-openapi/cmd/openapi-gen",
-  "k8s.io/gengo/args",
   "knative.dev/pkg/codegen/cmd/injection-gen",
   "knative.dev/caching/pkg/apis/caching/v1alpha1",
   "knative.dev/test-infra/scripts",
   "knative.dev/test-infra/tools/dep-collector",
-  "sigs.k8s.io/controller-tools/pkg/crd/generator",
 ]
 
 [[override]]
@@ -51,10 +48,6 @@ required = [
   name = "k8s.io/client-go"
   # revision for tag "kubernetes-1.13.1"
   revision = "8d9ed539ba3134352c586810e749e58df4e94e4f"
-
-[[override]]
-  name = "github.com/coreos/prometheus-operator"
-  version = "=v0.29.0"
 
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
