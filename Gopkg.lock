@@ -1177,7 +1177,7 @@
     "pkg/apis/caching/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "caf670d2528971b8e0d71860f6875c15ffd32382"
+  revision = "9dbdb2f91c257e4b41c3e387959b32cce588daf4"
 
 [[projects]]
   branch = "master"
