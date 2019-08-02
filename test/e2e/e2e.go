@@ -20,13 +20,18 @@ import (
 	// Apparently just importing it is enough. @_@ side effects @_@.
 	// https://github.com/kubernetes/client-go/issues/242
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	pkgTest "knative.dev/pkg/test"
+	"knative.dev/serving-operator/test/resources"
 	"knative.dev/serving-operator/test"
 )
 
 // Setup creates the client objects needed in the e2e tests.
 func Setup(t *testing.T) *test.Clients {
-	return SetupWithNamespace(t, test.ServingOperatorNamespace)
+	return SetupWithNamespace(t, "default")
 }
 
 // SetupWithNamespace creates the client objects needed in the e2e tests under the specified namespace.
@@ -39,4 +44,74 @@ func SetupWithNamespace(t *testing.T, namespace string) *test.Clients {
 		t.Fatalf("Couldn't initialize clients: %v", err)
 	}
 	return clients
+}
+
+// CreateNamespace creates a namespace to run the integration tests.
+func CreateNamespace(t *testing.T, clients *test.Clients, namespace string) {
+	_, err := clients.KubeClient.Kube.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+	if err != nil && apierrs.IsNotFound(err) {
+		// Create the namespace if not available
+		if _, err = clients.KubeClient.Kube.CoreV1().Namespaces().Create(&corev1.Namespace{ObjectMeta:
+			metav1.ObjectMeta{Name: namespace}}); err != nil {
+			t.Fatalf("Failed to create the namespace %s: %v", namespace, err)
+		}
+	}
+}
+
+// TestKnativeServingCreation creates a KnativeServing to see if it can reach the READY status.
+func TestKnativeServingCreation(t *testing.T, clients *test.Clients, names test.ResourceNames) {
+	if _, err := resources.CreateKnativeServingReady(t, clients.KnativeServingAlphaClient, names,
+		resources.IsKnativeServingReady); err != nil {
+		t.Fatalf("KnativeService %q failed to get to the READY status: %v", names.KnativeServing, err)
+	}
+}
+
+// TestDeploymentRecreation verify whether all the deployments for knative serving are able to recreate, when they are deleted.
+func TestDeploymentRecreation(t *testing.T, clients *test.Clients, names test.ResourceNames) *v1.DeploymentList {
+	dpListSave, err := clients.KubeClient.Kube.AppsV1().Deployments(names.Namespace).List(metav1.ListOptions{})
+	if err != nil {
+		t.Fatalf("Failed to get any deployment under the namespace %q: %v",
+			test.ServingOperatorNamespace, err)
+	}
+	if len(dpListSave.Items) == 0 {
+		t.Fatalf("No deployment under the namespace %q was found",
+			test.ServingOperatorNamespace)
+	}
+	// Delete the deployments one by one to see if they will be recreated.
+	for _, deployment := range dpListSave.Items {
+		if err := clients.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Delete(deployment.Name,
+			&metav1.DeleteOptions{}); err != nil {
+			t.Fatalf("Failed to delete deployment %s/%s: %v", deployment.Namespace, deployment.Name, err)
+		}
+		if _, err = resources.WaitForDeployment(clients, deployment.Name, deployment.Namespace,
+			resources.IsDeploymentAvailable, "DeploymentIsAvailable"); err != nil {
+			t.Fatalf("The deployment %s/%s failed to reach the desired state: %v",
+				deployment.Namespace, deployment.Name, err)
+		}
+		if _, err := resources.WaitForKnativeServingState(clients.KnativeServingAlphaClient, test.ServingOperatorName,
+			resources.IsKnativeServingReady); err != nil {
+			t.Fatalf("KnativeService %q failed to reach the desired state: %v", test.ServingOperatorName, err)
+		}
+		t.Logf("The deployment %s/%s reached the desired state.", deployment.Namespace, deployment.Name)
+	}
+	return dpListSave
+}
+
+// TestKnativeServingDeletion deletes tha KnativeServing to see if all the deployments will be removed.
+func TestKnativeServingDeletion(t *testing.T, clients *test.Clients, names test.ResourceNames, dpListSave *v1.DeploymentList) {
+	if err := clients.KnativeServingAlphaClient.KnativeServings.Delete(names.KnativeServing, nil); err != nil {
+		t.Fatalf("KnativeService %q failed to delete: %v", names.KnativeServing, err)
+	}
+	if _, err := resources.WaitForKnativeServingState(clients.KnativeServingAlphaClient, names.KnativeServing,
+		resources.IsKnativeServingDeleted); err != nil {
+		t.Fatalf("KnativeService %q failed to be deleted: %v", names.KnativeServing, err)
+	}
+	for _, deployment := range dpListSave.Items {
+		if _, err := resources.WaitForDeployment(clients, deployment.Name, deployment.Namespace,
+			resources.IsDeploymentDeleted, "DeploymentIsDeleted"); err != nil {
+			t.Fatalf("The deployment %s/%s failed to be deleted: %v",
+				deployment.Namespace, deployment.Name, err)
+		}
+		t.Logf("The deployment %s/%s has been deleted.", deployment.Namespace, deployment.Name)
+	}
 }
