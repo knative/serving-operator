@@ -12,11 +12,12 @@ import (
 )
 
 type updateGatewayTest struct {
-	name           string
-	gatewayName    string
-	in             map[string]string
-	ingressGateway servingv1alpha1.KnativeIngressGateway
-	expected       map[string]string
+	name                  string
+	gatewayName           string
+	in                    map[string]string
+	knativeIngressGateway servingv1alpha1.IstioGatewayOverride
+	clusterLocalGateway   servingv1alpha1.IstioGatewayOverride
+	expected              map[string]string
 }
 
 var updateGatewayTests = []updateGatewayTest{
@@ -26,13 +27,38 @@ var updateGatewayTests = []updateGatewayTest{
 		in: map[string]string{
 			"istio": "old-istio",
 		},
-		ingressGateway: servingv1alpha1.KnativeIngressGateway{
+		knativeIngressGateway: servingv1alpha1.IstioGatewayOverride{
 			Selector: map[string]string{
-				"istio": "new-istio",
+				"istio": "knative-ingress",
+			},
+		},
+		clusterLocalGateway: servingv1alpha1.IstioGatewayOverride{
+			Selector: map[string]string{
+				"istio": "cluster-local",
 			},
 		},
 		expected: map[string]string{
-			"istio": "new-istio",
+			"istio": "knative-ingress",
+		},
+	},
+	{
+		name:        "UpdatesClusterLocalGateway",
+		gatewayName: "cluster-local-gateway",
+		in: map[string]string{
+			"istio": "old-istio",
+		},
+		knativeIngressGateway: servingv1alpha1.IstioGatewayOverride{
+			Selector: map[string]string{
+				"istio": "knative-ingress",
+			},
+		},
+		clusterLocalGateway: servingv1alpha1.IstioGatewayOverride{
+			Selector: map[string]string{
+				"istio": "cluster-local",
+			},
+		},
+		expected: map[string]string{
+			"istio": "cluster-local",
 		},
 	},
 	{
@@ -41,9 +67,14 @@ var updateGatewayTests = []updateGatewayTest{
 		in: map[string]string{
 			"istio": "old-istio",
 		},
-		ingressGateway: servingv1alpha1.KnativeIngressGateway{
+		knativeIngressGateway: servingv1alpha1.IstioGatewayOverride{
 			Selector: map[string]string{
-				"istio": "new-istio",
+				"istio": "knative-ingress",
+			},
+		},
+		clusterLocalGateway: servingv1alpha1.IstioGatewayOverride{
+			Selector: map[string]string{
+				"istio": "cluster-local",
 			},
 		},
 		expected: map[string]string{
@@ -67,7 +98,8 @@ func runGatewayTransformTest(t *testing.T, tt *updateGatewayTest) {
 	unstructedGateway := makeUnstructuredGateway(t, tt, testScheme)
 	instance := &servingv1alpha1.KnativeServing{
 		Spec: servingv1alpha1.KnativeServingSpec{
-			KnativeIngressGateway: tt.ingressGateway,
+			KnativeIngressGateway: tt.knativeIngressGateway,
+			ClusterLocalGateway:   tt.clusterLocalGateway,
 		},
 	}
 	gatewayTransform := GatewayTransform(testScheme, instance, log)
