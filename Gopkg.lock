@@ -445,9 +445,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8ab1e86d749c43948e91318ee9f22f3efe422451ede826e9ad7bd7ffcd686367"
+  digest = "1:3b186af714f9b47338502e14684509080f09b1b14efbcf1aff2cc4380235318c"
   name = "github.com/openshift/api"
-  packages = ["config/v1"]
+  packages = [
+    "config/v1",
+    "route/v1",
+  ]
   pruneopts = "NUT"
   revision = "f15120709e0ac8de84e11616d8f0cac54e8f52e3"
 
@@ -1277,6 +1280,7 @@
     "github.com/go-openapi/spec",
     "github.com/jcrossley3/manifestival",
     "github.com/openshift/api/config/v1",
+    "github.com/openshift/api/route/v1",
     "github.com/operator-framework/operator-sdk/pkg/leader",
     "github.com/operator-framework/operator-sdk/pkg/log/zap",
     "github.com/operator-framework/operator-sdk/pkg/metrics",

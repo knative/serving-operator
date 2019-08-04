@@ -24,6 +24,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	configv1 "github.com/openshift/api/config/v1"
+	routev1 "github.com/openshift/api/route/v1"
+
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 
@@ -54,7 +56,7 @@ const (
 
 var (
 	extension = common.Extension{
-		Transformers: []mf.Transformer{ingress, egress, deploymentController},
+		Transformers: []mf.Transformer{ingress, egress, deploymentController, kibana},
 		PreInstalls:  []common.Extender{ensureMaistra, caBundleConfigMap, addUserToSCC},
 		PostInstalls: []common.Extender{ensureOpenshiftIngress},
 	}
@@ -74,9 +76,15 @@ func Configure(c client.Client, kc kubernetes.Interface, dc dynamic.Interface, s
 		return nil, nil
 	}
 
-	// Register scheme
+	// Register config v1 scheme
 	if err := configv1.Install(s); err != nil {
-		log.Error(err, "Unable to register scheme")
+		log.Error(err, "Unable to register configv1 scheme")
+		return nil, err
+	}
+
+	// Register route v1 scheme
+	if err := routev1.Install(s); err != nil {
+		log.Error(err, "Unable to register routev1 scheme")
 		return nil, err
 	}
 
@@ -226,6 +234,28 @@ func ingress(u *unstructured.Unstructured) error {
 	return nil
 }
 
+func kibana(u *unstructured.Unstructured) error {
+	if u.GetKind() == "ConfigMap" && u.GetName() == "config-observability" {
+		// attempt to locate kibana route which is available if openshift-logging has been configured
+		route := &routev1.Route{}
+		if err := api.Get(context.TODO(), types.NamespacedName{Name: "kibana", Namespace: "openshift-logging"}, route); err != nil {
+			if !meta.IsNoMatchError(err) {
+				return err
+			}
+			return nil
+		}
+		// retreive host from kibana route, construct a concrete logUrl template with actual host name, update config-observability
+		if len(route.Status.Ingress) > 0 {
+			host := route.Status.Ingress[0].Host
+			if len(host) > 0 {
+				url := "https://" + host + "/app/kibana#/discover?_a=(index:.all,query:'kubernetes.labels.serving_knative_dev%5C%2FrevisionUID:${REVISION_UID}')"
+				data := map[string]string{"logging.revision-url-template": url}
+				common.UpdateConfigMap(u, data, log)
+			}
+		}
+	}
+	return nil
+}
 func egress(u *unstructured.Unstructured) error {
 	if u.GetKind() == "ConfigMap" && u.GetName() == "config-network" {
 		networkConfig := &configv1.Network{}
