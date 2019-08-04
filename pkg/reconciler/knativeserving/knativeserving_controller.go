@@ -142,19 +142,12 @@ func (r *ReconcileKnativeServing) Reconcile(request reconcile.Request) (reconcil
 	instance := &servingv1alpha1.KnativeServing{}
 	if err := r.client.Get(context.TODO(), request.NamespacedName, instance); err != nil {
 		if errors.IsNotFound(err) {
-			if isInteresting(request) {
-				r.config.DeleteAll()
-			}
+			r.config.DeleteAll()
 			reqLogger.V(1).Info("No KnativeServing")
 			return reconcile.Result{}, nil
 		}
 		reqLogger.Error(err, "Error getting KnativeServing")
 		return reconcile.Result{}, err
-	}
-
-	if !isInteresting(request) {
-		reqLogger.V(1).Info("Not interesting KnativeServing", "request", request.String)
-		return reconcile.Result{}, r.ignore(instance)
 	}
 
 	stages := []func(*servingv1alpha1.KnativeServing) error{
@@ -201,9 +194,6 @@ func (r *ReconcileKnativeServing) updateStatus(instance *servingv1alpha1.Knative
 // Apply the embedded resources
 func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServing) error {
 	log.V(1).Info("install", "status", instance.Status)
-	if instance.Status.IsDeploying() {
-		return nil
-	}
 	defer r.updateStatus(instance)
 
 	extensions, err := platforms.Extend(r.client, r.kubeClientSet, r.dynamicClientSet, r.scheme)
@@ -297,12 +287,6 @@ func (r *ReconcileKnativeServing) deleteObsoleteResources(instance *servingv1alp
 		return err
 	}
 	return nil
-}
-
-// Because it's effectively cluster-scoped, we only care about a
-// single, named resource: knative-serving/knative-serving
-func isInteresting(request reconcile.Request) bool {
-	return request.Namespace == operand && request.Name == operand
 }
 
 // Reflect our ignorance in the KnativeServing status

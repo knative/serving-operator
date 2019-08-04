@@ -290,6 +290,14 @@
   version = "v0.3.7"
 
 [[projects]]
+  branch = "master"
+  digest = "1:aa0434674a14402891f31f393b4dd53792bc67eee05158748d999096a8826ed3"
+  name = "github.com/influxdata/tdigest"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "bf2b5ad3c0a925c44a0d2842c5d8182113cd248e"
+
+[[projects]]
   digest = "1:1f2aebae7e7c856562355ec0198d8ca2fa222fb05e5b1b66632a1fce39631885"
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
@@ -313,14 +321,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1bc2182db9fca862cd2b3a028aad73e473705be1c3f2454429a37b8626e16eda"
-  name = "github.com/knative/test-infra"
+  digest = "1:927762c6729b4e72957ba3310e485ed09cf8451c5a637a52fd016a9fe09e7936"
+  name = "github.com/mailru/easyjson"
   packages = [
-    "scripts",
-    "tools/dep-collector",
+    "buffer",
+    "jlexer",
+    "jwriter",
   ]
-  pruneopts = "UT"
-  revision = "4631314ecc6586c84223b67ecb78dc48d0bdb7bf"
+  pruneopts = "NUT"
+  revision = "b2ccc519800e761ac8000b95e5d57c80a897ff9e"
 
 [[projects]]
   digest = "1:56dbf15e091bf7926cb33a57cb6bdfc658fc6d3498d2f76f10a97ce7856f1fde"
@@ -454,7 +463,8 @@
     "semver",
   ]
   pruneopts = "NUT"
-  revision = "4bbc89b6501cca7dd6b5557d78d70c8d2c6e8b97"
+  revision = "438578804ca6f31be148c27683afc419ce47c06e"
+  version = "v1.3.0"
 
 [[projects]]
   digest = "1:d917313f309bda80d27274d53985bc65651f81a5b66b820749ac7f8ef061fd04"
@@ -471,6 +481,14 @@
   pruneopts = "NUT"
   revision = "298182f68c66c05229eb03ac171abe6e309ee79a"
   version = "v1.0.3"
+
+[[projects]]
+  branch = "master"
+  digest = "1:25bec9bd4bd740f94fcbd977bff20ca1b43a658645577ca8a705e639aba1eea4"
+  name = "github.com/tsenart/vegeta"
+  packages = ["lib"]
+  pruneopts = "NUT"
+  revision = "b5f4fca92137581c0f118ba6b106ba0cb3a2c84e"
 
 [[projects]]
   digest = "1:0e3fd52087079d1289983e4fef32268ca965973f5370b69204e2934185527baa"
@@ -1129,6 +1147,17 @@
   pruneopts = "NUT"
   revision = "33be087ad058f99c78e067996202b60230737e49"
 
+[[projects]]
+  branch = "master"
+  digest = "1:68050b4ce26531655bac0f6e109d04eb0a4550ead73e320119ed3c628ced4a0a"
+  name = "knative.dev/test-infra"
+  packages = [
+    "scripts",
+    "tools/dep-collector",
+  ]
+  pruneopts = "UT"
+  revision = "17f2331e80ad0d3e170ea2bae45c3922744f83af"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -1146,8 +1175,6 @@
     "github.com/google/go-cmp/cmp/cmpopts",
     "github.com/google/uuid",
     "github.com/gorilla/websocket",
-    "github.com/knative/test-infra/scripts",
-    "github.com/knative/test-infra/tools/dep-collector",
     "github.com/markbates/inflect",
     "github.com/mattbaird/jsonpatch",
     "github.com/openzipkin/zipkin-go",
@@ -1158,6 +1185,7 @@
     "github.com/pkg/errors",
     "github.com/rogpeppe/go-internal/semver",
     "github.com/spf13/pflag",
+    "github.com/tsenart/vegeta/lib",
     "go.opencensus.io/plugin/ochttp",
     "go.opencensus.io/plugin/ochttp/propagation/b3",
     "go.opencensus.io/stats",
@@ -1234,6 +1262,8 @@
     "k8s.io/gengo/namer",
     "k8s.io/gengo/types",
     "k8s.io/klog",
+    "knative.dev/test-infra/scripts",
+    "knative.dev/test-infra/tools/dep-collector",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

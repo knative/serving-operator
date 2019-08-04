@@ -3,30 +3,34 @@
 Knative Serving Operator is a project aiming to deploy and manage Knative
 Serving in an automated way.
 
-The following steps will install [Knative Serving](https://github.com/knative/serving)
-and configure it appropriately for your cluster in the `knative-serving`
-namespace. Please make sure the [prerequisites](#Prerequisites) are installed first.
+The following steps will install
+[Knative Serving](https://github.com/knative/serving) and configure it
+appropriately for your cluster in the `knative-serving` namespace. Please make
+sure the [prerequisites](#Prerequisites) are installed first.
 
-1. Install the [KnativeServing custom resource](#the-knativeserving-custom-resource)
-    ```
-    kubectl apply -f config/crds/serving_v1alpha1_knativeserving_crd.yaml
-    ```
+1. Install the
+   [KnativeServing custom resource](#the-knativeserving-custom-resource)
+
+   ```
+   kubectl apply -f config/crds/serving_v1alpha1_knativeserving_crd.yaml
+   ```
 
 2. Install the operator
 
-    To install from source code, run the command:
+   To install from source code, run the command:
 
-    ```
-    ko apply -f config/
-    ```
+   ```
+   ko apply -f config/
+   ```
 
-    To install from an existing image, change the value of `image` into
-    `quay.io/openshift-knative/knative-serving-operator:v0.6.0` or any other valid
-    operator image in the file config/operator.yaml, and run the following command:
+   To install from an existing image, change the value of `image` into
+   `quay.io/openshift-knative/knative-serving-operator:v0.6.0` or any other
+   valid operator image in the file config/operator.yaml, and run the following
+   command:
 
-    ```
-    kubectl apply -f config/
-    ```
+   ```
+   kubectl apply -f config/
+   ```
 
 Please refer to [Building the Operator Image](#building-the-operator-image) to
 build your own image.
@@ -121,90 +125,3 @@ output of the above `ko publish` command.
 The image should match what's in [config/operator.yaml](config/operator.yaml)
 and the `$VERSION` should match [version.go](version/version.go) and correspond
 to the contents of [config/resources](config/resources/).
-
-## Operator Framework
-
-The remaining sections only apply if you wish to create the metadata required by
-the
-[Operator Lifecycle Manager](https://github.com/operator-framework/operator-lifecycle-manager)
-
-### Create a ClusterServiceVersion
-
-The OLM requires special manifests that the operator-sdk can help generate.
-
-Create a `ClusterServiceVersion` for the version that corresponds to the
-manifest[s] beneath [config/resources](config/resources/). The
-`$PREVIOUS_VERSION` is the CSV yours will replace.
-
-```
-operator-sdk olm-catalog gen-csv \
-    --csv-version $VERSION \
-    --from-version $PREVIOUS_VERSION \
-    --update-crds
-```
-
-Most values should carry over, but if you're starting from scratch, some
-post-editing of the file it generates may be required:
-
-- Add fields to address any warnings it reports
-- Verify `description` and `displayName` fields for all owned CRD's
-
-### Create a CatalogSource
-
-The [catalog.sh](hack/catalog.sh) script should yield a valid `ConfigMap` and
-`CatalogSource` comprised of the `ClusterServiceVersions`,
-`CustomResourceDefinitions`, and package manifest in the bundle beneath
-[config/olm-catalog](config/olm-catalog/). You should apply its output in the
-OLM namespace:
-
-```
-OLM_NS=$(kubectl get deploy --all-namespaces | grep olm-operator | awk '{print $1}')
-./hack/catalog.sh | kubectl apply -n $OLM_NS -f -
-```
-
-### Using OLM on Minikube
-
-You can test the operator using
-[minikube](https://kubernetes.io/docs/setup/minikube/) after installing OLM on
-it:
-
-```
-minikube start
-kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.10.0/crds.yaml
-kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.10.0/olm.yaml
-```
-
-Once all the pods in the `olm` namespace are running, install the operator like
-so:
-
-```
-./hack/catalog.sh | kubectl apply -n $OLM_NS -f -
-```
-
-Interacting with OLM is possible using `kubectl` but the OKD console is
-"friendlier". If you have docker installed, use
-[this script](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/scripts/run_console_local.sh)
-to fire it up on <http://localhost:9000>.
-
-#### Using kubectl
-
-To install Knative Serving into the `knative-serving` namespace, simply
-subscribe to the operator by running this script:
-
-```
-OLM_NS=$(kubectl get og --all-namespaces | grep olm-operators | awk '{print $1}')
-OPERATOR_NS=$(kubectl get og --all-namespaces | grep global-operators | awk '{print $1}')
-cat <<-EOF | kubectl apply -f -
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: knative-serving-operator-sub
-  generateName: knative-serving-operator-
-  namespace: $OPERATOR_NS
-spec:
-  source: knative-serving-operator
-  sourceNamespace: $OLM_NS
-  name: knative-serving-operator
-  channel: alpha
-EOF
-```
