@@ -45,9 +45,9 @@ type Registry struct {
 	Override map[string]string `json:"override,omitempty"`
 }
 
-// KnativeIngressGateway override the knative-ingress-gateway
-type KnativeIngressGateway struct {
-	// A map of values to replace the "selector" values in the knative-ingress-gateway.
+// IstioGatewayOverride override the knative-ingress-gateway and cluster-local-gateway
+type IstioGatewayOverride struct {
+	// A map of values to replace the "selector" values in the knative-ingress-gateway and cluster-local-gateway
 	Selector map[string]string `json:"selector,omitempty"`
 }
 
@@ -68,7 +68,10 @@ type KnativeServingSpec struct {
 	Registry Registry `json:"registry,omitempty"`
 
 	// A means to override the knative-ingress-gateway
-	KnativeIngressGateway KnativeIngressGateway `json:"knative-ingress-gateway,omitempty"`
+	KnativeIngressGateway IstioGatewayOverride `json:"knative-ingress-gateway,omitempty"`
+
+	// A means to override the cluster-local-gateway
+	ClusterLocalGateway IstioGatewayOverride `json:"cluster-local-gateway,omitempty"`
 }
 
 // KnativeServingStatus defines the observed state of KnativeServing

@@ -60,6 +60,15 @@ spec:
                   type: object
                   additionalProperties:
                     type: string
+            cluster-local-gateway:
+              description: A means to override the cluster-local-gateway
+              type: object
+              properties:
+                selector:
+                  description: The selector for the ingress-gateway.
+                  type: object
+                  additionalProperties:
+                    type: string
             registry:
               description: A means to override the corresponding deployment images in the upstream.
                 This affects both apps/v1.Deployment and caching.internal.knative.dev/v1alpha1.Image.
