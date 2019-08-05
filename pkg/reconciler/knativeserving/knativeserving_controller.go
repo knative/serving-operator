@@ -221,12 +221,70 @@ func (r *ReconcileKnativeServing) executeInstall(extensions common.Extensions, i
 		return err
 	}
 
-	err = r.config.ApplyAll()
+	err = r.applyEnabledResources(instance)
 	if err != nil {
 		return err
 	}
 
 	return extensions.PostInstall(instance)
+}
+
+func (r *ReconcileKnativeServing) applyEnabledResources(instance *servingv1alpha1.KnativeServing) error {
+	for _, spec := range r.config.Resources {
+		if err := r.applyOrDeleteSpec(spec, instance); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (r *ReconcileKnativeServing) applyOrDeleteSpec(spec unstructured.Unstructured, instance *servingv1alpha1.KnativeServing) error {
+	if !shouldApplySpec(spec, instance) {
+		return r.deleteSpec(spec)
+	}
+	return r.applySpec(spec)
+}
+
+func (r *ReconcileKnativeServing) deleteSpec(spec unstructured.Unstructured) error {
+	if err := r.config.Delete(&spec); err != nil {
+		log.Error(err, "Error deleting spec", "spec", spec)
+		return err
+	}
+	return nil
+}
+
+func (r *ReconcileKnativeServing) applySpec(spec unstructured.Unstructured) error {
+	if err := r.config.Apply(&spec); err != nil {
+		log.Error(err, "Error applying spec", "spec", spec)
+		return err
+	}
+	return nil
+}
+
+func shouldApplySpec(spec unstructured.Unstructured, instance *servingv1alpha1.KnativeServing) bool {
+	if instance.Spec.DisabledComponents.NetworkingIstio && isNetworkingIstioComponent(spec) {
+		return false
+	}
+	if instance.Spec.DisabledComponents.Certmanager && isCertmanagerComponent(spec) {
+		return false
+	}
+	return true
+}
+
+func isCertmanagerComponent(spec unstructured.Unstructured) bool {
+	return hasLabel(spec, "networking.knative.dev/certificate-provider", "cert-manager")
+}
+
+func isNetworkingIstioComponent(spec unstructured.Unstructured) bool {
+	return hasLabel(spec, "networking.knative.dev/ingress-provider", "istio")
+}
+
+func hasLabel(spec unstructured.Unstructured, labelNameToMatch string, labelValueToMatch string) bool {
+	for labelName, labelValue := range spec.GetLabels() {
+		if labelName == labelNameToMatch && labelValue == labelValueToMatch {
+			return true
+		}
+	}
+	return false
 }
 
 // Check for all deployments available
@@ -243,7 +301,7 @@ func (r *ReconcileKnativeServing) checkDeployments(instance *servingv1alpha1.Kna
 	}
 	deployment := &appsv1.Deployment{}
 	for _, u := range r.config.Resources {
-		if u.GetKind() == "Deployment" {
+		if u.GetKind() == "Deployment" && shouldApplySpec(u, instance) {
 			key := client.ObjectKey{Namespace: u.GetNamespace(), Name: u.GetName()}
 			if err := r.client.Get(context.TODO(), key, deployment); err != nil {
 				instance.Status.MarkDeploymentsNotReady()

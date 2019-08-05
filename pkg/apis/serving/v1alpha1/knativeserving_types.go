@@ -51,6 +51,15 @@ type IstioGatewayOverride struct {
 	Selector map[string]string `json:"selector,omitempty"`
 }
 
+// DisabledComponents skips certain sections of knative serving
+type DisabledComponents struct {
+	// The ability to disable the certificate deployment and related assets.
+	Certmanager bool `json:"certmanager,omitempty"`
+
+	// The ability to disable the networking-istio deployment.
+	NetworkingIstio bool `json:"networking-istio,omitempty"`
+}
+
 // KnativeServingSpec defines the desired state of KnativeServing
 // +k8s:openapi-gen=true
 type KnativeServingSpec struct {
@@ -72,6 +81,9 @@ type KnativeServingSpec struct {
 
 	// A means to override the cluster-local-gateway
 	ClusterLocalGateway IstioGatewayOverride `json:"cluster-local-gateway,omitempty"`
+
+	// A means to skip specific sections in the installation
+	DisabledComponents DisabledComponents `json:"disabled-components,omitempty"`
 }
 
 // KnativeServingStatus defines the observed state of KnativeServing

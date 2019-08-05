@@ -83,6 +83,16 @@ spec:
                   type: object
                   additionalProperties:
                     type: string
+            disabled-components:
+              description: A means to skip specific sections in the installation
+              type: object
+              properties:
+                certmanager:
+                  type: boolean
+                  description: The ability to disable the certificate deployment and related assets.
+                networking-istio:
+                  type: boolean
+                  description: The ability to disable the networking-istio deployment.
           type: object
         status:
           description: Status defines the observed state of KnativeServing
