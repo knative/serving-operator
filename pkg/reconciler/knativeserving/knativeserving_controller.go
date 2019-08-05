@@ -201,16 +201,8 @@ func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServi
 		return err
 	}
 
-	err = r.config.Transform(extensions.Transform(r.scheme, instance)...)
-	if err == nil {
-		err = extensions.PreInstall(instance)
-		if err == nil {
-			err = r.config.ApplyAll()
-			if err == nil {
-				err = extensions.PostInstall(instance)
-			}
-		}
-	}
+	err = r.executeInstall(extensions, instance)
+
 	if err != nil {
 		instance.Status.MarkInstallFailed(err.Error())
 		return err
@@ -221,6 +213,25 @@ func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServi
 	log.Info("Install succeeded", "version", version.Version)
 	instance.Status.MarkInstallSucceeded()
 	return nil
+}
+
+func (r *ReconcileKnativeServing) executeInstall(extensions common.Extensions, instance *servingv1alpha1.KnativeServing) error {
+	err := r.config.Transform(extensions.Transform(r.scheme, instance)...)
+	if err != nil {
+		return err
+	}
+
+	err = extensions.PreInstall(instance)
+	if err != nil {
+		return err
+	}
+
+	err = r.config.ApplyAll()
+	if err != nil {
+		return err
+	}
+
+	return extensions.PostInstall(instance)
 }
 
 // Check for all deployments available
@@ -244,9 +255,11 @@ func (r *ReconcileKnativeServing) checkDeployments(instance *servingv1alpha1.Kna
 				if errors.IsNotFound(err) {
 					return nil
 				}
+				log.Error(err, "Error fetching deployment", "key", key)
 				return err
 			}
 			if !available(deployment) {
+				log.V(1).Info("Depolyment not ready", "deployment", deployment)
 				instance.Status.MarkDeploymentsNotReady()
 				return nil
 			}
