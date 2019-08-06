@@ -78,9 +78,9 @@ strictly required but does provide some handy tooling.
 
 ## The `KnativeServing` Custom Resource
 
-The installation of Knative Serving is triggered by the creation of [a
-`KnativeServing` custom resource
-(CR)](config/crds/serving_v1alpha1_knativeserving_cr.yaml). The
+The installation of Knative Serving is triggered by the creation of a
+`KnativeServing` custom resource (CR) as defined by [this
+CRD](config/crds/serving_v1alpha1_knativeserving_crd.yaml). The
 operator will deploy Knative Serving in the same namespace containing
 the `KnativeServing` CR, and this CR will trigger the installation,
 reconfiguration, or removal of the knative serving resources.
