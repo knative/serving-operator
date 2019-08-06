@@ -35,9 +35,24 @@ sure the [prerequisites](#Prerequisites) are installed first.
 3. Install the
    [KnativeServing custom resource](#the-knativeserving-custom-resource)
 
-   ```
-   kubectl apply -f config/crds/serving_v1alpha1_knativeserving_cr.yaml
-   ```
+```
+cat <<-EOF | kubectl apply -f -
+apiVersion: serving.knative.dev/v1alpha1
+kind: KnativeServing
+metadata:
+  name: knative-serving
+spec:
+  config:
+    defaults:
+      revision-timeout-seconds: "300"  # 5 minutes
+    autoscaler:
+      stable-window: "60s"
+    deployment:
+      registriesSkippingTagResolving: "ko.local,dev.local"
+    logging:
+      loglevel.controller: "debug"
+EOF
+```
 
 Please refer to [Building the Operator Image](#building-the-operator-image) to
 build your own image.
