@@ -259,7 +259,7 @@ func (r *ReconcileKnativeServing) checkDeployments(instance *servingv1alpha1.Kna
 				return err
 			}
 			if !available(deployment) {
-				log.V(1).Info("Depolyment not ready", "deployment", deployment)
+				log.V(1).Info("Deployment not ready", "deployment", deployment)
 				instance.Status.MarkDeploymentsNotReady()
 				return nil
 			}
