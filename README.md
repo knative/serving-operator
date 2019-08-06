@@ -9,7 +9,7 @@ appropriately for your cluster in the `knative-serving` namespace. Please make
 sure the [prerequisites](#Prerequisites) are installed first.
 
 1. Install the
-   [KnativeServing custom resource](#the-knativeserving-custom-resource)
+   [KnativeServing CRD](config/crds/serving_v1alpha1_knativeserving_crd.yaml)
 
    ```
    kubectl apply -f config/crds/serving_v1alpha1_knativeserving_crd.yaml
@@ -32,11 +32,15 @@ sure the [prerequisites](#Prerequisites) are installed first.
    kubectl apply -f config/
    ```
 
+3. Install the
+   [KnativeServing custom resource](#the-knativeserving-custom-resource)
+
+   ```
+   kubectl apply -f config/crds/serving_v1alpha1_knativeserving_cr.yaml
+   ```
+
 Please refer to [Building the Operator Image](#building-the-operator-image) to
 build your own image.
-
-To be clear, the operator will be deployed in the `default` namespace, and then
-it will install Knative Serving in the `knative-serving` namespace.
 
 ## Prerequisites
 
@@ -59,14 +63,12 @@ strictly required but does provide some handy tooling.
 
 ## The `KnativeServing` Custom Resource
 
-The installation of Knative Serving is triggered by the creation of
-[a `KnativeServing` custom resource](config/crds/serving_v1alpha1_knativeserving_cr.yaml).
-When it starts, the operator will _automatically_ create one of these in the
-`knative-serving` namespace if it doesn't already exist.
-
-The operator will ignore all other `KnativeServing` resources. Only the one
-named `knative-serving` in the `knative-serving` namespace will trigger the
-installation, reconfiguration, or removal of the knative serving resources.
+The installation of Knative Serving is triggered by the creation of [a
+`KnativeServing` custom resource
+(CR)](config/crds/serving_v1alpha1_knativeserving_cr.yaml). The
+operator will deploy Knative Serving in the same namespace containing
+the `KnativeServing` CR, and this CR will trigger the installation,
+reconfiguration, or removal of the knative serving resources.
 
 The optional `spec.config` field can be used to set the corresponding entries in
 the Knative Serving ConfigMaps. Conditions for a successful install and
@@ -84,7 +86,7 @@ kubectl get ks -oyaml
 To uninstall Knative Serving, simply delete the `KnativeServing` resource.
 
 ```
-kubectl delete ks -n knative-serving --all
+kubectl delete ks --all
 ```
 
 ## Development
