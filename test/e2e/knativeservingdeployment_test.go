@@ -35,10 +35,6 @@ func TestKnativeServingDeploymentRecreationReady(t *testing.T) {
 		t.Fatalf("Failed to get any deployment under the namespace %q: %v",
 			test.ServingOperatorNamespace, err)
 	}
-	if len(dpList.Items) == 0 {
-		t.Fatalf("No deployment under the namespace %q was found",
-			test.ServingOperatorNamespace)
-	}
 	// Delete the deployments one by one to see if they will be recreated.
 	for _, deployment := range dpList.Items {
 		if err := clients.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Delete(deployment.Name,
