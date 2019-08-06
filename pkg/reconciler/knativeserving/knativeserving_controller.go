@@ -18,7 +18,6 @@ package knativeserving
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -46,10 +45,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-)
-
-const (
-	operand = "knative-serving"
 )
 
 var (
@@ -126,7 +121,7 @@ func (r *ReconcileKnativeServing) InjectClient(c client.Client) error {
 
 	r.kubeClientSet = kubeclient.Get(ctx)
 	r.dynamicClientSet = dynamicclient.Get(ctx)
-	return r.ensureKnativeServing()
+	return nil
 }
 
 // Reconcile reads that state of the cluster for a KnativeServing object and makes changes based on the state read
@@ -300,38 +295,4 @@ func (r *ReconcileKnativeServing) deleteObsoleteResources(instance *servingv1alp
 		return err
 	}
 	return nil
-}
-
-// Reflect our ignorance in the KnativeServing status
-func (r *ReconcileKnativeServing) ignore(instance *servingv1alpha1.KnativeServing) (err error) {
-	err = r.initStatus(instance)
-	if err == nil {
-		msg := fmt.Sprintf("The only KnativeServing resource that matters is %s/%s", operand, operand)
-		instance.Status.MarkIgnored(msg)
-		err = r.updateStatus(instance)
-	}
-	return
-}
-
-// If we can't find knative-serving/knative-serving, create it
-func (r *ReconcileKnativeServing) ensureKnativeServing() (err error) {
-	koDataDir := os.Getenv("KO_DATA_PATH")
-	const path = "serving_v1alpha1_knativeserving_cr.yaml"
-	instance := &servingv1alpha1.KnativeServing{}
-	key := client.ObjectKey{Namespace: operand, Name: operand}
-	if err = r.client.Get(context.TODO(), key, instance); err != nil {
-		var manifest mf.Manifest
-		manifest, err = mf.NewManifest(filepath.Join(koDataDir, path), false, r.client)
-		if err == nil {
-			// create namespace
-			err = manifest.Apply(&r.config.Resources[0])
-		}
-		if err == nil {
-			err = manifest.Transform(mf.InjectNamespace(operand))
-		}
-		if err == nil {
-			err = manifest.ApplyAll()
-		}
-	}
-	return
 }
