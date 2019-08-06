@@ -82,10 +82,6 @@ function install_serving_operator() {
   # Deploy the operator
   kubectl apply -f config/crds/serving_v1alpha1_knativeserving_crd.yaml
   ko apply -f config/
-
-  # Wait for Serving to come up
-  sleep 10
-  wait_until_pods_running knative-serving
 }
 
 function knative_setup() {
