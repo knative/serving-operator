@@ -18,9 +18,9 @@ package e2e
 import (
 	"testing"
 
-	"knative.dev/pkg/test/helpers"
 	"knative.dev/pkg/test/logstream"
 	"knative.dev/serving-operator/test"
+	"knative.dev/serving-operator/test/resources"
 )
 
 // TestKnativeServingDeployment verifies the KnativeServing creation, deployment recreation, and KnativeServing deletion.
@@ -31,7 +31,7 @@ func TestKnativeServingDeployment(t *testing.T) {
 
 	names := test.ResourceNames{
 		KnativeServing: test.ServingOperatorName,
-		Namespace:      helpers.AppendRandomString(test.ServingOperatorNamespace),
+		Namespace:      test.ServingOperatorNamespace,
 	}
 
 	test.CleanupOnInterrupt(func() { test.TearDown(clients, names) })
@@ -43,12 +43,22 @@ func TestKnativeServingDeployment(t *testing.T) {
 	// Change the namespace for the clients
 	clients = SetupWithNamespace(t, names.Namespace)
 
-	// Create a KnativeServing to see if it can reach the READY status
-	TestKnativeServingCreation(t, clients, names)
+	// Create a KnativeServing
+	if _, err := resources.CreateKnativeServing(clients.KnativeServingAlphaClient, names); err != nil {
+		t.Fatalf("KnativeService %q failed to create: %v", names.KnativeServing, err)
+	}
+	// Test if KnativeServing can reach the READY status
+	t.Run("create", func(t *testing.T) {
+		KnativeServingVerify(t, clients, names)
+	})
 
 	// Delete the deployments one by one to see if they will be recreated.
-	dpList := TestDeploymentRecreation(t, clients, names)
+	t.Run("restore", func(t *testing.T) {
+		DeploymentRecreation(t, clients, names)
+	})
 
 	// Delete the KnativeServing to see if all the deployments will be removed as well
-	TestKnativeServingDeletion(t, clients, names, dpList)
+	t.Run("delete", func(t *testing.T) {
+		KnativeServingDeletion(t, clients, names)
+	})
 }

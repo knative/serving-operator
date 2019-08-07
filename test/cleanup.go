@@ -44,16 +44,6 @@ func TearDown(clients *Clients, names ResourceNames) {
 		clients.KnativeServingAlphaClient.KnativeServings.Delete(names.KnativeServing, &metav1.DeleteOptions{})
 	}
 
-	// Remove all the deployments
-	dpListSave, err := clients.KubeClient.Kube.AppsV1().Deployments(names.Namespace).List(metav1.ListOptions{})
-	if err == nil && len(dpListSave.Items) == 0 {
-		// Delete the deployments one by one.
-		for _, deployment := range dpListSave.Items {
-			clients.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Delete(deployment.Name,
-				&metav1.DeleteOptions{})
-		}
-	}
-
 	// Remove the namespace
 	clients.KubeClient.Kube.CoreV1().Namespaces().Delete(names.Namespace, &metav1.DeleteOptions{})
 }
