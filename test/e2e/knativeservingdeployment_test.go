@@ -41,21 +41,21 @@ func TestKnativeServingDeployment(t *testing.T) {
 	if _, err := resources.CreateKnativeServing(clients.KnativeServingAlphaClient, names); err != nil {
 		t.Fatalf("KnativeService %q failed to create: %v", names.KnativeServing, err)
 	}
-	knativeServingVerify(t, clients, names)
 
 	// Test if KnativeServing can reach the READY status
 	t.Run("create", func(t *testing.T) {
-		// We do not need to implement here, since the prerequisite to run all the integration tests
-		// is that KnativeServing is created and ready.
+		knativeServingVerify(t, clients, names)
 	})
 
 	// Delete the deployments one by one to see if they will be recreated.
 	t.Run("restore", func(t *testing.T) {
+		knativeServingVerify(t, clients, names)
 		deploymentRecreation(t, clients, names)
 	})
 
 	// Delete the KnativeServing to see if all the deployments will be removed as well
 	t.Run("delete", func(t *testing.T) {
+		knativeServingVerify(t, clients, names)
 		knativeServingDeletion(t, clients, names)
 	})
 }

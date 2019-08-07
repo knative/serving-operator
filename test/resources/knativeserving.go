@@ -29,7 +29,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	va1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"knative.dev/pkg/test/logging"
 	"knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
@@ -38,8 +37,10 @@ import (
 )
 
 const (
-	interval = 10 * time.Second
-	timeout  = 5 * time.Minute
+	// Interval specifies the time between two polls.
+	Interval = 10 * time.Second
+	// Timeout specifies the timeout for the function PollImmediate to reach a certain status.
+	Timeout  = 5 * time.Minute
 )
 
 // WaitKnativeServingReady polls the status of the KnativeServing called name
@@ -51,7 +52,7 @@ func WaitKnativeServingReady(t *testing.T, clients servingv1alpha1.KnativeServin
 	defer span.End()
 
 	var lastState *v1alpha1.KnativeServing
-	waitErr := wait.PollImmediate(interval, timeout, func() (bool, error) {
+	waitErr := wait.PollImmediate(Interval, Timeout, func() (bool, error) {
 		lastState, err := clients.Get(name, metav1.GetOptions{})
 		return inState(lastState, err)
 	})
@@ -83,7 +84,7 @@ func WaitForKnativeServingState(client servingv1alpha1.KnativeServingInterface, 
 	defer span.End()
 
 	var lastState *v1alpha1.KnativeServing
-	waitErr := wait.PollImmediate(interval, timeout, func() (bool, error) {
+	waitErr := wait.PollImmediate(Interval, Timeout, func() (bool, error) {
 		lastState, err := client.Get(name, metav1.GetOptions{})
 		return inState(lastState, err)
 	})
@@ -104,37 +105,9 @@ func IsKnativeServingDeleted(s *v1alpha1.KnativeServing, err error) (bool, error
 	return apierrs.IsNotFound(err), nil
 }
 
-// WaitForDeployment polls the status of the deployment called name
-// from client every `interval` until `inState` returns `true` indicating it
-// is done, returns an error or timeout.
-func WaitForDeployment(clients *test.Clients, name, namespace string, inState func(s *v1.Deployment, err error) (bool, error),
-	desc string) (*v1.Deployment, error) {
-	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitForKnativeServingState/%s/%s", name,
-		desc))
-	defer span.End()
-	var dep *v1.Deployment
-
-	waitErr := wait.PollImmediate(interval, timeout, func() (bool, error) {
-		dep, err := clients.KubeClient.Kube.AppsV1().Deployments(namespace).Get(name, va1.GetOptions{})
-		return inState(dep, err)
-	})
-
-	if waitErr != nil {
-		return dep, errors.Wrapf(waitErr, "Deployment %q is not in desired status for the condition type Available,"+
-			"got: %+q; want %+q", name, getDeploymentStatus(dep), "True")
-	}
-
-	return dep, nil
-}
-
 // IsDeploymentAvailable will check the status conditions of the deployment and return true if the deployment is available.
-func IsDeploymentAvailable(d *v1.Deployment, err error) (bool, error) {
+func IsDeploymentAvailable(d *v1.Deployment) (bool, error) {
 	return getDeploymentStatus(d) == "True", nil
-}
-
-// IsDeploymentAvailable will check the status conditions of the deployment and return true if the deployment is available.
-func IsDeploymentDeleted(d *v1.Deployment, err error) (bool, error) {
-	return apierrs.IsNotFound(err), nil
 }
 
 func getDeploymentStatus(d *v1.Deployment) corev1.ConditionStatus {

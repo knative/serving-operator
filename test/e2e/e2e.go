@@ -14,9 +14,11 @@ limitations under the License.
 package e2e
 
 import (
+	"k8s.io/apimachinery/pkg/util/wait"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	// Mysteriously required to support GCP auth (required by k8s libs).
 	// Apparently just importing it is enough. @_@ side effects @_@.
 	// https://github.com/kubernetes/client-go/issues/242
@@ -25,6 +27,7 @@ import (
 	"knative.dev/serving-operator/test"
 	"knative.dev/serving-operator/test/resources"
 )
+
 
 // Setup creates the client objects needed in the e2e tests.
 func Setup(t *testing.T) *test.Clients {
@@ -69,11 +72,20 @@ func deploymentRecreation(t *testing.T, clients *test.Clients, names test.Resour
 			&metav1.DeleteOptions{}); err != nil {
 			t.Fatalf("Failed to delete deployment %s/%s: %v", deployment.Namespace, deployment.Name, err)
 		}
-		if _, err = resources.WaitForDeployment(clients, deployment.Name, deployment.Namespace,
-			resources.IsDeploymentAvailable, "DeploymentIsAvailable"); err != nil {
-			t.Fatalf("The deployment %s/%s failed to reach the desired state: %v",
-				deployment.Namespace, deployment.Name, err)
+
+		waitErr := wait.PollImmediate(resources.Interval, resources.Timeout, func() (bool, error) {
+			dep, err := clients.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Get(deployment.Name, metav1.GetOptions{})
+			if err != nil && apierrs.IsNotFound(err) {
+				// If the deployment is not found, we continue to wait for the availability.
+				return false, nil
+			}
+			return resources.IsDeploymentAvailable(dep)
+		})
+
+		if waitErr != nil {
+			t.Fatalf("The deployment %s/%s failed to reach the desired state: %v", deployment.Namespace, deployment.Name, err)
 		}
+
 		if _, err := resources.WaitForKnativeServingState(clients.KnativeServingAlphaClient, test.ServingOperatorName,
 			resources.IsKnativeServingReady); err != nil {
 			t.Fatalf("KnativeService %q failed to reach the desired state: %v", test.ServingOperatorName, err)
@@ -98,10 +110,17 @@ func knativeServingDeletion(t *testing.T, clients *test.Clients, names test.Reso
 	}
 
 	for _, deployment := range dpListSave.Items {
-		if _, err := resources.WaitForDeployment(clients, deployment.Name, deployment.Namespace,
-			resources.IsDeploymentDeleted, "DeploymentIsDeleted"); err != nil {
-			t.Fatalf("The deployment %s/%s failed to be deleted: %v",
-				deployment.Namespace, deployment.Name, err)
+		waitErr := wait.PollImmediate(resources.Interval, resources.Timeout, func() (bool, error) {
+			if _, err := clients.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Get(deployment.Name,
+				metav1.GetOptions{}); err != nil && apierrs.IsNotFound(err) {
+				// If the deployment is not found, we determine it is deleted.
+				return true, nil
+			}
+			return false, nil
+		})
+
+		if waitErr != nil {
+			t.Fatalf("The deployment %s/%s failed to be deleted: %v", deployment.Namespace, deployment.Name, err)
 		}
 		t.Logf("The deployment %s/%s has been deleted.", deployment.Namespace, deployment.Name)
 	}
