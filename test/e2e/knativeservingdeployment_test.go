@@ -37,28 +37,25 @@ func TestKnativeServingDeployment(t *testing.T) {
 	test.CleanupOnInterrupt(func() { test.TearDown(clients, names) })
 	defer test.TearDown(clients, names)
 
-	// Create the namespace for tests
-	CreateNamespace(t, clients, names.Namespace)
-
-	// Change the namespace for the clients
-	clients = SetupWithNamespace(t, names.Namespace)
-
 	// Create a KnativeServing
 	if _, err := resources.CreateKnativeServing(clients.KnativeServingAlphaClient, names); err != nil {
 		t.Fatalf("KnativeService %q failed to create: %v", names.KnativeServing, err)
 	}
+	knativeServingVerify(t, clients, names)
+
 	// Test if KnativeServing can reach the READY status
 	t.Run("create", func(t *testing.T) {
-		knativeServingVerify(t, clients, names)
+		// We do not need to implement here, since the prerequisite to run all the integration tests
+		// is that KnativeServing is created and ready.
 	})
 
 	// Delete the deployments one by one to see if they will be recreated.
 	t.Run("restore", func(t *testing.T) {
-		DeploymentRecreation(t, clients, names)
+		deploymentRecreation(t, clients, names)
 	})
 
 	// Delete the KnativeServing to see if all the deployments will be removed as well
 	t.Run("delete", func(t *testing.T) {
-		KnativeServingDeletion(t, clients, names)
+		knativeServingDeletion(t, clients, names)
 	})
 }

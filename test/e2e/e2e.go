@@ -16,8 +16,6 @@ package e2e
 import (
 	"testing"
 
-	corev1 "k8s.io/api/core/v1"
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	// Mysteriously required to support GCP auth (required by k8s libs).
 	// Apparently just importing it is enough. @_@ side effects @_@.
@@ -30,7 +28,7 @@ import (
 
 // Setup creates the client objects needed in the e2e tests.
 func Setup(t *testing.T) *test.Clients {
-	return SetupWithNamespace(t, "default")
+	return SetupWithNamespace(t, test.ServingOperatorNamespace)
 }
 
 // SetupWithNamespace creates the client objects needed in the e2e tests under the specified namespace.
@@ -45,19 +43,7 @@ func SetupWithNamespace(t *testing.T, namespace string) *test.Clients {
 	return clients
 }
 
-// CreateNamespace creates a namespace to run the integration tests.
-func CreateNamespace(t *testing.T, clients *test.Clients, namespace string) {
-	_, err := clients.KubeClient.Kube.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
-	if err != nil && apierrs.IsNotFound(err) {
-		// Create the namespace if not available
-		if _, err = clients.KubeClient.Kube.CoreV1().Namespaces().Create(&corev1.Namespace{ObjectMeta:
-			metav1.ObjectMeta{Name: namespace}}); err != nil {
-			t.Fatalf("Failed to create the namespace %s: %v", namespace, err)
-		}
-	}
-}
-
-// KnativeServingVerify verifies if the KnativeServing can reach the READY status.
+// knativeServingVerify verifies if the KnativeServing can reach the READY status.
 func knativeServingVerify(t *testing.T, clients *test.Clients, names test.ResourceNames) {
 	if _, err := resources.WaitKnativeServingReady(t, clients.KnativeServingAlphaClient, names.KnativeServing,
 		resources.IsKnativeServingReady); err != nil {
@@ -66,8 +52,8 @@ func knativeServingVerify(t *testing.T, clients *test.Clients, names test.Resour
 
 }
 
-// DeploymentRecreation verify whether all the deployments for knative serving are able to recreate, when they are deleted.
-func DeploymentRecreation(t *testing.T, clients *test.Clients, names test.ResourceNames) {
+// deploymentRecreation verify whether all the deployments for knative serving are able to recreate, when they are deleted.
+func deploymentRecreation(t *testing.T, clients *test.Clients, names test.ResourceNames) {
 	dpListSave, err := clients.KubeClient.Kube.AppsV1().Deployments(names.Namespace).List(metav1.ListOptions{})
 	if err != nil {
 		t.Fatalf("Failed to get any deployment under the namespace %q: %v",
@@ -96,8 +82,8 @@ func DeploymentRecreation(t *testing.T, clients *test.Clients, names test.Resour
 	}
 }
 
-// KnativeServingDeletion deletes tha KnativeServing to see if all the deployments will be removed.
-func KnativeServingDeletion(t *testing.T, clients *test.Clients, names test.ResourceNames) {
+// knativeServingDeletion deletes tha KnativeServing to see if all the deployments will be removed.
+func knativeServingDeletion(t *testing.T, clients *test.Clients, names test.ResourceNames) {
 	if err := clients.KnativeServingAlphaClient.Delete(names.KnativeServing, &metav1.DeleteOptions{}); err != nil {
 		t.Fatalf("KnativeService %q failed to delete: %v", names.KnativeServing, err)
 	}

@@ -43,7 +43,4 @@ func TearDown(clients *Clients, names ResourceNames) {
 	if clients != nil && clients.KnativeServingAlphaClient != nil {
 		clients.KnativeServingAlphaClient.Delete(names.KnativeServing, &metav1.DeleteOptions{})
 	}
-
-	// Remove the namespace
-	clients.KubeClient.Kube.CoreV1().Namespaces().Delete(names.Namespace, &metav1.DeleteOptions{})
 }
