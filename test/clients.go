@@ -29,12 +29,7 @@ import (
 type Clients struct {
 	KubeClient                *test.KubeClient
 	Dynamic                   dynamic.Interface
-	KnativeServingAlphaClient *KnativeServingAlphaClients
-}
-
-// KnativeServingAlphaClients holds instances of interfaces for making requests to knativeserving clients
-type KnativeServingAlphaClients struct {
-	KnativeServings servingv1alpha1.KnativeServingInterface
+	KnativeServingAlphaClient servingv1alpha1.KnativeServingInterface
 }
 
 // NewClients instantiates and returns several clientsets required for making request to the
@@ -80,13 +75,11 @@ func buildClientConfig(kubeConfigPath string, clusterName string) (*rest.Config,
 		&overrides).ClientConfig()
 }
 
-func newKnativeServingAlphaClients(cfg *rest.Config, namespace string) (*KnativeServingAlphaClients, error) {
+func newKnativeServingAlphaClients(cfg *rest.Config, namespace string) (servingv1alpha1.KnativeServingInterface, error) {
 	cs, err := versioned.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return &KnativeServingAlphaClients{
-		KnativeServings: cs.ServingV1alpha1().KnativeServings(namespace),
-	}, nil
+	return cs.ServingV1alpha1().KnativeServings(namespace), nil
 }

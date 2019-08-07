@@ -24,15 +24,16 @@ import (
 	"testing"
 	"time"
 
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	va1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"knative.dev/pkg/test/logging"
 	"knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
+	servingv1alpha1 "knative.dev/serving-operator/pkg/client/clientset/versioned/typed/serving/v1alpha1"
 	"knative.dev/serving-operator/test"
 )
 
@@ -44,14 +45,14 @@ const (
 // WaitKnativeServingReady polls the status of the KnativeServing called name
 // from client every `interval` until `inState` returns `true` indicating it
 // is done, returns an error or timeout.
-func WaitKnativeServingReady(t *testing.T, clients *test.KnativeServingAlphaClients, name string,
+func WaitKnativeServingReady(t *testing.T, clients servingv1alpha1.KnativeServingInterface, name string,
 	inState func(s *v1alpha1.KnativeServing, err error) (bool, error)) (*v1alpha1.KnativeServing, error) {
 	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitForKnativeServingState/%s/%s", name, "KnativeServingIsReady"))
 	defer span.End()
 
 	var lastState *v1alpha1.KnativeServing
 	waitErr := wait.PollImmediate(interval, timeout, func() (bool, error) {
-		lastState, err := clients.KnativeServings.Get(name, metav1.GetOptions{})
+		lastState, err := clients.Get(name, metav1.GetOptions{})
 		return inState(lastState, err)
 	})
 
@@ -62,28 +63,28 @@ func WaitKnativeServingReady(t *testing.T, clients *test.KnativeServingAlphaClie
 }
 
 // CreateKnativeServing creates a KnativeServing with the name names.KnativeServing under the namespace names.Namespace.
-func CreateKnativeServing(clients *test.KnativeServingAlphaClients, names test.ResourceNames) (*v1alpha1.KnativeServing, error) {
+func CreateKnativeServing(clients servingv1alpha1.KnativeServingInterface, names test.ResourceNames) (*v1alpha1.KnativeServing, error) {
 	ks := &v1alpha1.KnativeServing{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: names.KnativeServing,
 			Namespace: names.Namespace,
 		},
 	}
-	svc, err := clients.KnativeServings.Create(ks)
+	svc, err := clients.Create(ks)
 	return svc, err
 }
 
 // WaitForKnativeServingState polls the status of the KnativeServing called name
 // from client every `interval` until `inState` returns `true` indicating it
 // is done, returns an error or timeout.
-func WaitForKnativeServingState(client *test.KnativeServingAlphaClients, name string, inState func(s *v1alpha1.KnativeServing,
+func WaitForKnativeServingState(client servingv1alpha1.KnativeServingInterface, name string, inState func(s *v1alpha1.KnativeServing,
 	err error) (bool, error)) (*v1alpha1.KnativeServing, error) {
 	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitForKnativeServingState/%s/%s", name, "KnativeServingIsReady"))
 	defer span.End()
 
 	var lastState *v1alpha1.KnativeServing
 	waitErr := wait.PollImmediate(interval, timeout, func() (bool, error) {
-		lastState, err := client.KnativeServings.Get(name, metav1.GetOptions{})
+		lastState, err := client.Get(name, metav1.GetOptions{})
 		return inState(lastState, err)
 	})
 

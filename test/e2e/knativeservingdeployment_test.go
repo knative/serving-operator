@@ -49,7 +49,7 @@ func TestKnativeServingDeployment(t *testing.T) {
 	}
 	// Test if KnativeServing can reach the READY status
 	t.Run("create", func(t *testing.T) {
-		KnativeServingVerify(t, clients, names)
+		knativeServingVerify(t, clients, names)
 	})
 
 	// Delete the deployments one by one to see if they will be recreated.

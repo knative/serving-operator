@@ -58,7 +58,7 @@ func CreateNamespace(t *testing.T, clients *test.Clients, namespace string) {
 }
 
 // KnativeServingVerify verifies if the KnativeServing can reach the READY status.
-func KnativeServingVerify(t *testing.T, clients *test.Clients, names test.ResourceNames) {
+func knativeServingVerify(t *testing.T, clients *test.Clients, names test.ResourceNames) {
 	if _, err := resources.WaitKnativeServingReady(t, clients.KnativeServingAlphaClient, names.KnativeServing,
 		resources.IsKnativeServingReady); err != nil {
 		t.Fatalf("KnativeService %q failed to get to the READY status: %v", names.KnativeServing, err)
@@ -98,7 +98,7 @@ func DeploymentRecreation(t *testing.T, clients *test.Clients, names test.Resour
 
 // KnativeServingDeletion deletes tha KnativeServing to see if all the deployments will be removed.
 func KnativeServingDeletion(t *testing.T, clients *test.Clients, names test.ResourceNames) {
-	if err := clients.KnativeServingAlphaClient.KnativeServings.Delete(names.KnativeServing, &metav1.DeleteOptions{}); err != nil {
+	if err := clients.KnativeServingAlphaClient.Delete(names.KnativeServing, &metav1.DeleteOptions{}); err != nil {
 		t.Fatalf("KnativeService %q failed to delete: %v", names.KnativeServing, err)
 	}
 	if _, err := resources.WaitForKnativeServingState(clients.KnativeServingAlphaClient, names.KnativeServing,

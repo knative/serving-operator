@@ -41,7 +41,7 @@ func CleanupOnInterrupt(cleanup func()) {
 // TearDown will delete created names using clients.
 func TearDown(clients *Clients, names ResourceNames) {
 	if clients != nil && clients.KnativeServingAlphaClient != nil {
-		clients.KnativeServingAlphaClient.KnativeServings.Delete(names.KnativeServing, &metav1.DeleteOptions{})
+		clients.KnativeServingAlphaClient.Delete(names.KnativeServing, &metav1.DeleteOptions{})
 	}
 
 	// Remove the namespace
