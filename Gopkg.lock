@@ -24,15 +24,15 @@
   version = "v0.1.0"
 
 [[projects]]
-  digest = "1:f091d5e3183a972fc45c4279cec2d97e13262bfda5b85cda3280cb41475e1415"
+  digest = "1:c1e8c027918e8a7cf79327f35ca2919cb997ecaa928116e3c2b470d06d0e9c12"
   name = "contrib.go.opencensus.io/exporter/stackdriver"
   packages = [
     ".",
     "monitoredresource",
   ]
   pruneopts = "NUT"
-  revision = "6850d2e00d7dfe4886f7e4773bf9f05e39296d92"
-  version = "v0.12.4"
+  revision = "bf39ce456bd8c6e2e3e37ef9775ed8b10628feca"
+  version = "v0.12.5"
 
 [[projects]]
   digest = "1:618123482859bf198813cf43954ba85c1d73c06157187e3f39d40cac2d6ec89b"
@@ -74,7 +74,7 @@
   version = "1.0.0"
 
 [[projects]]
-  digest = "1:292d411ce00424be150fa0ea5d256bd9e8162d6c20a837e45abd341f7fc8ce6b"
+  digest = "1:32ffeed6bc3ad78fcff8f7a607dc99e69795eb610b49566dd89f2cfa425fa589"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -110,8 +110,8 @@
     "service/sts/stsiface",
   ]
   pruneopts = "NUT"
-  revision = "b024dccbed5bf4ecdf4718113f282c0ef972a776"
-  version = "v1.21.8"
+  revision = "d38ae59ad646630fb9ee134c9d9a4c0601e20483"
+  version = "v1.22.1"
 
 [[projects]]
   digest = "1:707ebe952a8b3d00b343c01536c79c73771d100f63ec6babeaed5c79e2b8a8dd"
@@ -440,14 +440,6 @@
   version = "1.0.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:9c1fa2edc0bd7f1b62b37ee801ac9e87784259c4d5be40fd5243532a35a6b2bc"
-  name = "github.com/openshift/api"
-  packages = ["config/v1"]
-  pruneopts = "NUT"
-  revision = "0922aa5a655be314e20a3e0e94f4f2b105100154"
-
-[[projects]]
   digest = "1:cc5a3e116d6cc4b248414d855a501f2aebf0c70a87e493b69825b03f192d0bb8"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
@@ -660,14 +652,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a78248ec09fef1350f61ec7a833e6f1b4f84d35ff8e1bf9a976c967c764d15e2"
+  digest = "1:1797af05bdcb4e1bf36b2971de3a9379a9d89211b7f116efdfda6127376d7f64"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "cbf593c0f2f39034e9104bbf77e2ec7c48c98fc5"
+  revision = "51ab0e2deafac1f46c46ad59cf0921be2f180c3d"
 
 [[projects]]
   digest = "1:66a2f252a58b4fbbad0e4e180e1d85a83c222b6bce09c3dcdef3dc87c72eda7c"
@@ -705,7 +697,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:aa5bc3c668f07e9663277ab8d8e4f914326c8c893b77e7bee5c53c67e2374c37"
+  digest = "1:5b36055683b4369a6e60839aa98f810e1bfa99bf930003ca520720d6e6cf184b"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -722,7 +714,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "e9bb7d36c0606a2c422dffe30db7d628ebeb9302"
+  revision = "128824a23e7c038a341252700f1001ad29ef1988"
 
 [[projects]]
   branch = "master"
@@ -740,7 +732,7 @@
     "transport/http/internal/propagation",
   ]
   pruneopts = "NUT"
-  revision = "4c197b2a726769bfd12605f577c8c05ad81f8021"
+  revision = "6f3912904777a209e099b9dbda3ed7bcb4e25ad7"
 
 [[projects]]
   digest = "1:a955e7c44c2be14b61aa2ddda744edfdfbc6817e993703a16e303c277ba84449"
@@ -1151,12 +1143,12 @@
   revision = "e17681d19d3ac4837a019ece36c2a0ec31ffe985"
 
 [[projects]]
-  digest = "1:43099cc4ed575c40f80277c7ba7168df37d0c663bdc4f541325430bd175cce8a"
+  digest = "1:c05ad592787fc6cdacf8c5309d826561aa4a7d9e4e7ea28660dfb2c77ff68ab0"
   name = "k8s.io/klog"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "d98d8acdac006fb39831f1b25640813fef9c314f"
-  version = "v0.3.3"
+  revision = "3ca30a56d8a775276f9cdae009ba326fdc05af7f"
+  version = "v0.4.0"
 
 [[projects]]
   digest = "1:0dac10b488f2671c15738b662478d665b0c0ec7cae3362669dec172147331ce5"
@@ -1177,11 +1169,11 @@
     "pkg/apis/caching/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "9dbdb2f91c257e4b41c3e387959b32cce588daf4"
+  revision = "13dc5ad94dbdcb12b0809cddc4e815f2304b0052"
 
 [[projects]]
   branch = "master"
-  digest = "1:bb229ac008f2b7ddcd122f857584627de4cf78f31f3001ca79560f48659db88f"
+  digest = "1:c375d4501b58273f93be7fb531b551406dc57247a865520e48e724cee9398ded"
   name = "knative.dev/pkg"
   packages = [
     "apis",
@@ -1215,7 +1207,7 @@
     "test/zipkin",
   ]
   pruneopts = "T"
-  revision = "2b848f71969c997809a2dbea8351eaadb23e9bc9"
+  revision = "4707aad818fed9883f7d5255dcbf67b9382260e2"
 
 [[projects]]
   digest = "1:eeebb49b9a2eb1dd46487913c8155bce627f8657b0ef6aa1d30acb729e277f1c"
@@ -1279,7 +1271,6 @@
     "github.com/go-logr/logr",
     "github.com/go-openapi/spec",
     "github.com/jcrossley3/manifestival",
-    "github.com/openshift/api/config/v1",
     "github.com/operator-framework/operator-sdk/pkg/predicate",
     "github.com/operator-framework/operator-sdk/pkg/restmapper",
     "github.com/pkg/errors",
@@ -1287,7 +1278,6 @@
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
-    "k8s.io/apimachinery/pkg/api/meta",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
     "k8s.io/apimachinery/pkg/labels",

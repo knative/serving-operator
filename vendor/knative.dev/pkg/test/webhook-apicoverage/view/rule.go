@@ -13,12 +13,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package knativeserving
 
-import (
-	"knative.dev/serving-operator/pkg/reconciler/knativeserving/openshift"
-)
+package view
 
-func init() {
-	platforms = append(platforms, openshift.Configure)
+import "knative.dev/pkg/test/webhook-apicoverage/coveragecalculator"
+
+// DisplayRules provides a mechanism for repos to define their own display rules.
+// DisplayHelper methods can use these rules to define how to display results.
+type DisplayRules struct {
+	PackageNameRule func(packageName string) string
+	TypeNameRule    func(typeName string) string
+	FieldRule       func(coverage *coveragecalculator.FieldCoverage) string
 }
