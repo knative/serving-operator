@@ -65,7 +65,7 @@ func TestKnativeServingDeployment(t *testing.T) {
 
 // knativeServingVerify verifies if the KnativeServing can reach the READY status.
 func knativeServingVerify(t *testing.T, clients *test.Clients, names test.ResourceNames) {
-	if _, err := resources.WaitKnativeServingReady(clients.KnativeServingAlphaClient, names.KnativeServing,
+	if _, err := resources.WaitForKnativeServingState(clients.KnativeServingAlphaClient, names.KnativeServing,
 		resources.IsKnativeServingReady); err != nil {
 		t.Fatalf("KnativeService %q failed to get to the READY status: %v", names.KnativeServing, err)
 	}
@@ -74,17 +74,17 @@ func knativeServingVerify(t *testing.T, clients *test.Clients, names test.Resour
 
 // deploymentRecreation verify whether all the deployments for knative serving are able to recreate, when they are deleted.
 func deploymentRecreation(t *testing.T, clients *test.Clients, names test.ResourceNames) {
-	dpListSave, err := clients.KubeClient.Kube.AppsV1().Deployments(names.Namespace).List(metav1.ListOptions{})
+	dpList, err := clients.KubeClient.Kube.AppsV1().Deployments(names.Namespace).List(metav1.ListOptions{})
 	if err != nil {
 		t.Fatalf("Failed to get any deployment under the namespace %q: %v",
 			test.ServingOperatorNamespace, err)
 	}
-	if len(dpListSave.Items) == 0 {
+	if len(dpList.Items) == 0 {
 		t.Fatalf("No deployment under the namespace %q was found",
 			test.ServingOperatorNamespace)
 	}
 	// Delete the deployments one by one to see if they will be recreated.
-	for _, deployment := range dpListSave.Items {
+	for _, deployment := range dpList.Items {
 		if err := clients.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Delete(deployment.Name,
 			&metav1.DeleteOptions{}); err != nil {
 			t.Fatalf("Failed to delete deployment %s/%s: %v", deployment.Namespace, deployment.Name, err)
@@ -106,7 +106,7 @@ func deploymentRecreation(t *testing.T, clients *test.Clients, names test.Resour
 			t.Fatalf("The deployment %s/%s failed to reach the desired state: %v", deployment.Namespace, deployment.Name, err)
 		}
 
-		if _, err := resources.WaitKnativeServingReady(clients.KnativeServingAlphaClient, test.ServingOperatorName,
+		if _, err := resources.WaitForKnativeServingState(clients.KnativeServingAlphaClient, test.ServingOperatorName,
 			resources.IsKnativeServingReady); err != nil {
 			t.Fatalf("KnativeService %q failed to reach the desired state: %v", test.ServingOperatorName, err)
 		}
@@ -120,12 +120,12 @@ func knativeServingDeletion(t *testing.T, clients *test.Clients, names test.Reso
 		t.Fatalf("KnativeService %q failed to delete: %v", names.KnativeServing, err)
 	}
 
-	dpListSave, err := clients.KubeClient.Kube.AppsV1().Deployments(names.Namespace).List(metav1.ListOptions{})
+	dpList, err := clients.KubeClient.Kube.AppsV1().Deployments(names.Namespace).List(metav1.ListOptions{})
 	if err != nil {
 		t.Fatalf("Error getting any deployment under the namespace %q: %v", names.Namespace, err)
 	}
 
-	for _, deployment := range dpListSave.Items {
+	for _, deployment := range dpList.Items {
 		waitErr := wait.PollImmediate(resources.Interval, resources.Timeout, func() (bool, error) {
 			_, err := clients.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Get(deployment.Name, metav1.GetOptions{})
 			if err != nil {

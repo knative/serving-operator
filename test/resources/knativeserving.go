@@ -41,12 +41,12 @@ const (
 	Timeout  = 5 * time.Minute
 )
 
-// WaitKnativeServingReady polls the status of the KnativeServing called name
+// WaitForKnativeServingState polls the status of the KnativeServing called name
 // from client every `interval` until `inState` returns `true` indicating it
 // is done, returns an error or timeout.
-func WaitKnativeServingReady(clients servingv1alpha1.KnativeServingInterface, name string,
+func WaitForKnativeServingState(clients servingv1alpha1.KnativeServingInterface, name string,
 	inState func(s *v1alpha1.KnativeServing, err error) (bool, error)) (*v1alpha1.KnativeServing, error) {
-	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitKnativeServingReady/%s/%s", name, "KnativeServingIsReady"))
+	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitForKnativeServingState/%s/%s", name, "KnativeServingIsReady"))
 	defer span.End()
 
 	var lastState *v1alpha1.KnativeServing

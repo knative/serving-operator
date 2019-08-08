@@ -24,7 +24,6 @@ import (
 	"knative.dev/serving-operator/test"
 )
 
-
 // Setup creates the client objects needed in the e2e tests.
 func Setup(t *testing.T) *test.Clients {
 	return SetupWithNamespace(t, test.ServingOperatorNamespace)
