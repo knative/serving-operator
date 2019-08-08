@@ -16,7 +16,6 @@ limitations under the License.
 package test
 
 import (
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -30,12 +29,7 @@ import (
 type Clients struct {
 	KubeClient                *test.KubeClient
 	Dynamic                   dynamic.Interface
-	KnativeServingAlphaClient *KnativeServingAlphaClients
-}
-
-// KnativeServingAlphaClients holds instances of interfaces for making requests to knativeserving clients
-type KnativeServingAlphaClients struct {
-	KnativeServings servingv1alpha1.KnativeServingInterface
+	KnativeServingAlphaClient servingv1alpha1.KnativeServingInterface
 }
 
 // NewClients instantiates and returns several clientsets required for making request to the
@@ -81,48 +75,11 @@ func buildClientConfig(kubeConfigPath string, clusterName string) (*rest.Config,
 		&overrides).ClientConfig()
 }
 
-func newKnativeServingAlphaClients(cfg *rest.Config, namespace string) (*KnativeServingAlphaClients, error) {
+func newKnativeServingAlphaClients(cfg *rest.Config, namespace string) (servingv1alpha1.KnativeServingInterface, error) {
 	cs, err := versioned.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return &KnativeServingAlphaClients{
-		KnativeServings: cs.ServingV1alpha1().KnativeServings(namespace),
-	}, nil
-}
-
-// Delete will delete all knativeservings, if clients has been successfully initialized.
-func (clients *KnativeServingAlphaClients) Delete(knativeservings []string) error {
-	deletions := []struct {
-		client interface {
-			Delete(name string, options *v1.DeleteOptions) error
-		}
-		items []string
-	}{
-		{clients.KnativeServings, knativeservings},
-	}
-
-	propPolicy := v1.DeletePropagationForeground
-	dopt := &v1.DeleteOptions{
-		PropagationPolicy: &propPolicy,
-	}
-
-	for _, deletion := range deletions {
-		if deletion.client == nil {
-			continue
-		}
-
-		for _, item := range deletion.items {
-			if item == "" {
-				continue
-			}
-
-			if err := deletion.client.Delete(item, dopt); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return cs.ServingV1alpha1().KnativeServings(namespace), nil
 }

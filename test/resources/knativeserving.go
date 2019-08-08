@@ -27,62 +27,55 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	va1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"knative.dev/pkg/test/logging"
 	"knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
+	servingv1alpha1 "knative.dev/serving-operator/pkg/client/clientset/versioned/typed/serving/v1alpha1"
 	"knative.dev/serving-operator/test"
 )
 
 const (
-	interval = 10 * time.Second
-	timeout  = 2 * time.Minute
+	// Interval specifies the time between two polls.
+	Interval = 10 * time.Second
+	// Timeout specifies the timeout for the function PollImmediate to reach a certain status.
+	Timeout  = 5 * time.Minute
 )
 
 // WaitForKnativeServingState polls the status of the KnativeServing called name
 // from client every `interval` until `inState` returns `true` indicating it
 // is done, returns an error or timeout.
-func WaitForKnativeServingState(client *test.KnativeServingAlphaClients, name string, inState func(s *v1alpha1.KnativeServing) (bool, error)) (*v1alpha1.KnativeServing, error) {
+func WaitForKnativeServingState(clients servingv1alpha1.KnativeServingInterface, name string,
+	inState func(s *v1alpha1.KnativeServing, err error) (bool, error)) (*v1alpha1.KnativeServing, error) {
 	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitForKnativeServingState/%s/%s", name, "KnativeServingIsReady"))
 	defer span.End()
 
 	var lastState *v1alpha1.KnativeServing
-	waitErr := wait.PollImmediate(interval, timeout, func() (bool, error) {
-		lastState, _ = client.KnativeServings.Get(name, metav1.GetOptions{})
-		return inState(lastState)
+	waitErr := wait.PollImmediate(Interval, Timeout, func() (bool, error) {
+		lastState, err := clients.Get(name, metav1.GetOptions{})
+		return inState(lastState, err)
 	})
 
 	if waitErr != nil {
-		return lastState, errors.Wrapf(waitErr, "knativeserving %q is not in desired state, got: %+v", name, lastState)
+		return lastState, errors.Wrapf(waitErr, "knativeserving %s is not in desired state, got: %+v", name, lastState)
 	}
 	return lastState, nil
 }
 
-// IsKnativeServingReady will check the status conditions of the KnativeServing and return true if the KnativeServing is ready.
-func IsKnativeServingReady(s *v1alpha1.KnativeServing) (bool, error) {
-	return s.Status.IsReady(), nil
+// CreateKnativeServing creates a KnativeServing with the name names.KnativeServing under the namespace names.Namespace.
+func CreateKnativeServing(clients servingv1alpha1.KnativeServingInterface, names test.ResourceNames) (*v1alpha1.KnativeServing, error) {
+	ks := &v1alpha1.KnativeServing{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: names.KnativeServing,
+			Namespace: names.Namespace,
+		},
+	}
+	svc, err := clients.Create(ks)
+	return svc, err
 }
 
-// WaitForDeploymentAvailable polls the status of the deployment called name
-// from client every `interval` until `inState` returns `true` indicating it
-// is done, returns an error or timeout.
-func WaitForDeploymentAvailable(clients *test.Clients, name, namespace string, inState func(s *v1.Deployment) (bool, error)) (*v1.Deployment, error) {
-	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitForKnativeServingState/%s/%s", name,
-		"DeploymentIsAvailable"))
-	defer span.End()
-	var dep *v1.Deployment
-
-	waitErr := wait.PollImmediate(interval, timeout, func() (bool, error) {
-		dep, _ = clients.KubeClient.Kube.AppsV1().Deployments(namespace).Get(name, va1.GetOptions{})
-		return inState(dep)
-	})
-
-	if waitErr != nil {
-		return dep, errors.Wrapf(waitErr, "Deployment %q is not in desired status for the condition type Available,"+
-			"got: %+q; want %+q", name, getDeploymentStatus(dep), "True")
-	}
-
-	return dep, nil
+// IsKnativeServingReady will check the status conditions of the KnativeServing and return true if the KnativeServing is ready.
+func IsKnativeServingReady(s *v1alpha1.KnativeServing, err error) (bool, error) {
+	return s.Status.IsReady(), err
 }
 
 // IsDeploymentAvailable will check the status conditions of the deployment and return true if the deployment is available.
