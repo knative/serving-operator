@@ -18,38 +18,16 @@ package common
 import (
 	mf "github.com/jcrossley3/manifestival"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-var log = logf.Log.WithName("common")
+var log = logf.Log.WithName("extensions")
 
-type Platforms []func(client.Client, kubernetes.Interface, dynamic.Interface, *runtime.Scheme) (*Extension, error)
-type Extender func(*servingv1alpha1.KnativeServing) error
-type Extensions []Extension
-type Extension struct {
-	Transformers []mf.Transformer
-	PreInstalls  []Extender
-	PostInstalls []Extender
-}
+type Platforms []func(kubernetes.Interface) (mf.Transformer, error)
 
-func (platforms Platforms) Extend(c client.Client, kubeClientSet kubernetes.Interface, dynamicClientSet dynamic.Interface, scheme *runtime.Scheme) (result Extensions, err error) {
-	for _, fn := range platforms {
-		ext, err := fn(c, kubeClientSet, dynamicClientSet, scheme)
-		if err != nil {
-			return result, err
-		}
-		if ext != nil {
-			result = append(result, *ext)
-		}
-	}
-	return
-}
-
-func (exts Extensions) Transform(scheme *runtime.Scheme, instance *servingv1alpha1.KnativeServing) []mf.Transformer {
+func (platforms Platforms) Transformers(kubeClientSet kubernetes.Interface, scheme *runtime.Scheme, instance *servingv1alpha1.KnativeServing) ([]mf.Transformer, error) {
 	log.V(1).Info("Transforming", "instance", instance)
 	result := []mf.Transformer{
 		mf.InjectOwner(instance),
@@ -59,30 +37,14 @@ func (exts Extensions) Transform(scheme *runtime.Scheme, instance *servingv1alph
 		ImageTransform(scheme, instance, log),
 		GatewayTransform(scheme, instance, log),
 	}
-	for _, extension := range exts {
-		result = append(result, extension.Transformers...)
-	}
-	return result
-}
-
-func (exts Extensions) PreInstall(instance *servingv1alpha1.KnativeServing) error {
-	for _, extension := range exts {
-		for _, f := range extension.PreInstalls {
-			if err := f(instance); err != nil {
-				return err
-			}
+	for _, fn := range platforms {
+		transformer, err := fn(kubeClientSet)
+		if err != nil {
+			return result, err
+		}
+		if transformer != nil {
+			result = append(result, transformer)
 		}
 	}
-	return nil
-}
-
-func (exts Extensions) PostInstall(instance *servingv1alpha1.KnativeServing) error {
-	for _, extension := range exts {
-		for _, f := range extension.PostInstalls {
-			if err := f(instance); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+	return result, nil
 }
