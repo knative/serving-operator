@@ -21,13 +21,11 @@ package resources
 import (
 	"context"
 	"fmt"
-	"testing"
 	"time"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"knative.dev/pkg/test/logging"
@@ -46,9 +44,9 @@ const (
 // WaitKnativeServingReady polls the status of the KnativeServing called name
 // from client every `interval` until `inState` returns `true` indicating it
 // is done, returns an error or timeout.
-func WaitKnativeServingReady(t *testing.T, clients servingv1alpha1.KnativeServingInterface, name string,
+func WaitKnativeServingReady(clients servingv1alpha1.KnativeServingInterface, name string,
 	inState func(s *v1alpha1.KnativeServing, err error) (bool, error)) (*v1alpha1.KnativeServing, error) {
-	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitForKnativeServingState/%s/%s", name, "KnativeServingIsReady"))
+	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitKnativeServingReady/%s/%s", name, "KnativeServingIsReady"))
 	defer span.End()
 
 	var lastState *v1alpha1.KnativeServing
@@ -75,34 +73,9 @@ func CreateKnativeServing(clients servingv1alpha1.KnativeServingInterface, names
 	return svc, err
 }
 
-// WaitForKnativeServingState polls the status of the KnativeServing called name
-// from client every `interval` until `inState` returns `true` indicating it
-// is done, returns an error or timeout.
-func WaitForKnativeServingState(client servingv1alpha1.KnativeServingInterface, name string, inState func(s *v1alpha1.KnativeServing,
-	err error) (bool, error)) (*v1alpha1.KnativeServing, error) {
-	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitForKnativeServingState/%s/%s", name, "KnativeServingIsReady"))
-	defer span.End()
-
-	var lastState *v1alpha1.KnativeServing
-	waitErr := wait.PollImmediate(Interval, Timeout, func() (bool, error) {
-		lastState, err := client.Get(name, metav1.GetOptions{})
-		return inState(lastState, err)
-	})
-
-	if waitErr != nil {
-		return lastState, errors.Wrapf(waitErr, "knativeserving %q is not in desired state, got: %+v", name, lastState)
-	}
-	return lastState, nil
-}
-
 // IsKnativeServingReady will check the status conditions of the KnativeServing and return true if the KnativeServing is ready.
 func IsKnativeServingReady(s *v1alpha1.KnativeServing, err error) (bool, error) {
-	return s.Status.IsReady(), nil
-}
-
-// IsKnativeServingDeleted will check the status conditions of the KnativeServing and return true if the KnativeServing is deleted.
-func IsKnativeServingDeleted(s *v1alpha1.KnativeServing, err error) (bool, error) {
-	return apierrs.IsNotFound(err), nil
+	return s.Status.IsReady(), err
 }
 
 // IsDeploymentAvailable will check the status conditions of the deployment and return true if the deployment is available.
