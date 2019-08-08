@@ -105,14 +105,13 @@ func TestDeploymentTransform(t *testing.T) {
 func runDeploymentTransformTest(t *testing.T, tt *updateDeploymentImageTest) {
 	log := logf.Log.WithName(tt.name)
 	logf.SetLogger(logf.ZapLogger(true))
-	testScheme := runtime.NewScheme()
-	unstructuredDeployment := makeUnstructuredDeployment(t, tt, testScheme)
+	unstructuredDeployment := makeUnstructuredDeployment(t, tt)
 	instance := &servingv1alpha1.KnativeServing{
 		Spec: servingv1alpha1.KnativeServingSpec{
 			Registry: tt.registry,
 		},
 	}
-	deploymentTransform := DeploymentTransform(testScheme, instance, log)
+	deploymentTransform := DeploymentTransform(instance, log)
 	deploymentTransform(&unstructuredDeployment)
 	validateUnstructedDeploymentChanged(t, tt, &unstructuredDeployment)
 }
@@ -126,7 +125,7 @@ func validateUnstructedDeploymentChanged(t *testing.T, tt *updateDeploymentImage
 	}
 }
 
-func makeUnstructuredDeployment(t *testing.T, tt *updateDeploymentImageTest, scheme *runtime.Scheme) unstructured.Unstructured {
+func makeUnstructuredDeployment(t *testing.T, tt *updateDeploymentImageTest) unstructured.Unstructured {
 	deployment := appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Deployment",
@@ -180,14 +179,13 @@ func runImageTransformTest(t *testing.T, tt *updateImageSpecTest) {
 	log := logf.Log.WithName(tt.name)
 	logf.SetLogger(logf.ZapLogger(true))
 
-	testScheme := runtime.NewScheme()
-	unstructuredImage := makeUnstructuredImage(t, tt, testScheme)
+	unstructuredImage := makeUnstructuredImage(t, tt)
 	instance := &servingv1alpha1.KnativeServing{
 		Spec: servingv1alpha1.KnativeServingSpec{
 			Registry: tt.registry,
 		},
 	}
-	imageTransform := ImageTransform(testScheme, instance, log)
+	imageTransform := ImageTransform(instance, log)
 	imageTransform(&unstructuredImage)
 	validateUnstructedImageChanged(t, tt, &unstructuredImage)
 }
@@ -199,7 +197,7 @@ func validateUnstructedImageChanged(t *testing.T, tt *updateImageSpecTest, u *un
 	assertEqual(t, image.Spec.Image, tt.expected)
 }
 
-func makeUnstructuredImage(t *testing.T, tt *updateImageSpecTest, scheme *runtime.Scheme) unstructured.Unstructured {
+func makeUnstructuredImage(t *testing.T, tt *updateImageSpecTest) unstructured.Unstructured {
 	image := caching.Image{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "caching.internal.knative.dev/v1alpha1",
