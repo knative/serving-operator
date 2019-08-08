@@ -16,28 +16,22 @@ limitations under the License.
 package minikube
 
 import (
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
 	mf "github.com/jcrossley3/manifestival"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 var (
-	extension = common.Extension{
-		Transformers: []mf.Transformer{egress},
-	}
 	log = logf.Log.WithName("minikube")
 )
 
 // Configure minikube if we're soaking in it
-func Configure(_ client.Client, kubeClientSet kubernetes.Interface, _ dynamic.Interface, _ *runtime.Scheme) (*common.Extension, error) {
+func Configure(kubeClientSet kubernetes.Interface) (mf.Transformer, error) {
 	if _, err := kubeClientSet.CoreV1().Nodes().Get("minikube", metav1.GetOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
 			log.Error(err, "Unable to query for minikube node")
@@ -45,7 +39,7 @@ func Configure(_ client.Client, kubeClientSet kubernetes.Interface, _ dynamic.In
 		// Not running in minikube
 		return nil, nil
 	}
-	return &extension, nil
+	return egress, nil
 }
 
 func egress(u *unstructured.Unstructured) error {

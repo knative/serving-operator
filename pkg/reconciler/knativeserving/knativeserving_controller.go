@@ -186,47 +186,42 @@ func (r *ReconcileKnativeServing) updateStatus(instance *servingv1alpha1.Knative
 	return nil
 }
 
-// Apply the embedded resources
+// Install the resources from the Manifest
 func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServing) error {
 	log.V(1).Info("install", "status", instance.Status)
 	defer r.updateStatus(instance)
 
-	extensions, err := platforms.Extend(r.client, r.kubeClientSet, r.dynamicClientSet, r.scheme)
-	if err != nil {
+	if err := r.transform(instance); err != nil {
 		return err
 	}
-
-	err = r.executeInstall(extensions, instance)
-
-	if err != nil {
-		instance.Status.MarkInstallFailed(err.Error())
+	if err := r.apply(instance); err != nil {
 		return err
 	}
-
-	// Update status
-	instance.Status.Version = version.Version
-	log.Info("Install succeeded", "version", version.Version)
-	instance.Status.MarkInstallSucceeded()
 	return nil
 }
 
-func (r *ReconcileKnativeServing) executeInstall(extensions common.Extensions, instance *servingv1alpha1.KnativeServing) error {
-	err := r.config.Transform(extensions.Transform(r.scheme, instance)...)
+// Transform the resources
+func (r *ReconcileKnativeServing) transform(instance *servingv1alpha1.KnativeServing) error {
+	transforms, err := platforms.Transformers(r.kubeClientSet, r.scheme, instance)
 	if err != nil {
 		return err
 	}
-
-	err = extensions.PreInstall(instance)
-	if err != nil {
+	if err := r.config.Transform(transforms...); err != nil {
 		return err
 	}
+	return nil
+}
 
-	err = r.config.ApplyAll()
-	if err != nil {
+// Apply the embedded resources
+func (r *ReconcileKnativeServing) apply(instance *servingv1alpha1.KnativeServing) error {
+	if err := r.config.ApplyAll(); err != nil {
+		instance.Status.MarkInstallFailed(err.Error())
 		return err
 	}
-
-	return extensions.PostInstall(instance)
+	instance.Status.MarkInstallSucceeded()
+	instance.Status.Version = version.Version
+	log.Info("Install succeeded", "version", version.Version)
+	return nil
 }
 
 // Check for all deployments available
