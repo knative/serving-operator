@@ -440,14 +440,6 @@
   version = "1.0.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:9c1fa2edc0bd7f1b62b37ee801ac9e87784259c4d5be40fd5243532a35a6b2bc"
-  name = "github.com/openshift/api"
-  packages = ["config/v1"]
-  pruneopts = "NUT"
-  revision = "0922aa5a655be314e20a3e0e94f4f2b105100154"
-
-[[projects]]
   digest = "1:cc5a3e116d6cc4b248414d855a501f2aebf0c70a87e493b69825b03f192d0bb8"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
@@ -1279,7 +1271,6 @@
     "github.com/go-logr/logr",
     "github.com/go-openapi/spec",
     "github.com/jcrossley3/manifestival",
-    "github.com/openshift/api/config/v1",
     "github.com/operator-framework/operator-sdk/pkg/predicate",
     "github.com/operator-framework/operator-sdk/pkg/restmapper",
     "github.com/pkg/errors",
@@ -1287,7 +1278,6 @@
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
-    "k8s.io/apimachinery/pkg/api/meta",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
     "k8s.io/apimachinery/pkg/labels",
