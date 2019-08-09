@@ -38,7 +38,7 @@ const (
 	// Interval specifies the time between two polls.
 	Interval = 10 * time.Second
 	// Timeout specifies the timeout for the function PollImmediate to reach a certain status.
-	Timeout  = 5 * time.Minute
+	Timeout = 5 * time.Minute
 )
 
 // WaitForKnativeServingState polls the status of the KnativeServing called name
@@ -65,7 +65,7 @@ func WaitForKnativeServingState(clients servingv1alpha1.KnativeServingInterface,
 func CreateKnativeServing(clients servingv1alpha1.KnativeServingInterface, names test.ResourceNames) (*v1alpha1.KnativeServing, error) {
 	ks := &v1alpha1.KnativeServing{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: names.KnativeServing,
+			Name:      names.KnativeServing,
 			Namespace: names.Namespace,
 		},
 	}
