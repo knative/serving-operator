@@ -17,7 +17,6 @@ package common
 
 import (
 	mf "github.com/jcrossley3/manifestival"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -27,15 +26,15 @@ var log = logf.Log.WithName("extensions")
 
 type Platforms []func(kubernetes.Interface) (mf.Transformer, error)
 
-func (platforms Platforms) Transformers(kubeClientSet kubernetes.Interface, scheme *runtime.Scheme, instance *servingv1alpha1.KnativeServing) ([]mf.Transformer, error) {
+func (platforms Platforms) Transformers(kubeClientSet kubernetes.Interface, instance *servingv1alpha1.KnativeServing) ([]mf.Transformer, error) {
 	log.V(1).Info("Transforming", "instance", instance)
 	result := []mf.Transformer{
 		mf.InjectOwner(instance),
 		mf.InjectNamespace(instance.GetNamespace()),
 		ConfigMapTransform(instance, log),
-		DeploymentTransform(scheme, instance, log),
-		ImageTransform(scheme, instance, log),
-		GatewayTransform(scheme, instance, log),
+		DeploymentTransform(instance, log),
+		ImageTransform(instance, log),
+		GatewayTransform(instance, log),
 	}
 	for _, fn := range platforms {
 		transformer, err := fn(kubeClientSet)

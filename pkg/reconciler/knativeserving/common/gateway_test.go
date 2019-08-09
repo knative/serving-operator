@@ -94,15 +94,14 @@ func runGatewayTransformTest(t *testing.T, tt *updateGatewayTest) {
 	log := logf.Log.WithName(tt.name)
 	logf.SetLogger(logf.ZapLogger(true))
 
-	testScheme := runtime.NewScheme()
-	unstructedGateway := makeUnstructuredGateway(t, tt, testScheme)
+	unstructedGateway := makeUnstructuredGateway(t, tt)
 	instance := &servingv1alpha1.KnativeServing{
 		Spec: servingv1alpha1.KnativeServingSpec{
 			KnativeIngressGateway: tt.knativeIngressGateway,
 			ClusterLocalGateway:   tt.clusterLocalGateway,
 		},
 	}
-	gatewayTransform := GatewayTransform(testScheme, instance, log)
+	gatewayTransform := GatewayTransform(instance, log)
 	gatewayTransform(&unstructedGateway)
 	validateUnstructedGatewayChanged(t, tt, &unstructedGateway)
 }
@@ -116,7 +115,7 @@ func validateUnstructedGatewayChanged(t *testing.T, tt *updateGatewayTest, u *un
 	}
 }
 
-func makeUnstructuredGateway(t *testing.T, tt *updateGatewayTest, scheme *runtime.Scheme) unstructured.Unstructured {
+func makeUnstructuredGateway(t *testing.T, tt *updateGatewayTest) unstructured.Unstructured {
 	gateway := v1alpha3.Gateway{
 		Spec: v1alpha3.GatewaySpec{
 			Selector: tt.in,

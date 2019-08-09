@@ -34,7 +34,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -63,7 +62,7 @@ func Add(mgr manager.Manager, clientConfig *rest.Config) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager, clientConfig *rest.Config) reconcile.Reconciler {
-	return &ReconcileKnativeServing{client: mgr.GetClient(), scheme: mgr.GetScheme(), clientConfig: clientConfig}
+	return &ReconcileKnativeServing{client: mgr.GetClient(), clientConfig: clientConfig}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -102,7 +101,6 @@ type ReconcileKnativeServing struct {
 	kubeClientSet    kubernetes.Interface
 	dynamicClientSet dynamic.Interface
 	client           client.Client
-	scheme           *runtime.Scheme
 	config           mf.Manifest
 	clientConfig     *rest.Config
 }
@@ -202,7 +200,7 @@ func (r *ReconcileKnativeServing) install(instance *servingv1alpha1.KnativeServi
 
 // Transform the resources
 func (r *ReconcileKnativeServing) transform(instance *servingv1alpha1.KnativeServing) error {
-	transforms, err := platforms.Transformers(r.kubeClientSet, r.scheme, instance)
+	transforms, err := platforms.Transformers(r.kubeClientSet, instance)
 	if err != nil {
 		return err
 	}

@@ -35,27 +35,27 @@ var (
 	containerNameVariable = "${NAME}"
 )
 
-func DeploymentTransform(scheme *runtime.Scheme, instance *servingv1alpha1.KnativeServing, log logr.Logger) mf.Transformer {
+func DeploymentTransform(instance *servingv1alpha1.KnativeServing, log logr.Logger) mf.Transformer {
 	return func(u *unstructured.Unstructured) error {
 		// Update the deployment with the new registry and tag
 		if u.GetKind() == "Deployment" {
-			return updateDeployment(scheme, instance, u, log)
+			return updateDeployment(instance, u, log)
 		}
 		return nil
 	}
 }
 
-func ImageTransform(scheme *runtime.Scheme, instance *servingv1alpha1.KnativeServing, log logr.Logger) mf.Transformer {
+func ImageTransform(instance *servingv1alpha1.KnativeServing, log logr.Logger) mf.Transformer {
 	return func(u *unstructured.Unstructured) error {
 		// Update the image with the new registry and tag
 		if u.GetAPIVersion() == "caching.internal.knative.dev/v1alpha1" && u.GetKind() == "Image" {
-			return updateCachingImage(scheme, instance, u)
+			return updateCachingImage(instance, u)
 		}
 		return nil
 	}
 }
 
-func updateDeployment(scheme *runtime.Scheme, instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured, log logr.Logger) error {
+func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured, log logr.Logger) error {
 	var deployment = &appsv1.Deployment{}
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, deployment)
 	if err != nil {
@@ -99,7 +99,7 @@ func updateDeploymentImage(deployment *appsv1.Deployment, registry *servingv1alp
 	log.V(1).Info("Finished updating images", "name", deployment.GetName(), "containers", deployment.Spec.Template.Spec.Containers)
 }
 
-func updateCachingImage(scheme *runtime.Scheme, instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured) error {
+func updateCachingImage(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured) error {
 	var image = &caching.Image{}
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, image)
 	if err != nil {
