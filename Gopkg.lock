@@ -440,12 +440,9 @@
   version = "1.0.1"
 
 [[projects]]
-  digest = "1:cc5a3e116d6cc4b248414d855a501f2aebf0c70a87e493b69825b03f192d0bb8"
+  digest = "1:4af5ef5028af0c996043a4ed5731c51a649fc3d27d700a2d88a47d51591ab993"
   name = "github.com/operator-framework/operator-sdk"
-  packages = [
-    "pkg/predicate",
-    "pkg/restmapper",
-  ]
+  packages = ["pkg/restmapper"]
   pruneopts = "NUT"
   revision = "78c472461e75e6c64589cfadf577a2004b8a26b3"
   version = "v0.8.0"
@@ -1271,8 +1268,6 @@
     "github.com/go-logr/logr",
     "github.com/go-openapi/spec",
     "github.com/jcrossley3/manifestival",
-    "github.com/operator-framework/operator-sdk/pkg/predicate",
-    "github.com/operator-framework/operator-sdk/pkg/restmapper",
     "github.com/pkg/errors",
     "github.com/spf13/pflag",
     "k8s.io/api/apps/v1",
@@ -1325,6 +1320,7 @@
     "sigs.k8s.io/controller-runtime/pkg/controller",
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",
+    "sigs.k8s.io/controller-runtime/pkg/predicate",
     "sigs.k8s.io/controller-runtime/pkg/reconcile",
     "sigs.k8s.io/controller-runtime/pkg/runtime/log",
     "sigs.k8s.io/controller-runtime/pkg/runtime/scheme",
