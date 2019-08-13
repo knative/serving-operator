@@ -9,6 +9,8 @@ spec:
       name: knative-serving-operator
   template:
     metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
       labels:
         name: knative-serving-operator
     spec:
