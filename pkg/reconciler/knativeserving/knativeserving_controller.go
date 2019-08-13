@@ -38,6 +38,8 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	serving "knative.dev/serving-operator/pkg/client/clientset/versioned"
+	servingclient "knative.dev/serving-operator/pkg/client/injection/client"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -58,12 +60,12 @@ var (
 // Add creates a new KnativeServing Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager, clientConfig *rest.Config) error {
-	return add(mgr, newReconciler(mgr, clientConfig))
+	return add(mgr, newReconciler(clientConfig))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, clientConfig *rest.Config) reconcile.Reconciler {
-	return &ReconcileKnativeServing{client: mgr.GetClient(), clientConfig: clientConfig}
+func newReconciler(clientConfig *rest.Config) reconcile.Reconciler {
+	return &ReconcileKnativeServing{clientConfig: clientConfig}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -101,7 +103,7 @@ type ReconcileKnativeServing struct {
 
 	kubeClientSet    kubernetes.Interface
 	dynamicClientSet dynamic.Interface
-	client           client.Client
+	servingClient    serving.Interface
 	config           mf.Manifest
 	clientConfig     *rest.Config
 }
@@ -120,6 +122,7 @@ func (r *ReconcileKnativeServing) InjectClient(c client.Client) error {
 
 	r.kubeClientSet = kubeclient.Get(ctx)
 	r.dynamicClientSet = dynamicclient.Get(ctx)
+	r.servingClient = servingclient.Get(ctx)
 	return nil
 }
 
@@ -133,8 +136,8 @@ func (r *ReconcileKnativeServing) Reconcile(request reconcile.Request) (reconcil
 	reqLogger.Info("Reconciling KnativeServing")
 
 	// Fetch the KnativeServing instance
-	instance := &servingv1alpha1.KnativeServing{}
-	if err := r.client.Get(context.TODO(), request.NamespacedName, instance); err != nil {
+	instance, err := r.servingClient.ServingV1alpha1().KnativeServings(request.Namespace).Get(request.Name, metav1.GetOptions{})
+	if err != nil {
 		if errors.IsNotFound(err) {
 			r.config.DeleteAll(&metav1.DeleteOptions{})
 			reqLogger.V(1).Info("No KnativeServing")
@@ -144,6 +147,8 @@ func (r *ReconcileKnativeServing) Reconcile(request reconcile.Request) (reconcil
 		return reconcile.Result{}, err
 	}
 
+	// TODO: We need to find a better way to make sure the instance has the updated info.
+	instance.SetGroupVersionKind(servingv1alpha1.SchemeGroupVersion.WithKind("KnativeServing"))
 	stages := []func(*servingv1alpha1.KnativeServing) error{
 		r.initStatus,
 		r.install,
@@ -175,13 +180,13 @@ func (r *ReconcileKnativeServing) initStatus(instance *servingv1alpha1.KnativeSe
 // Update the status subresource
 func (r *ReconcileKnativeServing) updateStatus(instance *servingv1alpha1.KnativeServing) error {
 
-	// Account for https://github.com/kubernetes-sigs/controller-runtime/issues/406
-	gvk := instance.GroupVersionKind()
-	defer instance.SetGroupVersionKind(gvk)
+	afterUpdate, err := r.servingClient.ServingV1alpha1().KnativeServings(instance.Namespace).UpdateStatus(instance)
 
-	if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+	if err != nil {
 		return err
 	}
+	// TODO: We shouldn't rely on mutability and return the updated entities from functions instead.
+	afterUpdate.DeepCopyInto(instance)
 	return nil
 }
 
@@ -235,16 +240,15 @@ func (r *ReconcileKnativeServing) checkDeployments(instance *servingv1alpha1.Kna
 		}
 		return false
 	}
-	deployment := &appsv1.Deployment{}
 	for _, u := range r.config.Resources {
 		if u.GetKind() == "Deployment" {
-			key := client.ObjectKey{Namespace: u.GetNamespace(), Name: u.GetName()}
-			if err := r.client.Get(context.TODO(), key, deployment); err != nil {
+			deployment, err := r.kubeClientSet.AppsV1().Deployments(u.GetNamespace()).Get(u.GetName(), metav1.GetOptions{})
+			if err != nil {
 				instance.Status.MarkDeploymentsNotReady()
 				if errors.IsNotFound(err) {
 					return nil
 				}
-				log.Error(err, "Error fetching deployment", "key", key)
+				log.Error(err, "Error fetching deployment", "deployment", deployment)
 				return err
 			}
 			if !available(deployment) {
