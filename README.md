@@ -35,12 +35,18 @@ sure the [prerequisites](#Prerequisites) are installed first.
 3. Install the
    [KnativeServing custom resource](#the-knativeserving-custom-resource)
 
-```
+```sh
 cat <<-EOF | kubectl apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+ name: knative-serving
+---
 apiVersion: serving.knative.dev/v1alpha1
 kind: KnativeServing
 metadata:
   name: knative-serving
+  namespace: knative-serving
 spec:
   config:
     defaults:
@@ -141,4 +147,4 @@ output of the above `ko publish` command.
 
 The image should match what's in [config/operator.yaml](config/operator.yaml)
 and the `$VERSION` should match [version.go](version/version.go) and correspond
-to the contents of [config/resources](config/resources/).
+to the contents of [config/](config/).
