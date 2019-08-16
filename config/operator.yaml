@@ -26,3 +26,25 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "knative-serving-operator"
+            - name: SYSTEM_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CONFIG_LOGGING_NAME
+              value: config-logging
+            - name: METRICS_DOMAIN
+              value: knative.dev/serving-operator
+            - name: CONFIG_OBSERVABILITY_NAME
+              value: config-observability
+          volumeMounts:
+            - name: config-logging
+              mountPath: /etc/config-logging
+            - name: config-observability
+              mountPath: /etc/config-observability
+      volumes:
+        - name: config-logging
+          configMap:
+            name: config-logging
+        - name: config-observability
+          configMap:
+            name: config-observability
