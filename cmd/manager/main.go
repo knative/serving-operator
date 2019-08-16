@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Knative Authors
+Copyright 2018 The Knative Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,9 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package main
 
 import (
+<<<<<<< HEAD
 	"flag"
 	"os"
 
@@ -29,11 +31,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+=======
+	"knative.dev/pkg/injection/sharedmain"
+	"knative.dev/serving-operator/pkg/reconciler/knativeserving"
+>>>>>>> 3f4bdcc... Remove old controller-runtime model
 )
 
-var log = logf.Log.WithName("cmd")
-
 func main() {
+<<<<<<< HEAD
 	// Add flags registered by imported packages (e.g. glog and
 	// controller-runtime)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -85,4 +90,9 @@ func main() {
 		log.Error(err, "Manager exited non-zero")
 		os.Exit(1)
 	}
+=======
+	sharedmain.Main("operator-controller",
+		knativeserving.NewController,
+	)
+>>>>>>> 3f4bdcc... Remove old controller-runtime model
 }

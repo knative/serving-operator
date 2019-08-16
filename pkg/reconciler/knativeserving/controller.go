@@ -37,8 +37,8 @@ const (
 )
 
 var (
-	masterURL  = flag.String("master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
-	kubeconfig = flag.String("kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
+	masterURL1  = flag.String("master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
+	kubeconfig1 = flag.String("kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 )
 
 // NewController initializes the controller and is called by the generated code
@@ -56,7 +56,7 @@ func NewController(
 	}
 
 	flag.Parse()
-	cfg, err := sharedmain.GetConfig(*masterURL, *kubeconfig)
+	cfg, err := sharedmain.GetConfig(*masterURL1, *kubeconfig1)
 	if err != nil {
 		c.Logger.Fatal("Error building kubeconfig", err)
 	}
