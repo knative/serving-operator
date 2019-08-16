@@ -16,7 +16,8 @@ package knativeserving
 import (
 	"context"
 	"flag"
-	"knative.dev/pkg/injection/sharedmain"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 	"os"
 	"path/filepath"
 
@@ -37,8 +38,8 @@ const (
 )
 
 var (
-	masterURL1  = flag.String("master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
-	kubeconfig1 = flag.String("kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
+	ClusterConfig *rest.Config
+	recursive = flag.Bool("recursive", false, "If filename is a directory, process all manifests recursively")
 )
 
 // NewController initializes the controller and is called by the generated code
@@ -55,21 +56,14 @@ func NewController(
 		knativeServingLister: knativeServingInformer.Lister(),
 	}
 
-	flag.Parse()
-	cfg, err := sharedmain.GetConfig(*masterURL1, *kubeconfig1)
-	if err != nil {
-		c.Logger.Fatal("Error building kubeconfig", err)
-	}
-
 	koDataDir := os.Getenv("KO_DATA_PATH")
-	config, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving/"), *recursive, cfg)
+	config, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving/"), *recursive, ClusterConfig)
 	if err != nil {
 		c.Logger.Error(err, "Error creating the Manifest for knative-serving")
 		os.Exit(1)
 	}
 
 	c.config = config
-
 	impl := controller.NewImpl(c, c.Logger, reconcilerName)
 
 	c.Logger.Info("Setting up event handlers for %s", reconcilerName)
