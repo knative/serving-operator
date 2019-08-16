@@ -15,10 +15,11 @@ package knativeserving
 
 import (
 	"context"
+	"flag"
+	"knative.dev/pkg/injection/sharedmain"
 	"os"
 	"path/filepath"
 
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
 	mf "github.com/jcrossley3/manifestival"
@@ -35,20 +36,29 @@ const (
 	reconcilerName      = "KnativeServing"
 )
 
+var (
+	masterURL  = flag.String("master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
+	kubeconfig = flag.String("kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
+)
+
 // NewController initializes the controller and is called by the generated code
 // Registers eventhandlers to enqueue events
 func NewController(
 	ctx context.Context,
 	cmw configmap.Watcher,
-	cfg *rest.Config,
 ) *controller.Impl {
-
 	knativeServingInformer := knativeServinginformer.Get(ctx)
 	deploymentInformer := deploymentinformer.Get(ctx)
 
 	c := &Reconciler{
 		Base:                 rbase.NewBase(ctx, controllerAgentName, cmw),
 		knativeServingLister: knativeServingInformer.Lister(),
+	}
+
+	flag.Parse()
+	cfg, err := sharedmain.GetConfig(*masterURL, *kubeconfig)
+	if err != nil {
+		c.Logger.Fatal("Error building kubeconfig", err)
 	}
 
 	koDataDir := os.Getenv("KO_DATA_PATH")
