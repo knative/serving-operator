@@ -24,7 +24,6 @@ import (
 	"knative.dev/serving-operator/pkg/apis"
 	"knative.dev/serving-operator/pkg/reconciler"
 
-	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -59,9 +58,7 @@ func main() {
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{
-		MapperProvider: restmapper.NewDynamicRESTMapper,
-	})
+	mgr, err := manager.New(cfg, manager.Options{})
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)

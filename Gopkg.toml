@@ -59,12 +59,6 @@ required = [
   revision = "6c3132259e7b5062a719b393536c216397110e01"
 
 [[constraint]]
-  name = "github.com/operator-framework/operator-sdk"
-  # The version rule is used for a specific release and the master branch for in between releases.
-  # branch = "master" #osdk_branch_annotation
-  version = "=v0.8.0" #osdk_version_annotation
-
-[[constraint]]
   name = "github.com/jcrossley3/manifestival"
   branch = "client-go"
 
