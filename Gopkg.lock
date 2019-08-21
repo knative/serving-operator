@@ -382,11 +382,11 @@
 
 [[projects]]
   branch = "client-go"
-  digest = "1:81d7c90d8779b1d1c11f919616b27ca9fdad600e20f63f7810a40cead3cfab9f"
+  digest = "1:928c48472d9006c89f70c696ea1f7cb829b38e410e0641ec3f434080c2a90896"
   name = "github.com/jcrossley3/manifestival"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "d4530429d4c0708da344a6ff5a63d7971d05b67b"
+  revision = "97e164e00f2355c8d3816d9006802224ba613a60"
 
 [[projects]]
   digest = "1:1f2aebae7e7c856562355ec0198d8ca2fa222fb05e5b1b66632a1fce39631885"

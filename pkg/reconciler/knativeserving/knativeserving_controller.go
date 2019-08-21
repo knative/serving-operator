@@ -110,6 +110,7 @@ type ReconcileKnativeServing struct {
 
 // Create manifestival resources and KnativeServing, if necessary
 func (r *ReconcileKnativeServing) InjectClient(c client.Client) error {
+	mf.SetLogger(log)
 	koDataDir := os.Getenv("KO_DATA_PATH")
 	m, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving/"), *recursive, r.clientConfig)
 	if err != nil {
