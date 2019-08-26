@@ -35,7 +35,7 @@ import (
 	"knative.dev/pkg/controller"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	listers "knative.dev/serving-operator/pkg/client/listers/serving/v1alpha1"
-	"knative.dev/serving-operator/pkg/reconciler/newreconciler"
+	"knative.dev/serving-operator/pkg/reconciler"
 	"knative.dev/serving-operator/version"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 )
@@ -47,7 +47,7 @@ var (
 
 // Reconciler implements controller.Reconciler for Knativeserving resources.
 type Reconciler struct {
-	*newreconciler.Base
+	*reconciler.Base
 	// Listers index properties about resources
 	knativeServingLister          listers.KnativeServingLister
 	deploymentLister              appsv1listers.DeploymentLister

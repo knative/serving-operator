@@ -20,5 +20,5 @@ import (
 )
 
 func init() {
-	platforms = append(platforms, minikube.Configure)
+	platform = append(platform, minikube.Configure)
 }

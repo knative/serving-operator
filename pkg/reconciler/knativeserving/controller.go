@@ -29,7 +29,7 @@ import (
 	deploymentinformer "knative.dev/pkg/injection/informers/kubeinformers/appsv1/deployment"
 	"knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	knativeServinginformer "knative.dev/serving-operator/pkg/client/injection/informers/serving/v1alpha1/knativeserving"
-	rbase "knative.dev/serving-operator/pkg/reconciler/newreconciler"
+	rbase "knative.dev/serving-operator/pkg/reconciler"
 )
 
 const (
