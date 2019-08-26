@@ -25,19 +25,12 @@ import (
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving"
 )
 
-var (
-	masterURL  = flag.String("master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
-	kubeconfig = flag.String("kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
-)
-
 func main() {
 	flag.Parse()
 
-	cfg, err := clientcmd.BuildConfigFromFlags(*masterURL, *kubeconfig)
+	cfg, err := clientcmd.BuildConfigFromFlags(*knativeserving.MasterURL, *knativeserving.Kubeconfig)
 	if err != nil {
 		log.Fatal("Error building kubeconfig", err)
 	}
-	// TODO This cluster config will be saved for further usage, since mf.NewManifest will use a different parameter.
-	knativeserving.ClusterConfig = cfg
 	sharedmain.MainWithConfig(signals.NewContext(), "controller", cfg, knativeserving.NewController)
 }

@@ -28,16 +28,14 @@ import (
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	appsv1listers "k8s.io/client-go/listers/apps/v1"
-	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 
 	"knative.dev/pkg/controller"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	listers "knative.dev/serving-operator/pkg/client/listers/serving/v1alpha1"
+	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 	"knative.dev/serving-operator/pkg/reconciler"
 	"knative.dev/serving-operator/version"
-	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 )
 
 var (
@@ -50,8 +48,6 @@ type Reconciler struct {
 	*reconciler.Base
 	// Listers index properties about resources
 	knativeServingLister          listers.KnativeServingLister
-	deploymentLister              appsv1listers.DeploymentLister
-	serviceLister                 corev1listers.ServiceLister
 	config                        mf.Manifest
 
 }
@@ -73,16 +69,19 @@ func (r *Reconciler) Reconcile(ctx context.Context, key string) error {
 	original, err := r.knativeServingLister.KnativeServings(namespace).Get(name)
 	if apierrs.IsNotFound(err) {
 		// The resource may no longer exist, in which case we stop processing.
+		r.config.DeleteAll(&metav1.DeleteOptions{})
 		r.Logger.Errorf("KnativeServing %q in work queue no longer exists", key)
 		return nil
 
 	} else if err != nil {
+		r.Logger.Error(err, "Error getting KnativeServing")
 		return err
 	}
+
 	// Don't modify the informers copy.
 	knativeServing := original.DeepCopy()
 
-	// Reconcile this copy of the route and then write back any status
+	// Reconcile this copy of the KnativeServing resource and then write back any status
 	// updates regardless of whether the reconciliation errored out.
 	reconcileErr := r.reconcile(ctx, knativeServing)
 	if equality.Semantic.DeepEqual(original.Status, knativeServing.Status) {
@@ -107,20 +106,8 @@ func (r *Reconciler) reconcile(ctx context.Context, ks *servingv1alpha1.KnativeS
 	reqLogger := r.Logger.With(zap.String("Request.Namespace", ks.Namespace)).With("Request.Name", ks.Name)
 	reqLogger.Info("Reconciling KnativeServing")
 
-	// Fetch the KnativeServing instance
-	instance, err := r.KnativeServingClientSet.ServingV1alpha1().KnativeServings(ks.Namespace).Get(ks.Name, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			r.config.DeleteAll(&metav1.DeleteOptions{})
-			reqLogger.Info("No KnativeServing")
-			return nil
-		}
-		reqLogger.Error(err, "Error getting KnativeServing")
-		return err
-	}
-
 	// TODO: We need to find a better way to make sure the instance has the updated info.
-	instance.SetGroupVersionKind(servingv1alpha1.SchemeGroupVersion.WithKind("KnativeServing"))
+	ks.SetGroupVersionKind(servingv1alpha1.SchemeGroupVersion.WithKind("KnativeServing"))
 	stages := []func(*servingv1alpha1.KnativeServing) error{
 		r.initStatus,
 		r.install,
@@ -129,7 +116,7 @@ func (r *Reconciler) reconcile(ctx context.Context, ks *servingv1alpha1.KnativeS
 	}
 
 	for _, stage := range stages {
-		if err := stage(instance); err != nil {
+		if err := stage(ks); err != nil {
 			return err
 		}
 	}
