@@ -28,16 +28,14 @@ import (
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	appsv1listers "k8s.io/client-go/listers/apps/v1"
-	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 
 	"knative.dev/pkg/controller"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	listers "knative.dev/serving-operator/pkg/client/listers/serving/v1alpha1"
+	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 	"knative.dev/serving-operator/pkg/reconciler/newreconciler"
 	"knative.dev/serving-operator/version"
-	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 )
 
 var (
@@ -50,8 +48,6 @@ type Reconciler struct {
 	*newreconciler.Base
 	// Listers index properties about resources
 	knativeServingLister          listers.KnativeServingLister
-	deploymentLister              appsv1listers.DeploymentLister
-	serviceLister                 corev1listers.ServiceLister
 	config                        mf.Manifest
 
 }
