@@ -15,10 +15,11 @@ package knativeserving
 
 import (
 	"context"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/cache"
 	"os"
 	"path/filepath"
+
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 
 	mf "github.com/jcrossley3/manifestival"
 	"knative.dev/pkg/configmap"
@@ -31,7 +32,7 @@ import (
 
 const (
 	controllerAgentName = "knativeserving-controller"
-	reconcilerName = "KnativeServing"
+	reconcilerName      = "KnativeServing"
 )
 
 // NewController initializes the controller and is called by the generated code
@@ -46,8 +47,8 @@ func NewController(
 	deploymentInformer := deploymentinformer.Get(ctx)
 
 	c := &Reconciler{
-		Base:                     rbase.NewBase(ctx, controllerAgentName, cmw),
-		knativeServingLister:     knativeServingInformer.Lister(),
+		Base:                 rbase.NewBase(ctx, controllerAgentName, cmw),
+		knativeServingLister: knativeServingInformer.Lister(),
 	}
 
 	koDataDir := os.Getenv("KO_DATA_PATH")

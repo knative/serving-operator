@@ -20,25 +20,25 @@ import (
 	"context"
 
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/record"
-	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/record"
 
+	sharedclientset "knative.dev/pkg/client/clientset/versioned"
+	sharedclient "knative.dev/pkg/client/injection/client"
+	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/controller"
 	"knative.dev/pkg/injection/clients/dynamicclient"
 	"knative.dev/pkg/injection/clients/kubeclient"
 	"knative.dev/pkg/logging"
 	"knative.dev/pkg/logging/logkey"
-	sharedclientset "knative.dev/pkg/client/clientset/versioned"
-	sharedclient "knative.dev/pkg/client/injection/client"
-	servingclient "knative.dev/serving-operator/pkg/client/injection/client"
-	"knative.dev/pkg/configmap"
 	clientset "knative.dev/serving-operator/pkg/client/clientset/versioned"
 	servingScheme "knative.dev/serving-operator/pkg/client/clientset/versioned/scheme"
+	servingclient "knative.dev/serving-operator/pkg/client/injection/client"
 )
 
 // Base implements the core controller logic, given a Reconciler.
@@ -101,13 +101,13 @@ func NewBase(ctx context.Context, controllerAgentName string, cmw configmap.Watc
 	}
 
 	base := &Base{
-		KubeClientSet:    kubeClient,
-		SharedClientSet:  sharedclient.Get(ctx),
+		KubeClientSet:           kubeClient,
+		SharedClientSet:         sharedclient.Get(ctx),
 		KnativeServingClientSet: servingclient.Get(ctx),
-		DynamicClientSet: dynamicclient.Get(ctx),
-		ConfigMapWatcher: cmw,
-		Recorder:         recorder,
-		Logger:           logger,
+		DynamicClientSet:        dynamicclient.Get(ctx),
+		ConfigMapWatcher:        cmw,
+		Recorder:                recorder,
+		Logger:                  logger,
 	}
 
 	return base

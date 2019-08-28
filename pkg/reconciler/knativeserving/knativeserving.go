@@ -47,9 +47,8 @@ var (
 type Reconciler struct {
 	*newreconciler.Base
 	// Listers index properties about resources
-	knativeServingLister          listers.KnativeServingLister
-	config                        mf.Manifest
-
+	knativeServingLister listers.KnativeServingLister
+	config               mf.Manifest
 }
 
 // Check that our Reconciler implements controller.Reconciler
@@ -135,6 +134,7 @@ func (r *Reconciler) initStatus(instance *servingv1alpha1.KnativeServing) error 
 	}
 	return nil
 }
+
 // Update the status subresource
 func (r *Reconciler) updateStatus(instance *servingv1alpha1.KnativeServing) error {
 	afterUpdate, err := r.KnativeServingClientSet.ServingV1alpha1().KnativeServings(instance.Namespace).UpdateStatus(instance)
