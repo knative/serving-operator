@@ -16,9 +16,13 @@ limitations under the License.
 package e2e
 
 import (
+	"path/filepath"
+	"runtime"
 	"testing"
 
+	mf "github.com/jcrossley3/manifestival"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"knative.dev/pkg/test/logstream"
@@ -60,6 +64,7 @@ func TestKnativeServingDeployment(t *testing.T) {
 	t.Run("delete", func(t *testing.T) {
 		knativeServingVerify(t, clients, names)
 		knativeServingDeletion(t, clients, names)
+		verifyClusterResourceDeletion(t, clients)
 	})
 }
 
@@ -126,8 +131,7 @@ func knativeServingDeletion(t *testing.T, clients *test.Clients, names test.Reso
 
 	for _, deployment := range dpList.Items {
 		waitErr := wait.PollImmediate(resources.Interval, resources.Timeout, func() (bool, error) {
-			_, err := clients.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Get(deployment.Name, metav1.GetOptions{})
-			if err != nil {
+			if _, err := clients.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Get(deployment.Name, metav1.GetOptions{}); err != nil {
 				if apierrs.IsNotFound(err) {
 					return true, nil
 				}
@@ -137,8 +141,33 @@ func knativeServingDeletion(t *testing.T, clients *test.Clients, names test.Reso
 		})
 
 		if waitErr != nil {
-			t.Fatalf("The deployment %s/%s failed to be deleted: %v", deployment.Namespace, deployment.Name, err)
+			t.Fatalf("The deployment %s/%s failed to be deleted: %v", deployment.Namespace, deployment.Name, waitErr)
 		}
 		t.Logf("The deployment %s/%s has been deleted.", deployment.Namespace, deployment.Name)
+	}
+}
+
+func verifyClusterResourceDeletion(t *testing.T, clients *test.Clients) {
+	_, b, _, _ := runtime.Caller(0)
+	m, err := mf.NewManifest(filepath.Join((filepath.Dir(b) + "/.."), "config/"), false, clients.Config)
+	if err != nil {
+		t.Fatal("Failed to load manifest", err)
+	}
+	for _, u := range m.Resources {
+		if u.GetNamespace() == "" && u.GetKind() != "Namespace" {
+			waitErr := wait.PollImmediate(resources.Interval, resources.Timeout, func() (bool, error) {
+				gvrs, _ := meta.UnsafeGuessKindToResource(u.GroupVersionKind())
+				if _, err := clients.Dynamic.Resource(gvrs).Get(u.GetName(), metav1.GetOptions{}); apierrs.IsNotFound(err) {
+					return true, nil
+				} else {
+					return false, err
+				}
+			})
+
+			if waitErr != nil {
+				t.Fatalf("The %s %s failed to be deleted: %v", u.GetKind(), u.GetName(), waitErr)
+			}
+			t.Logf("The %s %s has been deleted.", u.GetKind(), u.GetName())
+		}
 	}
 }

@@ -30,6 +30,7 @@ type Clients struct {
 	KubeClient                *test.KubeClient
 	Dynamic                   dynamic.Interface
 	KnativeServingAlphaClient servingv1alpha1.KnativeServingInterface
+	Config                    *rest.Config
 }
 
 // NewClients instantiates and returns several clientsets required for making request to the
@@ -61,6 +62,7 @@ func NewClients(configPath string, clusterName string, namespace string) (*Clien
 		return nil, err
 	}
 
+	clients.Config = cfg
 	return clients, nil
 }
 
