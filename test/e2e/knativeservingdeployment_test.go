@@ -157,13 +157,11 @@ func verifyClusterResourceDeletion(t *testing.T, clients *test.Clients) {
 		if u.GetNamespace() == "" && u.GetKind() != "Namespace" {
 			waitErr := wait.PollImmediate(resources.Interval, resources.Timeout, func() (bool, error) {
 				gvrs, _ := meta.UnsafeGuessKindToResource(u.GroupVersionKind())
-				if _, err := clients.Dynamic.Resource(gvrs).Get(u.GetName(), metav1.GetOptions{}); err != nil {
-					if apierrs.IsNotFound(err) {
-						return true, nil
-					}
+				if _, err := clients.Dynamic.Resource(gvrs).Get(u.GetName(), metav1.GetOptions{}); apierrs.IsNotFound(err) {
+					return true, nil
+				} else {
 					return false, err
 				}
-				return false, nil
 			})
 
 			if waitErr != nil {
