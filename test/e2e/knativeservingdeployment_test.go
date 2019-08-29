@@ -149,7 +149,7 @@ func knativeServingDeletion(t *testing.T, clients *test.Clients, names test.Reso
 
 func verifyClusterResourceDeletion(t *testing.T, clients *test.Clients) {
 	_, b, _, _ := runtime.Caller(0)
-	m, err := mf.NewManifest(filepath.Join((filepath.Dir(b) + "/.."), "config/"), false, clients.Config)
+	m, err := mf.NewManifest(filepath.Join((filepath.Dir(b)+"/.."), "config/"), false, clients.Config)
 	if err != nil {
 		t.Fatal("Failed to load manifest", err)
 	}
