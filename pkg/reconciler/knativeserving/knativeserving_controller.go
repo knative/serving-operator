@@ -33,8 +33,8 @@ import (
 	"knative.dev/pkg/controller"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	listers "knative.dev/serving-operator/pkg/client/listers/serving/v1alpha1"
-	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 	"knative.dev/serving-operator/pkg/reconciler"
+	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 	"knative.dev/serving-operator/version"
 )
 
@@ -47,9 +47,8 @@ var (
 type Reconciler struct {
 	*reconciler.Base
 	// Listers index properties about resources
-	knativeServingLister          listers.KnativeServingLister
-	config                        mf.Manifest
-
+	knativeServingLister listers.KnativeServingLister
+	config               mf.Manifest
 }
 
 // Check that our Reconciler implements controller.Reconciler
@@ -135,6 +134,7 @@ func (r *Reconciler) initStatus(instance *servingv1alpha1.KnativeServing) error 
 	}
 	return nil
 }
+
 // Update the status subresource
 func (r *Reconciler) updateStatus(instance *servingv1alpha1.KnativeServing) error {
 	afterUpdate, err := r.KnativeServingClientSet.ServingV1alpha1().KnativeServings(instance.Namespace).UpdateStatus(instance)
