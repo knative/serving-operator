@@ -49,6 +49,7 @@ type Reconciler struct {
 	// Listers index properties about resources
 	knativeServingLister listers.KnativeServingLister
 	config               mf.Manifest
+	servings             map[string]bool
 }
 
 // Check that our Reconciler implements controller.Reconciler
@@ -67,15 +68,19 @@ func (r *Reconciler) Reconcile(ctx context.Context, key string) error {
 	// Get the KnativeServing resource with this namespace/name.
 	original, err := r.knativeServingLister.KnativeServings(namespace).Get(name)
 	if apierrs.IsNotFound(err) {
-		// The resource may no longer exist, in which case we stop processing.
-		r.config.DeleteAll(&metav1.DeleteOptions{})
-		r.Logger.Errorf("KnativeServing %q in work queue no longer exists", key)
+		// The resource was deleted
+		delete(r.servings, key)
+		if len(r.servings) == 0 {
+			r.config.DeleteAll(&metav1.DeleteOptions{})
+		}
 		return nil
 
 	} else if err != nil {
 		r.Logger.Error(err, "Error getting KnativeServing")
 		return err
 	}
+	// Keep track of the number of KnativeServings in the cluster
+	r.servings[key] = true
 
 	// Don't modify the informers copy.
 	knativeServing := original.DeepCopy()

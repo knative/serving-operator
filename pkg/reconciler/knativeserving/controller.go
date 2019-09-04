@@ -55,6 +55,7 @@ func NewController(
 	c := &Reconciler{
 		Base:                 rbase.NewBase(ctx, controllerAgentName, cmw),
 		knativeServingLister: knativeServingInformer.Lister(),
+		servings:             map[string]bool{},
 	}
 
 	koDataDir := os.Getenv("KO_DATA_PATH")
