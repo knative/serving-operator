@@ -113,7 +113,3 @@ type KnativeServingList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []KnativeServing `json:"items"`
 }
-
-func init() {
-	SchemeBuilderCR.Register(&KnativeServing{}, &KnativeServingList{})
-}
