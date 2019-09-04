@@ -19,11 +19,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.uber.org/zap"
 	"github.com/go-logr/zapr"
+	mf "github.com/jcrossley3/manifestival"
+	"go.uber.org/zap"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
-	mf "github.com/jcrossley3/manifestival"
 	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/controller"
 	deploymentinformer "knative.dev/pkg/injection/informers/kubeinformers/appsv1/deployment"
@@ -38,7 +38,7 @@ const (
 )
 
 var (
-	recursive = flag.Bool("recursive", false, "If filename is a directory, process all manifests recursively")
+	recursive  = flag.Bool("recursive", false, "If filename is a directory, process all manifests recursively")
 	MasterURL  = flag.String("master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	Kubeconfig = flag.String("kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 )
