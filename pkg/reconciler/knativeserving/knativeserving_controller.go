@@ -28,6 +28,7 @@ import (
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/tools/cache"
 
 	"knative.dev/pkg/controller"
@@ -49,7 +50,7 @@ type Reconciler struct {
 	// Listers index properties about resources
 	knativeServingLister listers.KnativeServingLister
 	config               mf.Manifest
-	servings             map[string]bool
+	servings             sets.String
 }
 
 // Check that our Reconciler implements controller.Reconciler
@@ -69,8 +70,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, key string) error {
 	original, err := r.knativeServingLister.KnativeServings(namespace).Get(name)
 	if apierrs.IsNotFound(err) {
 		// The resource was deleted
-		delete(r.servings, key)
-		if len(r.servings) == 0 {
+		r.servings.Delete(key)
+		if r.servings.Len() == 0 {
 			r.config.DeleteAll(&metav1.DeleteOptions{})
 		}
 		return nil
@@ -80,7 +81,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, key string) error {
 		return err
 	}
 	// Keep track of the number of KnativeServings in the cluster
-	r.servings[key] = true
+	r.servings.Insert(key)
 
 	// Don't modify the informers copy.
 	knativeServing := original.DeepCopy()
