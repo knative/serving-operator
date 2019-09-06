@@ -20,6 +20,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/test"
 	"knative.dev/serving-operator/pkg/client/clientset/versioned"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/client/clientset/versioned/typed/serving/v1alpha1"
@@ -27,16 +28,15 @@ import (
 
 // Clients holds instances of interfaces for making requests to Knative Serving.
 type Clients struct {
-	KubeClient                *test.KubeClient
-	Dynamic                   dynamic.Interface
-	KnativeServingAlphaClient servingv1alpha1.KnativeServingInterface
-	Config                    *rest.Config
+	KubeClient *test.KubeClient
+	Dynamic    dynamic.Interface
+	Serving    servingv1alpha1.ServingV1alpha1Interface
+	Config     *rest.Config
 }
 
 // NewClients instantiates and returns several clientsets required for making request to the
-// Knative Serving cluster specified by the combination of clusterName and configPath. Clients can
-// make requests within namespace.
-func NewClients(configPath string, clusterName string, namespace string) (*Clients, error) {
+// Knative Serving cluster specified by the combination of clusterName and configPath.
+func NewClients(configPath string, clusterName string) (*Clients, error) {
 	clients := &Clients{}
 	cfg, err := buildClientConfig(configPath, clusterName)
 	if err != nil {
@@ -57,7 +57,7 @@ func NewClients(configPath string, clusterName string, namespace string) (*Clien
 		return nil, err
 	}
 
-	clients.KnativeServingAlphaClient, err = newKnativeServingAlphaClients(cfg, namespace)
+	clients.Serving, err = newKnativeServingAlphaClients(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -77,11 +77,18 @@ func buildClientConfig(kubeConfigPath string, clusterName string) (*rest.Config,
 		&overrides).ClientConfig()
 }
 
-func newKnativeServingAlphaClients(cfg *rest.Config, namespace string) (servingv1alpha1.KnativeServingInterface, error) {
+func newKnativeServingAlphaClients(cfg *rest.Config) (servingv1alpha1.ServingV1alpha1Interface, error) {
 	cs, err := versioned.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
+	return cs.ServingV1alpha1(), nil
+}
 
-	return cs.ServingV1alpha1().KnativeServings(namespace), nil
+func (c *Clients) KnativeServing() servingv1alpha1.KnativeServingInterface {
+	return c.Serving.KnativeServings(ServingOperatorNamespace)
+}
+
+func (c *Clients) KnativeServingAll() servingv1alpha1.KnativeServingInterface {
+	return c.Serving.KnativeServings(metav1.NamespaceAll)
 }

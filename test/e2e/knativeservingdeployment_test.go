@@ -16,6 +16,7 @@ limitations under the License.
 package e2e
 
 import (
+	"errors"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -45,7 +46,7 @@ func TestKnativeServingDeployment(t *testing.T) {
 	defer test.TearDown(clients, names)
 
 	// Create a KnativeServing
-	if _, err := resources.CreateKnativeServing(clients.KnativeServingAlphaClient, names); err != nil {
+	if _, err := resources.CreateKnativeServing(clients.KnativeServing(), names); err != nil {
 		t.Fatalf("KnativeService %q failed to create: %v", names.KnativeServing, err)
 	}
 
@@ -70,7 +71,7 @@ func TestKnativeServingDeployment(t *testing.T) {
 
 // knativeServingVerify verifies if the KnativeServing can reach the READY status.
 func knativeServingVerify(t *testing.T, clients *test.Clients, names test.ResourceNames) {
-	if _, err := resources.WaitForKnativeServingState(clients.KnativeServingAlphaClient, names.KnativeServing,
+	if _, err := resources.WaitForKnativeServingState(clients.KnativeServing(), names.KnativeServing,
 		resources.IsKnativeServingReady); err != nil {
 		t.Fatalf("KnativeService %q failed to get to the READY status: %v", names.KnativeServing, err)
 	}
@@ -111,7 +112,7 @@ func deploymentRecreation(t *testing.T, clients *test.Clients, names test.Resour
 		t.Fatalf("The deployment %s/%s failed to reach the desired state: %v", deployment.Namespace, deployment.Name, err)
 	}
 
-	if _, err := resources.WaitForKnativeServingState(clients.KnativeServingAlphaClient, test.ServingOperatorName,
+	if _, err := resources.WaitForKnativeServingState(clients.KnativeServing(), test.ServingOperatorName,
 		resources.IsKnativeServingReady); err != nil {
 		t.Fatalf("KnativeService %q failed to reach the desired state: %v", test.ServingOperatorName, err)
 	}
@@ -120,7 +121,7 @@ func deploymentRecreation(t *testing.T, clients *test.Clients, names test.Resour
 
 // knativeServingDeletion deletes tha KnativeServing to see if all the deployments will be removed.
 func knativeServingDeletion(t *testing.T, clients *test.Clients, names test.ResourceNames) {
-	if err := clients.KnativeServingAlphaClient.Delete(names.KnativeServing, &metav1.DeleteOptions{}); err != nil {
+	if err := clients.KnativeServing().Delete(names.KnativeServing, &metav1.DeleteOptions{}); err != nil {
 		t.Fatalf("KnativeService %q failed to delete: %v", names.KnativeServing, err)
 	}
 
@@ -153,6 +154,9 @@ func verifyClusterResourceDeletion(t *testing.T, clients *test.Clients) {
 	if err != nil {
 		t.Fatal("Failed to load manifest", err)
 	}
+	if err := verifyNoKnativeServings(clients); err != nil {
+		t.Fatal(err)
+	}
 	for _, u := range m.Resources {
 		if u.GetNamespace() == "" && u.GetKind() != "Namespace" {
 			waitErr := wait.PollImmediate(resources.Interval, resources.Timeout, func() (bool, error) {
@@ -170,4 +174,15 @@ func verifyClusterResourceDeletion(t *testing.T, clients *test.Clients) {
 			t.Logf("The %s %s has been deleted.", u.GetKind(), u.GetName())
 		}
 	}
+}
+
+func verifyNoKnativeServings(clients *test.Clients) error {
+	servings, err := clients.KnativeServingAll().List(metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	if len(servings.Items) > 0 {
+		return errors.New("Unable to verify cluster-scoped resources are deleted if any KnativeServing exists")
+	}
+	return nil
 }
