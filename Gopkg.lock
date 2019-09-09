@@ -51,14 +51,6 @@
   revision = "de5bf2ad457846296e2031421a34e2568e304e35"
 
 [[projects]]
-  digest = "1:680b63a131506e668818d630d3ca36123ff290afa0afc9f4be21940adca3f27d"
-  name = "github.com/appscode/jsonpatch"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "7c0e3b262f30165a8ec3d0b4c6059fd92703bfb2"
-  version = "1.0.0"
-
-[[projects]]
   digest = "1:07e8b4eed57d5fd00be4d1b2db1ad7abc81d5a6be96c6dcbbb52d7179fea2f82"
   name = "github.com/aws/aws-sdk-go"
   packages = [
@@ -407,14 +399,6 @@
   pruneopts = "NUT"
   revision = "78c472461e75e6c64589cfadf577a2004b8a26b3"
   version = "v0.8.0"
-
-[[projects]]
-  digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
-  name = "github.com/pborman/uuid"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "adf5a7427709b9deb95d29d3fa8a2bf9cfd388f1"
-  version = "v1.2"
 
 [[projects]]
   branch = "master"
@@ -803,10 +787,9 @@
   version = "v2.2.2"
 
 [[projects]]
-  digest = "1:0ae5137dc94a40cd72fe4fcdf9db0c119d2d63df04af5958cfd514a2a21b3988"
+  digest = "1:c453ddc26bdab1e4267683a588ad9046e48d803a73f124fe2927adbab6ff02a5"
   name = "k8s.io/api"
   packages = [
-    "admission/v1beta1",
     "admissionregistration/v1alpha1",
     "admissionregistration/v1beta1",
     "apps/v1",
@@ -844,7 +827,7 @@
   revision = "05914d821849570fba9eacfb29466f2d8d3cd229"
 
 [[projects]]
-  digest = "1:27ae2f5b3e432bf8ab7cd0f9faaba294665a8b2ddc40672fa1bea931372b4455"
+  digest = "1:f1e7a93aa60a0807124feeab24d8229fda59bda1d997730479fae8e0a526bd39"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/equality",
@@ -884,7 +867,6 @@
     "pkg/util/runtime",
     "pkg/util/sets",
     "pkg/util/strategicpatch",
-    "pkg/util/uuid",
     "pkg/util/validation",
     "pkg/util/validation/field",
     "pkg/util/wait",
@@ -898,7 +880,7 @@
   revision = "2b1284ed4c93a43499e781493253e2ac5959c4fd"
 
 [[projects]]
-  digest = "1:d95ddc9fb832339ed82d5681be220a53e5422bb63e6ca679db87481e07e2f194"
+  digest = "1:884ff37a720e847234285d9b75a086e654ab82fab14ebbcccb1a39578e9331cd"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -1029,8 +1011,6 @@
     "tools/clientcmd/api",
     "tools/clientcmd/api/latest",
     "tools/clientcmd/api/v1",
-    "tools/leaderelection",
-    "tools/leaderelection/resourcelock",
     "tools/metrics",
     "tools/pager",
     "tools/record",
@@ -1127,7 +1107,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c3dcb59922bdd7fcf9050e1b399e645e029a6d743ef061b5c8a8c69e6d24af74"
+  digest = "1:0dca180a6449f2cd457f8efea003336352c5a412212fce072cad9661d5a71b61"
   name = "knative.dev/pkg"
   packages = [
     "apis",
@@ -1142,6 +1122,9 @@
     "client/clientset/versioned/typed/authentication/v1alpha1",
     "client/clientset/versioned/typed/istio/v1alpha3",
     "client/injection/client",
+    "client/injection/kube/client",
+    "client/injection/kube/informers/apps/v1/deployment",
+    "client/injection/kube/informers/factory",
     "codegen/cmd/injection-gen",
     "codegen/cmd/injection-gen/args",
     "codegen/cmd/injection-gen/generators",
@@ -1149,10 +1132,6 @@
     "controller",
     "injection",
     "injection/clients/dynamicclient",
-    "injection/clients/kubeclient",
-    "injection/informers/kubeinformers/appsv1/deployment",
-    "injection/informers/kubeinformers/corev1/service",
-    "injection/informers/kubeinformers/factory",
     "injection/sharedmain",
     "kmeta",
     "kmp",
@@ -1174,7 +1153,7 @@
     "test/zipkin",
   ]
   pruneopts = "T"
-  revision = "73daad6e4735a9ba885f3e7a08fb2a2f38865a93"
+  revision = "528ad1c1dd627059b95aef17ccf27f9ab0f46c10"
 
 [[projects]]
   digest = "1:eeebb49b9a2eb1dd46487913c8155bce627f8657b0ef6aa1d30acb729e277f1c"
@@ -1187,35 +1166,9 @@
   revision = "6c3132259e7b5062a719b393536c216397110e01"
 
 [[projects]]
-  digest = "1:18c52d0bbc6f341d99683faa04a05040234676fda7b3dec50913131133df1af9"
+  digest = "1:9d01f79d91d75c0e75578144de961abf2c925475080dfdad99fc42c1f24e6b9e"
   name = "sigs.k8s.io/controller-runtime"
-  packages = [
-    "pkg/cache",
-    "pkg/cache/internal",
-    "pkg/client",
-    "pkg/client/apiutil",
-    "pkg/controller",
-    "pkg/event",
-    "pkg/handler",
-    "pkg/internal/controller",
-    "pkg/internal/controller/metrics",
-    "pkg/internal/recorder",
-    "pkg/leaderelection",
-    "pkg/manager",
-    "pkg/metrics",
-    "pkg/patch",
-    "pkg/predicate",
-    "pkg/reconcile",
-    "pkg/recorder",
-    "pkg/runtime/inject",
-    "pkg/runtime/log",
-    "pkg/source",
-    "pkg/source/internal",
-    "pkg/webhook/admission",
-    "pkg/webhook/admission/types",
-    "pkg/webhook/internal/metrics",
-    "pkg/webhook/types",
-  ]
+  packages = ["pkg/runtime/log"]
   pruneopts = "NUT"
   revision = "12d98582e72927b6cd0123e2b4e819f9341ce62c"
   version = "v0.1.10"
@@ -1233,6 +1186,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/go-logr/logr",
+    "github.com/go-logr/zapr",
     "github.com/go-openapi/spec",
     "github.com/jcrossley3/manifestival",
     "github.com/pkg/errors",
@@ -1258,8 +1212,6 @@
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/kubernetes/typed/core/v1",
-    "k8s.io/client-go/listers/apps/v1",
-    "k8s.io/client-go/listers/core/v1",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/testing",
@@ -1279,14 +1231,13 @@
     "knative.dev/pkg/apis/istio/v1alpha3",
     "knative.dev/pkg/client/clientset/versioned",
     "knative.dev/pkg/client/injection/client",
+    "knative.dev/pkg/client/injection/kube/client",
+    "knative.dev/pkg/client/injection/kube/informers/apps/v1/deployment",
     "knative.dev/pkg/codegen/cmd/injection-gen",
     "knative.dev/pkg/configmap",
     "knative.dev/pkg/controller",
     "knative.dev/pkg/injection",
     "knative.dev/pkg/injection/clients/dynamicclient",
-    "knative.dev/pkg/injection/clients/kubeclient",
-    "knative.dev/pkg/injection/informers/kubeinformers/appsv1/deployment",
-    "knative.dev/pkg/injection/informers/kubeinformers/corev1/service",
     "knative.dev/pkg/injection/sharedmain",
     "knative.dev/pkg/logging",
     "knative.dev/pkg/logging/logkey",
@@ -1296,14 +1247,7 @@
     "knative.dev/pkg/test/logstream",
     "knative.dev/test-infra/scripts",
     "knative.dev/test-infra/tools/dep-collector",
-    "sigs.k8s.io/controller-runtime/pkg/client",
-    "sigs.k8s.io/controller-runtime/pkg/controller",
-    "sigs.k8s.io/controller-runtime/pkg/handler",
-    "sigs.k8s.io/controller-runtime/pkg/manager",
-    "sigs.k8s.io/controller-runtime/pkg/predicate",
-    "sigs.k8s.io/controller-runtime/pkg/reconcile",
     "sigs.k8s.io/controller-runtime/pkg/runtime/log",
-    "sigs.k8s.io/controller-runtime/pkg/source",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -30,10 +30,10 @@ import (
 
 	sharedclientset "knative.dev/pkg/client/clientset/versioned"
 	sharedclient "knative.dev/pkg/client/injection/client"
+	kubeclient "knative.dev/pkg/client/injection/kube/client"
 	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/controller"
 	"knative.dev/pkg/injection/clients/dynamicclient"
-	"knative.dev/pkg/injection/clients/kubeclient"
 	"knative.dev/pkg/logging"
 	"knative.dev/pkg/logging/logkey"
 	clientset "knative.dev/serving-operator/pkg/client/clientset/versioned"
