@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"os"
 	"reflect"
-	"strings"
 
 	"go.uber.org/zap"
 	"k8s.io/api/admission/v1beta1"
@@ -162,17 +161,19 @@ func (a *APICoverageRecorder) GetResourceCoverage(w http.ResponseWriter, r *http
 	var ignoredFields coveragecalculator.IgnoredFields
 	ignoredFieldsFilePath := os.Getenv("KO_DATA_PATH") + "/ignoredfields.yaml"
 	if err := ignoredFields.ReadFromFile(ignoredFieldsFilePath); err != nil {
-		fmt.Fprintf(w, "Error reading file: %s", ignoredFieldsFilePath)
+		a.Logger.Errorf("Error reading file %s: %v", ignoredFieldsFilePath, err)
 	}
 
 	tree := a.ResourceForest.TopLevelTrees[resource]
 	typeCoverage := tree.BuildCoverageData(a.NodeRules, a.FieldRules, ignoredFields)
 	coverageValues := coveragecalculator.CalculateTypeCoverage(typeCoverage)
+	coverageValues.CalculatePercentageValue()
 
-	var buffer strings.Builder
-	buffer.WriteString(view.GetHTMLDisplay(typeCoverage, a.DisplayRules))
-	buffer.WriteString(view.GetHTMLCoverageValuesDisplay(coverageValues))
-	fmt.Fprint(w, buffer.String())
+	if htmlData, err := view.GetHTMLDisplay(typeCoverage, coverageValues); err != nil {
+		fmt.Fprintf(w, "Error generating html file %v", err)
+	} else {
+		fmt.Fprint(w, htmlData)
+	}
 }
 
 // GetTotalCoverage goes over all the resources setup for the apicoverage tool and returns total coverage values.
@@ -184,7 +185,7 @@ func (a *APICoverageRecorder) GetTotalCoverage(w http.ResponseWriter, r *http.Re
 
 	ignoredFieldsFilePath := os.Getenv("KO_DATA_PATH") + "/ignoredfields.yaml"
 	if err = ignoredFields.ReadFromFile(ignoredFieldsFilePath); err != nil {
-		fmt.Fprintf(w, "error reading file: %s error: %v", ignoredFieldsFilePath, err)
+		a.Logger.Errorf("Error reading file %s: %v", ignoredFieldsFilePath, err)
 	}
 
 	totalCoverage := coveragecalculator.CoverageValues{}
@@ -197,9 +198,11 @@ func (a *APICoverageRecorder) GetTotalCoverage(w http.ResponseWriter, r *http.Re
 		totalCoverage.IgnoredFields += coverageValues.IgnoredFields
 	}
 
+	totalCoverage.CalculatePercentageValue()
 	var body []byte
 	if body, err = json.Marshal(totalCoverage); err != nil {
 		fmt.Fprintf(w, "error marshalling total coverage response: %v", err)
+		return
 	}
 
 	if _, err = w.Write(body); err != nil {
