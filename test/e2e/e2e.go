@@ -26,15 +26,9 @@ import (
 
 // Setup creates the client objects needed in the e2e tests.
 func Setup(t *testing.T) *test.Clients {
-	return SetupWithNamespace(t, test.ServingOperatorNamespace)
-}
-
-// SetupWithNamespace creates the client objects needed in the e2e tests under the specified namespace.
-func SetupWithNamespace(t *testing.T, namespace string) *test.Clients {
 	clients, err := test.NewClients(
 		pkgTest.Flags.Kubeconfig,
-		pkgTest.Flags.Cluster,
-		namespace)
+		pkgTest.Flags.Cluster)
 	if err != nil {
 		t.Fatalf("Couldn't initialize clients: %v", err)
 	}
