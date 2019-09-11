@@ -74,6 +74,7 @@ func CreateKnativeServing(clients servingv1alpha1.KnativeServingInterface, names
 	return svc, err
 }
 
+// WaitForConfigMap takes a condition function that evaluates ConfigMap data
 func WaitForConfigMap(client *kubernetes.Clientset, names test.ResourceNames, fn func(map[string]string) bool) error {
 	return wait.PollImmediate(Interval, Timeout, func() (bool, error) {
 		cm, err := client.CoreV1().ConfigMaps(names.Namespace).Get(names.LoggingConfig, metav1.GetOptions{})
