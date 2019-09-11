@@ -28,6 +28,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
 	"knative.dev/pkg/test/logging"
 	"knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/client/clientset/versioned/typed/serving/v1alpha1"
@@ -71,6 +72,16 @@ func CreateKnativeServing(clients servingv1alpha1.KnativeServingInterface, names
 	}
 	svc, err := clients.Create(ks)
 	return svc, err
+}
+
+func WaitForConfigMap(client *kubernetes.Clientset, names test.ResourceNames, fn func(map[string]string) bool) error {
+	return wait.PollImmediate(Interval, Timeout, func() (bool, error) {
+		cm, err := client.CoreV1().ConfigMaps(names.Namespace).Get(names.LoggingConfig, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+		return fn(cm.Data), nil
+	})
 }
 
 // IsKnativeServingReady will check the status conditions of the KnativeServing and return true if the KnativeServing is ready.

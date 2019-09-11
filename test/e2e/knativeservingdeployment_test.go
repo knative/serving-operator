@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"knative.dev/pkg/test/logstream"
+	"knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	"knative.dev/serving-operator/test"
 	"knative.dev/serving-operator/test/resources"
 )
@@ -40,6 +41,7 @@ func TestKnativeServingDeployment(t *testing.T) {
 	names := test.ResourceNames{
 		KnativeServing: test.ServingOperatorName,
 		Namespace:      test.ServingOperatorNamespace,
+		LoggingConfig:  test.LoggingConfigMapName,
 	}
 
 	test.CleanupOnInterrupt(func() { test.TearDown(clients, names) })
@@ -53,6 +55,11 @@ func TestKnativeServingDeployment(t *testing.T) {
 	// Test if KnativeServing can reach the READY status
 	t.Run("create", func(t *testing.T) {
 		knativeServingVerify(t, clients, names)
+	})
+
+	t.Run("configure", func(t *testing.T) {
+		knativeServingVerify(t, clients, names)
+		knativeServingConfigure(t, clients, names)
 	})
 
 	// Delete the deployments one by one to see if they will be recreated.
@@ -76,6 +83,44 @@ func knativeServingVerify(t *testing.T, clients *test.Clients, names test.Resour
 		t.Fatalf("KnativeService %q failed to get to the READY status: %v", names.KnativeServing, err)
 	}
 
+}
+
+// knativeServingConfigure verifies that KnativeServing config is set properly
+func knativeServingConfigure(t *testing.T, clients *test.Clients, names test.ResourceNames) {
+	// Get the existing KS without any spec
+	ks, err := clients.KnativeServing().Get(names.KnativeServing, metav1.GetOptions{})
+	// Add config to its spec
+	ks.Spec = v1alpha1.KnativeServingSpec{
+		Config: map[string]map[string]string{
+			"logging": map[string]string{
+				"loglevel.controller": "debug",
+			},
+		},
+	}
+	// Update it
+	if ks, err = clients.KnativeServing().Update(ks); err != nil {
+		t.Fatalf("KnativeServing %q failed to update: %v", names.KnativeServing, err)
+	}
+	// Verifty the relevant configmap has been updated
+	err = resources.WaitForConfigMap(clients.KubeClient.Kube, names, func(m map[string]string) bool {
+		return m["loglevel.controller"] == "debug"
+	})
+	if err != nil {
+		t.Fatal("The operator failed to update the configmap")
+	}
+	// Now remove the config from the spec and update
+	ks.Spec = v1alpha1.KnativeServingSpec{}
+	if ks, err = clients.KnativeServing().Update(ks); err != nil {
+		t.Fatalf("KnativeServing %q failed to update: %v", names.KnativeServing, err)
+	}
+	// And verify the configmap entry is gone
+	err = resources.WaitForConfigMap(clients.KubeClient.Kube, names, func(m map[string]string) bool {
+		_, exists := m["loglevel.controller"]
+		return !exists
+	})
+	if err != nil {
+		t.Fatal("The operator failed to revert the configmap")
+	}
 }
 
 // deploymentRecreation verify whether all the deployments for knative serving are able to recreate, when they are deleted.
