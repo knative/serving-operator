@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	caching "knative.dev/caching/pkg/apis/caching/v1alpha1"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
 	appsv1 "k8s.io/api/apps/v1"
 )
@@ -103,8 +102,6 @@ func TestDeploymentTransform(t *testing.T) {
 	}
 }
 func runDeploymentTransformTest(t *testing.T, tt *updateDeploymentImageTest) {
-	log := logf.Log.WithName(tt.name)
-	logf.SetLogger(logf.ZapLogger(true))
 	unstructuredDeployment := makeUnstructuredDeployment(t, tt)
 	instance := &servingv1alpha1.KnativeServing{
 		Spec: servingv1alpha1.KnativeServingSpec{
@@ -176,9 +173,6 @@ func TestImageTransform(t *testing.T) {
 	}
 }
 func runImageTransformTest(t *testing.T, tt *updateImageSpecTest) {
-	log := logf.Log.WithName(tt.name)
-	logf.SetLogger(logf.ZapLogger(true))
-
 	unstructuredImage := makeUnstructuredImage(t, tt)
 	instance := &servingv1alpha1.KnativeServing{
 		Spec: servingv1alpha1.KnativeServingSpec{

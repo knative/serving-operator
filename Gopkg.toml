@@ -50,10 +50,6 @@ required = [
   revision = "8d9ed539ba3134352c586810e749e58df4e94e4f"
 
 [[override]]
-  name = "sigs.k8s.io/controller-runtime"
-  version = "=v0.1.10"
-
-[[override]]
   name = "knative.dev/test-infra"
   # HEAD as of 2019-06-18
   revision = "6c3132259e7b5062a719b393536c216397110e01"
