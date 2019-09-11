@@ -109,7 +109,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, key string) error {
 
 func (r *Reconciler) reconcile(ctx context.Context, ks *servingv1alpha1.KnativeServing) error {
 	reqLogger := r.Logger.With(zap.String("Request.Namespace", ks.Namespace)).With("Request.Name", ks.Name)
-	reqLogger.Info("Reconciling KnativeServing")
 
 	// TODO: We need to find a better way to make sure the instance has the updated info.
 	ks.SetGroupVersionKind(servingv1alpha1.SchemeGroupVersion.WithKind("KnativeServing"))
@@ -120,18 +119,19 @@ func (r *Reconciler) reconcile(ctx context.Context, ks *servingv1alpha1.KnativeS
 		r.deleteObsoleteResources,
 	}
 
+	reqLogger.Infow("Reconciling KnativeServing", "status", ks.Status)
 	for _, stage := range stages {
 		if err := stage(ks); err != nil {
 			return err
 		}
 	}
+	reqLogger.Infow("Reconcile stages complete", "status", ks.Status)
 	return nil
 }
 
 // Initialize status conditions
 func (r *Reconciler) initStatus(instance *servingv1alpha1.KnativeServing) error {
-	r.Logger.Infof("Initialing the status. The current status is %q.", instance.Status)
-
+	r.Logger.Debug("Initializing status")
 	if len(instance.Status.Conditions) == 0 {
 		instance.Status.InitializeConditions()
 		if err := r.updateStatus(instance); err != nil {
@@ -155,7 +155,7 @@ func (r *Reconciler) updateStatus(instance *servingv1alpha1.KnativeServing) erro
 
 // Install the resources from the Manifest
 func (r *Reconciler) install(instance *servingv1alpha1.KnativeServing) error {
-	r.Logger.Infof("Installing knative-serving. The current status is %q.", instance.Status)
+	r.Logger.Debug("Installing manifest")
 	defer r.updateStatus(instance)
 
 	if err := r.transform(instance); err != nil {
@@ -169,7 +169,8 @@ func (r *Reconciler) install(instance *servingv1alpha1.KnativeServing) error {
 
 // Transform the resources
 func (r *Reconciler) transform(instance *servingv1alpha1.KnativeServing) error {
-	transforms, err := platform.Transformers(r.KubeClientSet, instance)
+	r.Logger.Debug("Transforming manifest")
+	transforms, err := platform.Transformers(r.KubeClientSet, instance, r.Logger)
 	if err != nil {
 		return err
 	}
@@ -181,19 +182,19 @@ func (r *Reconciler) transform(instance *servingv1alpha1.KnativeServing) error {
 
 // Apply the embedded resources
 func (r *Reconciler) apply(instance *servingv1alpha1.KnativeServing) error {
+	r.Logger.Debug("Applying manifest")
 	if err := r.config.ApplyAll(); err != nil {
 		instance.Status.MarkInstallFailed(err.Error())
 		return err
 	}
 	instance.Status.MarkInstallSucceeded()
 	instance.Status.Version = version.Version
-	r.Logger.Info("Install succeeded", "version", version.Version)
 	return nil
 }
 
 // Check for all deployments available
 func (r *Reconciler) checkDeployments(instance *servingv1alpha1.KnativeServing) error {
-	r.Logger.Infof("Checking the deployments. The current status is %q.", instance.Status)
+	r.Logger.Debug("Checking deployments")
 	defer r.updateStatus(instance)
 	available := func(d *appsv1.Deployment) bool {
 		for _, c := range d.Status.Conditions {
@@ -219,7 +220,6 @@ func (r *Reconciler) checkDeployments(instance *servingv1alpha1.KnativeServing) 
 			}
 		}
 	}
-	r.Logger.Info("All deployments are available")
 	instance.Status.MarkDeploymentsAvailable()
 	return nil
 }

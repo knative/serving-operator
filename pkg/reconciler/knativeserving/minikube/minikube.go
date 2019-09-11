@@ -16,6 +16,7 @@ limitations under the License.
 package minikube
 
 import (
+	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 
 	mf "github.com/jcrossley3/manifestival"
@@ -23,15 +24,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-var (
-	log = logf.Log.WithName("minikube")
-)
+var log *zap.SugaredLogger
 
 // Configure minikube if we're soaking in it
-func Configure(kubeClientSet kubernetes.Interface) (mf.Transformer, error) {
+func Configure(kubeClientSet kubernetes.Interface, slog *zap.SugaredLogger) (mf.Transformer, error) {
+	log = slog.Named("minikube")
 	if _, err := kubeClientSet.CoreV1().Nodes().Get("minikube", metav1.GetOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
 			log.Error(err, "Unable to query for minikube node")

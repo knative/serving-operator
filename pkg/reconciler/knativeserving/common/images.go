@@ -16,12 +16,11 @@ limitations under the License.
 package common
 
 import (
-	"fmt"
 	"strings"
 
 	mf "github.com/jcrossley3/manifestival"
+	"go.uber.org/zap"
 
-	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -35,7 +34,7 @@ var (
 	containerNameVariable = "${NAME}"
 )
 
-func DeploymentTransform(instance *servingv1alpha1.KnativeServing, log logr.Logger) mf.Transformer {
+func DeploymentTransform(instance *servingv1alpha1.KnativeServing, log *zap.SugaredLogger) mf.Transformer {
 	return func(u *unstructured.Unstructured) error {
 		// Update the deployment with the new registry and tag
 		if u.GetKind() == "Deployment" {
@@ -45,7 +44,7 @@ func DeploymentTransform(instance *servingv1alpha1.KnativeServing, log logr.Logg
 	}
 }
 
-func ImageTransform(instance *servingv1alpha1.KnativeServing, log logr.Logger) mf.Transformer {
+func ImageTransform(instance *servingv1alpha1.KnativeServing, log *zap.SugaredLogger) mf.Transformer {
 	return func(u *unstructured.Unstructured) error {
 		// Update the image with the new registry and tag
 		if u.GetAPIVersion() == "caching.internal.knative.dev/v1alpha1" && u.GetKind() == "Image" {
@@ -55,7 +54,7 @@ func ImageTransform(instance *servingv1alpha1.KnativeServing, log logr.Logger) m
 	}
 }
 
-func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured, log logr.Logger) error {
+func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured, log *zap.SugaredLogger) error {
 	var deployment = &appsv1.Deployment{}
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, deployment)
 	if err != nil {
@@ -64,7 +63,7 @@ func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.
 	}
 
 	registry := instance.Spec.Registry
-	log.V(1).Info("Updating Deployment", "name", u.GetName(), "registry", registry)
+	log.Debugw("Updating Deployment", "name", u.GetName(), "registry", registry)
 
 	updateDeploymentImage(deployment, &registry, log)
 	err = updateUnstructured(u, deployment, log)
@@ -72,11 +71,11 @@ func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.
 		return err
 	}
 
-	log.V(1).Info("Finished conversion", "name", u.GetName(), "unstructured", u.Object)
+	log.Debugw("Finished conversion", "name", u.GetName(), "unstructured", u.Object)
 	return nil
 }
 
-func updateUnstructured(u *unstructured.Unstructured, obj interface{}, log logr.Logger) error {
+func updateUnstructured(u *unstructured.Unstructured, obj interface{}, log *zap.SugaredLogger) error {
 	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&obj)
 	if err != nil {
 		log.Error(err, "Error converting obj to Unstructured", "unstructured", u, "obj", obj)
@@ -87,7 +86,7 @@ func updateUnstructured(u *unstructured.Unstructured, obj interface{}, log logr.
 }
 
 // updateDeploymentImage updates the image of the deployment with a new registry and tag
-func updateDeploymentImage(deployment *appsv1.Deployment, registry *servingv1alpha1.Registry, log logr.Logger) {
+func updateDeploymentImage(deployment *appsv1.Deployment, registry *servingv1alpha1.Registry, log *zap.SugaredLogger) {
 	containers := deployment.Spec.Template.Spec.Containers
 	for index := range containers {
 		container := &containers[index]
@@ -96,7 +95,7 @@ func updateDeploymentImage(deployment *appsv1.Deployment, registry *servingv1alp
 			updateContainer(container, newImage, log)
 		}
 	}
-	log.V(1).Info("Finished updating images", "name", deployment.GetName(), "containers", deployment.Spec.Template.Spec.Containers)
+	log.Debugw("Finished updating images", "name", deployment.GetName(), "containers", deployment.Spec.Template.Spec.Containers)
 }
 
 func updateCachingImage(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured) error {
@@ -108,25 +107,25 @@ func updateCachingImage(instance *servingv1alpha1.KnativeServing, u *unstructure
 	}
 
 	registry := instance.Spec.Registry
-	log.V(1).Info("Updating Image", "name", u.GetName(), "registry", registry)
+	log.Debugw("Updating Image", "name", u.GetName(), "registry", registry)
 
 	updateImageSpec(image, &registry, log)
 	err = updateUnstructured(u, image, log)
 	if err != nil {
 		return err
 	}
-	log.V(1).Info("Finished conversion", "name", u.GetName(), "unstructured", u.Object)
+	log.Debugw("Finished conversion", "name", u.GetName(), "unstructured", u.Object)
 	return nil
 }
 
 // updateImageSpec updates the image of a with a new registry and tag
-func updateImageSpec(image *caching.Image, registry *servingv1alpha1.Registry, log logr.Logger) {
+func updateImageSpec(image *caching.Image, registry *servingv1alpha1.Registry, log *zap.SugaredLogger) {
 	newImage := getNewImage(registry, image.Name)
 	if newImage != "" {
-		log.V(1).Info(fmt.Sprintf("Updating image from: %v, to: %v", image.Spec.Image, newImage))
+		log.Debugf("Updating image from: %v, to: %v", image.Spec.Image, newImage)
 		image.Spec.Image = newImage
 	}
-	log.V(1).Info("Finished updating image", "image", image.GetName())
+	log.Debugw("Finished updating image", "image", image.GetName())
 }
 
 func getNewImage(registry *servingv1alpha1.Registry, containerName string) string {
@@ -137,8 +136,8 @@ func getNewImage(registry *servingv1alpha1.Registry, containerName string) strin
 	return replaceName(registry.Default, containerName)
 }
 
-func updateContainer(container *corev1.Container, newImage string, log logr.Logger) {
-	log.V(1).Info(fmt.Sprintf("Updating container image from: %v, to: %v", container.Image, newImage))
+func updateContainer(container *corev1.Container, newImage string, log *zap.SugaredLogger) {
+	log.Debugf("Updating container image from: %v, to: %v", container.Image, newImage)
 	container.Image = newImage
 }
 

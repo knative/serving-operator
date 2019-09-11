@@ -17,17 +17,17 @@ package common
 
 import (
 	mf "github.com/jcrossley3/manifestival"
+	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-var log = logf.Log.WithName("extensions")
+var log = zap.NewExample().Sugar()
 
-type Platforms []func(kubernetes.Interface) (mf.Transformer, error)
+type Platforms []func(kubernetes.Interface, *zap.SugaredLogger) (mf.Transformer, error)
 
-func (platforms Platforms) Transformers(kubeClientSet kubernetes.Interface, instance *servingv1alpha1.KnativeServing) ([]mf.Transformer, error) {
-	log.V(1).Info("Transforming", "instance", instance)
+func (platforms Platforms) Transformers(kubeClientSet kubernetes.Interface, instance *servingv1alpha1.KnativeServing, slog *zap.SugaredLogger) ([]mf.Transformer, error) {
+	log = slog.Named("extensions")
 	result := []mf.Transformer{
 		mf.InjectOwner(instance),
 		mf.InjectNamespace(instance.GetNamespace()),
@@ -37,7 +37,7 @@ func (platforms Platforms) Transformers(kubeClientSet kubernetes.Interface, inst
 		GatewayTransform(instance, log),
 	}
 	for _, fn := range platforms {
-		transformer, err := fn(kubeClientSet)
+		transformer, err := fn(kubeClientSet, log)
 		if err != nil {
 			return result, err
 		}

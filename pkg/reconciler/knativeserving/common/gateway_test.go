@@ -8,7 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"knative.dev/pkg/apis/istio/v1alpha3"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 type updateGatewayTest struct {
@@ -91,9 +90,6 @@ func TestGatewayTransform(t *testing.T) {
 	}
 }
 func runGatewayTransformTest(t *testing.T, tt *updateGatewayTest) {
-	log := logf.Log.WithName(tt.name)
-	logf.SetLogger(logf.ZapLogger(true))
-
 	unstructedGateway := makeUnstructuredGateway(t, tt)
 	instance := &servingv1alpha1.KnativeServing{
 		Spec: servingv1alpha1.KnativeServingSpec{

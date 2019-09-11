@@ -16,13 +16,13 @@ limitations under the License.
 package common
 
 import (
-	"github.com/go-logr/logr"
 	mf "github.com/jcrossley3/manifestival"
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 )
 
-func ConfigMapTransform(instance *servingv1alpha1.KnativeServing, log logr.Logger) mf.Transformer {
+func ConfigMapTransform(instance *servingv1alpha1.KnativeServing, log *zap.SugaredLogger) mf.Transformer {
 	return func(u *unstructured.Unstructured) error {
 		// Let any config in instance override everything else
 		if u.GetKind() == "ConfigMap" {
@@ -35,7 +35,7 @@ func ConfigMapTransform(instance *servingv1alpha1.KnativeServing, log logr.Logge
 }
 
 // UpdateConfigMap set some data in a configmap, only overwriting common keys if they differ
-func UpdateConfigMap(cm *unstructured.Unstructured, data map[string]string, log logr.Logger) {
+func UpdateConfigMap(cm *unstructured.Unstructured, data map[string]string, log *zap.SugaredLogger) {
 	for k, v := range data {
 		message := []interface{}{"map", cm.GetName(), k, v}
 		if x, found, _ := unstructured.NestedFieldNoCopy(cm.Object, "data", k); found {
@@ -44,7 +44,7 @@ func UpdateConfigMap(cm *unstructured.Unstructured, data map[string]string, log 
 			}
 			message = append(message, "previous", x)
 		}
-		log.Info("Setting", message...)
+		log.Infow("Setting", message...)
 		unstructured.SetNestedField(cm.Object, v, "data", k)
 	}
 }
