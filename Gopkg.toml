@@ -56,7 +56,7 @@ required = [
 
 [[constraint]]
   name = "github.com/jcrossley3/manifestival"
-  branch = "client-go"
+  branch = "immutable-transform"
 
 [[constraint]]
   name = "knative.dev/pkg"

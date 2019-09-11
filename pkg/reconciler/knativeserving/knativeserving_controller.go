@@ -158,32 +158,30 @@ func (r *Reconciler) install(instance *servingv1alpha1.KnativeServing) error {
 	r.Logger.Debug("Installing manifest")
 	defer r.updateStatus(instance)
 
-	if err := r.transform(instance); err != nil {
+	transformed, err := r.transform(instance)
+	if err != nil {
 		return err
 	}
-	if err := r.apply(instance); err != nil {
+	if err := r.apply(transformed, instance); err != nil {
 		return err
 	}
 	return nil
 }
 
 // Transform the resources
-func (r *Reconciler) transform(instance *servingv1alpha1.KnativeServing) error {
+func (r *Reconciler) transform(instance *servingv1alpha1.KnativeServing) (*mf.Manifest, error) {
 	r.Logger.Debug("Transforming manifest")
 	transforms, err := platform.Transformers(r.KubeClientSet, instance, r.Logger)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err := r.config.Transform(transforms...); err != nil {
-		return err
-	}
-	return nil
+	return r.config.Transform(transforms...)
 }
 
 // Apply the embedded resources
-func (r *Reconciler) apply(instance *servingv1alpha1.KnativeServing) error {
+func (r *Reconciler) apply(manifest mf.Manifestival, instance *servingv1alpha1.KnativeServing) error {
 	r.Logger.Debug("Applying manifest")
-	if err := r.config.ApplyAll(); err != nil {
+	if err := manifest.ApplyAll(); err != nil {
 		instance.Status.MarkInstallFailed(err.Error())
 		return err
 	}
@@ -204,7 +202,11 @@ func (r *Reconciler) checkDeployments(instance *servingv1alpha1.KnativeServing) 
 		}
 		return false
 	}
-	for _, u := range r.config.Resources {
+	transformed, err := r.transform(instance)
+	if err != nil {
+		return err
+	}
+	for _, u := range transformed.Resources {
 		if u.GetKind() == "Deployment" {
 			deployment, err := r.KubeClientSet.AppsV1().Deployments(u.GetNamespace()).Get(u.GetName(), metav1.GetOptions{})
 			if err != nil {

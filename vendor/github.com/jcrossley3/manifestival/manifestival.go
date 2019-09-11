@@ -34,7 +34,7 @@ type Manifestival interface {
 	// Returns a copy of the resource from the api server, nil if not found
 	Get(spec *unstructured.Unstructured) (*unstructured.Unstructured, error)
 	// Transforms the resources within a Manifest
-	Transform(fns ...Transformer) error
+	Transform(fns ...Transformer) (*Manifest, error)
 }
 
 type Manifest struct {
@@ -161,14 +161,18 @@ func (f *Manifest) ResourceInterface(spec *unstructured.Unstructured) (dynamic.R
 	return f.client.Resource(mapping.Resource).Namespace(spec.GetNamespace()), nil
 }
 
-// We need to preserve the top-level target keys, specifically
-// 'metadata.resourceVersion', 'spec.clusterIP', and any existing
-// entries in a ConfigMap's 'data' field. So we only overwrite fields
-// set in our src resource.
+// We need to preserve some target keys, specifically
+// 'metadata.resourceVersion' and 'spec.clusterIP'. So we only
+// overwrite fields set in our src resource.
 // TODO: Use Patch instead
 func UpdateChanged(src, tgt map[string]interface{}) bool {
 	changed := false
 	for k, v := range src {
+		// Special case for ConfigMaps
+		if k == "data" && !equality.Semantic.DeepEqual(v, tgt[k]) {
+			tgt[k], changed = v, true
+			continue
+		}
 		if v, ok := v.(map[string]interface{}); ok {
 			if tgt[k] == nil {
 				tgt[k], changed = v, true
