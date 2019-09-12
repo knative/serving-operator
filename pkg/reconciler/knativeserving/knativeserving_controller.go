@@ -109,19 +109,24 @@ func (r *Reconciler) Reconcile(ctx context.Context, key string) error {
 
 func (r *Reconciler) reconcile(ctx context.Context, ks *servingv1alpha1.KnativeServing) error {
 	reqLogger := r.Logger.With(zap.String("Request.Namespace", ks.Namespace)).With("Request.Name", ks.Name)
+	reqLogger.Infow("Reconciling KnativeServing", "status", ks.Status)
 
 	// TODO: We need to find a better way to make sure the instance has the updated info.
 	ks.SetGroupVersionKind(servingv1alpha1.SchemeGroupVersion.WithKind("KnativeServing"))
-	stages := []func(*servingv1alpha1.KnativeServing) error{
+	stages := []func(*mf.Manifest, *servingv1alpha1.KnativeServing) error{
 		r.initStatus,
 		r.install,
 		r.checkDeployments,
 		r.deleteObsoleteResources,
 	}
 
-	reqLogger.Infow("Reconciling KnativeServing", "status", ks.Status)
+	manifest, err := r.transform(ks)
+	if err != nil {
+		return err
+	}
+
 	for _, stage := range stages {
-		if err := stage(ks); err != nil {
+		if err := stage(manifest, ks); err != nil {
 			return err
 		}
 	}
@@ -129,16 +134,14 @@ func (r *Reconciler) reconcile(ctx context.Context, ks *servingv1alpha1.KnativeS
 	return nil
 }
 
-// Initialize status conditions
-func (r *Reconciler) initStatus(instance *servingv1alpha1.KnativeServing) error {
-	r.Logger.Debug("Initializing status")
-	if len(instance.Status.Conditions) == 0 {
-		instance.Status.InitializeConditions()
-		if err := r.updateStatus(instance); err != nil {
-			return err
-		}
+// Transform the resources
+func (r *Reconciler) transform(instance *servingv1alpha1.KnativeServing) (*mf.Manifest, error) {
+	r.Logger.Debug("Transforming manifest")
+	transforms, err := platform.Transformers(r.KubeClientSet, instance, r.Logger)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+	return r.config.Transform(transforms...)
 }
 
 // Update the status subresource
@@ -153,37 +156,22 @@ func (r *Reconciler) updateStatus(instance *servingv1alpha1.KnativeServing) erro
 	return nil
 }
 
-// Install the resources from the Manifest
-func (r *Reconciler) install(instance *servingv1alpha1.KnativeServing) error {
+// Initialize status conditions
+func (r *Reconciler) initStatus(_ *mf.Manifest, instance *servingv1alpha1.KnativeServing) error {
+	r.Logger.Debug("Initializing status")
+	if len(instance.Status.Conditions) == 0 {
+		instance.Status.InitializeConditions()
+		if err := r.updateStatus(instance); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Apply the manifest resources
+func (r *Reconciler) install(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) error {
 	r.Logger.Debug("Installing manifest")
-	defer r.updateStatus(instance)
-
-	if err := r.transform(instance); err != nil {
-		return err
-	}
-	if err := r.apply(instance); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Transform the resources
-func (r *Reconciler) transform(instance *servingv1alpha1.KnativeServing) error {
-	r.Logger.Debug("Transforming manifest")
-	transforms, err := platform.Transformers(r.KubeClientSet, instance, r.Logger)
-	if err != nil {
-		return err
-	}
-	if err := r.config.Transform(transforms...); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Apply the embedded resources
-func (r *Reconciler) apply(instance *servingv1alpha1.KnativeServing) error {
-	r.Logger.Debug("Applying manifest")
-	if err := r.config.ApplyAll(); err != nil {
+	if err := manifest.ApplyAll(); err != nil {
 		instance.Status.MarkInstallFailed(err.Error())
 		return err
 	}
@@ -193,7 +181,7 @@ func (r *Reconciler) apply(instance *servingv1alpha1.KnativeServing) error {
 }
 
 // Check for all deployments available
-func (r *Reconciler) checkDeployments(instance *servingv1alpha1.KnativeServing) error {
+func (r *Reconciler) checkDeployments(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) error {
 	r.Logger.Debug("Checking deployments")
 	defer r.updateStatus(instance)
 	available := func(d *appsv1.Deployment) bool {
@@ -204,7 +192,7 @@ func (r *Reconciler) checkDeployments(instance *servingv1alpha1.KnativeServing) 
 		}
 		return false
 	}
-	for _, u := range r.config.Resources {
+	for _, u := range manifest.Resources {
 		if u.GetKind() == "Deployment" {
 			deployment, err := r.KubeClientSet.AppsV1().Deployments(u.GetNamespace()).Get(u.GetName(), metav1.GetOptions{})
 			if err != nil {
@@ -225,24 +213,24 @@ func (r *Reconciler) checkDeployments(instance *servingv1alpha1.KnativeServing) 
 }
 
 // Delete obsolete resources from previous versions
-func (r *Reconciler) deleteObsoleteResources(instance *servingv1alpha1.KnativeServing) error {
+func (r *Reconciler) deleteObsoleteResources(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) error {
 	// istio-system resources from 0.3
 	resource := &unstructured.Unstructured{}
 	resource.SetNamespace("istio-system")
 	resource.SetName("knative-ingressgateway")
 	resource.SetAPIVersion("v1")
 	resource.SetKind("Service")
-	if err := r.config.Delete(resource, &metav1.DeleteOptions{}); err != nil {
+	if err := manifest.Delete(resource, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	resource.SetAPIVersion("apps/v1")
 	resource.SetKind("Deployment")
-	if err := r.config.Delete(resource, &metav1.DeleteOptions{}); err != nil {
+	if err := manifest.Delete(resource, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	resource.SetAPIVersion("autoscaling/v1")
 	resource.SetKind("HorizontalPodAutoscaler")
-	if err := r.config.Delete(resource, &metav1.DeleteOptions{}); err != nil {
+	if err := manifest.Delete(resource, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	// config-controller from 0.5
@@ -250,7 +238,7 @@ func (r *Reconciler) deleteObsoleteResources(instance *servingv1alpha1.KnativeSe
 	resource.SetName("config-controller")
 	resource.SetAPIVersion("v1")
 	resource.SetKind("ConfigMap")
-	if err := r.config.Delete(resource, &metav1.DeleteOptions{}); err != nil {
+	if err := manifest.Delete(resource, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	return nil
