@@ -17,6 +17,7 @@ package e2e
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -41,7 +42,6 @@ func TestKnativeServingDeployment(t *testing.T) {
 	names := test.ResourceNames{
 		KnativeServing: test.ServingOperatorName,
 		Namespace:      test.ServingOperatorNamespace,
-		LoggingConfig:  test.LoggingConfigMapName,
 	}
 
 	test.CleanupOnInterrupt(func() { test.TearDown(clients, names) })
@@ -87,12 +87,15 @@ func knativeServingVerify(t *testing.T, clients *test.Clients, names test.Resour
 
 // knativeServingConfigure verifies that KnativeServing config is set properly
 func knativeServingConfigure(t *testing.T, clients *test.Clients, names test.ResourceNames) {
+	// We'll arbitrarily choose the logging config
+	configKey := "logging"
+	configMapName := fmt.Sprintf("%s/config-%s", names.Namespace, configKey)
 	// Get the existing KS without any spec
 	ks, err := clients.KnativeServing().Get(names.KnativeServing, metav1.GetOptions{})
 	// Add config to its spec
 	ks.Spec = v1alpha1.KnativeServingSpec{
 		Config: map[string]map[string]string{
-			"logging": map[string]string{
+			configKey: map[string]string{
 				"loglevel.controller": "debug",
 			},
 		},
@@ -102,7 +105,7 @@ func knativeServingConfigure(t *testing.T, clients *test.Clients, names test.Res
 		t.Fatalf("KnativeServing %q failed to update: %v", names.KnativeServing, err)
 	}
 	// Verifty the relevant configmap has been updated
-	err = resources.WaitForConfigMap(clients.KubeClient.Kube, names, func(m map[string]string) bool {
+	err = resources.WaitForConfigMap(configMapName, clients.KubeClient.Kube, func(m map[string]string) bool {
 		return m["loglevel.controller"] == "debug"
 	})
 	if err != nil {
@@ -114,7 +117,7 @@ func knativeServingConfigure(t *testing.T, clients *test.Clients, names test.Res
 		t.Fatalf("KnativeServing %q failed to update: %v", names.KnativeServing, err)
 	}
 	// And verify the configmap entry is gone
-	err = resources.WaitForConfigMap(clients.KubeClient.Kube, names, func(m map[string]string) bool {
+	err = resources.WaitForConfigMap(configMapName, clients.KubeClient.Kube, func(m map[string]string) bool {
 		_, exists := m["loglevel.controller"]
 		return !exists
 	})

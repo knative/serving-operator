@@ -20,5 +20,4 @@ package test
 type ResourceNames struct {
 	KnativeServing string
 	Namespace      string
-	LoggingConfig  string
 }

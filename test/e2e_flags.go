@@ -24,6 +24,4 @@ const (
 	ServingOperatorNamespace = "operator-tests"
 	// ServingOperatorName is the default operator name for serving operator e2e tests
 	ServingOperatorName = "knative-serving"
-	// LoggingConfigMapName is the name of the ConfigMap for verifying configuration
-	LoggingConfigMapName = "config-logging"
 )

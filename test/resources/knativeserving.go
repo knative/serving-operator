@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
 	"knative.dev/pkg/test/logging"
 	"knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/client/clientset/versioned/typed/serving/v1alpha1"
@@ -75,9 +76,10 @@ func CreateKnativeServing(clients servingv1alpha1.KnativeServingInterface, names
 }
 
 // WaitForConfigMap takes a condition function that evaluates ConfigMap data
-func WaitForConfigMap(client *kubernetes.Clientset, names test.ResourceNames, fn func(map[string]string) bool) error {
+func WaitForConfigMap(name string, client *kubernetes.Clientset, fn func(map[string]string) bool) error {
+	ns, cm, _ := cache.SplitMetaNamespaceKey(name)
 	return wait.PollImmediate(Interval, Timeout, func() (bool, error) {
-		cm, err := client.CoreV1().ConfigMaps(names.Namespace).Get(names.LoggingConfig, metav1.GetOptions{})
+		cm, err := client.CoreV1().ConfigMaps(ns).Get(cm, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
