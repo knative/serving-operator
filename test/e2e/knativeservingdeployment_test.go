@@ -95,7 +95,7 @@ func knativeServingConfigure(t *testing.T, clients *test.Clients, names test.Res
 	// Add config to its spec
 	ks.Spec = v1alpha1.KnativeServingSpec{
 		Config: map[string]map[string]string{
-			configKey: map[string]string{
+			configKey: {
 				"loglevel.controller": "debug",
 			},
 		},
