@@ -66,6 +66,7 @@ func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.
 	log.Debugw("Updating Deployment", "name", u.GetName(), "registry", registry)
 
 	updateDeploymentImage(deployment, &registry, log)
+	updatePodImagePullSecrets(deployment, &registry, log)
 	err = updateUnstructured(u, deployment, log)
 	if err != nil {
 		return err
@@ -143,4 +144,14 @@ func updateContainer(container *corev1.Container, newImage string, log *zap.Suga
 
 func replaceName(imageTemplate string, name string) string {
 	return strings.ReplaceAll(imageTemplate, containerNameVariable, name)
+}
+
+func updatePodImagePullSecrets(deployment *appsv1.Deployment, registry *servingv1alpha1.Registry, log *zap.SugaredLogger) {
+	if len(registry.ImagePullSecrets) > 0 {
+		log.Debugf("Adding ImagePullSecrets: %v", registry.ImagePullSecrets)
+		deployment.Spec.Template.Spec.ImagePullSecrets = append(
+			deployment.Spec.Template.Spec.ImagePullSecrets,
+			registry.ImagePullSecrets...,
+		)
+	}
 }

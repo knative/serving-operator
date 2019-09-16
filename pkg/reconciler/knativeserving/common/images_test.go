@@ -1,6 +1,22 @@
+/*
+Copyright 2019 The Knative Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package common
 
 import (
+	"reflect"
 	"testing"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -102,7 +118,7 @@ func TestDeploymentTransform(t *testing.T) {
 	}
 }
 func runDeploymentTransformTest(t *testing.T, tt *updateDeploymentImageTest) {
-	unstructuredDeployment := makeUnstructuredDeployment(t, tt)
+	unstructuredDeployment := makeUnstructured(t, makeDeployment(t, tt.name, corev1.PodSpec{Containers: tt.containers}))
 	instance := &servingv1alpha1.KnativeServing{
 		Spec: servingv1alpha1.KnativeServingSpec{
 			Registry: tt.registry,
@@ -122,28 +138,29 @@ func validateUnstructedDeploymentChanged(t *testing.T, tt *updateDeploymentImage
 	}
 }
 
-func makeUnstructuredDeployment(t *testing.T, tt *updateDeploymentImageTest) unstructured.Unstructured {
-	deployment := appsv1.Deployment{
+func makeDeployment(t *testing.T, name string, podSpec corev1.PodSpec) *appsv1.Deployment {
+	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: tt.name,
+			Name: name,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Template: corev1.PodTemplateSpec{
-				Spec: corev1.PodSpec{
-					Containers: tt.containers,
-				},
+				Spec: podSpec,
 			},
 		},
 	}
-	unstructuredDeployment, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&deployment)
+}
+
+func makeUnstructured(t *testing.T, obj interface{}) unstructured.Unstructured {
+	unstructuredObject, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&obj)
 	if err != nil {
-		t.Fatalf("Could not create unstructured deployment object: %v, err: %v", unstructuredDeployment, err)
+		t.Fatalf("Could not create unstructured object: %v, err: %v", unstructuredObject, err)
 	}
 	return unstructured.Unstructured{
-		Object: unstructuredDeployment,
+		Object: unstructuredObject,
 	}
 }
 
@@ -173,7 +190,7 @@ func TestImageTransform(t *testing.T) {
 	}
 }
 func runImageTransformTest(t *testing.T, tt *updateImageSpecTest) {
-	unstructuredImage := makeUnstructuredImage(t, tt)
+	unstructuredImage := makeUnstructured(t, makeImage(t, tt))
 	instance := &servingv1alpha1.KnativeServing{
 		Spec: servingv1alpha1.KnativeServingSpec{
 			Registry: tt.registry,
@@ -191,8 +208,8 @@ func validateUnstructedImageChanged(t *testing.T, tt *updateImageSpecTest, u *un
 	assertEqual(t, image.Spec.Image, tt.expected)
 }
 
-func makeUnstructuredImage(t *testing.T, tt *updateImageSpecTest) unstructured.Unstructured {
-	image := caching.Image{
+func makeImage(t *testing.T, tt *updateImageSpecTest) *caching.Image {
+	return &caching.Image{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "caching.internal.knative.dev/v1alpha1",
 			Kind:       "Image",
@@ -204,13 +221,82 @@ func makeUnstructuredImage(t *testing.T, tt *updateImageSpecTest) unstructured.U
 			Image: tt.in,
 		},
 	}
-	unstructuredDeployment, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&image)
-	if err != nil {
-		t.Fatalf("Could not create unstructured deployment object: %v, err: %v", unstructuredDeployment, err)
+}
+
+type addImagePullSecretsTest struct {
+	name            string
+	existingSecrets []corev1.LocalObjectReference
+	registry        servingv1alpha1.Registry
+	expectedSecrets []corev1.LocalObjectReference
+}
+
+var addImagePullSecretsTests = []addImagePullSecretsTest{
+	{
+		name:            "LeavesSecretsEmptyByDefault",
+		existingSecrets: nil,
+		registry:        servingv1alpha1.Registry{},
+		expectedSecrets: nil,
+	},
+	{
+		name:            "AddsImagePullSecrets",
+		existingSecrets: nil,
+		registry: servingv1alpha1.Registry{
+			ImagePullSecrets: []corev1.LocalObjectReference{corev1.LocalObjectReference{Name: "new-secret"}},
+		},
+		expectedSecrets: []corev1.LocalObjectReference{corev1.LocalObjectReference{Name: "new-secret"}},
+	},
+	{
+		name:            "SupportsMultipleImagePullSecrets",
+		existingSecrets: nil,
+		registry: servingv1alpha1.Registry{
+			ImagePullSecrets: []corev1.LocalObjectReference{
+				corev1.LocalObjectReference{Name: "new-secret-1"},
+				corev1.LocalObjectReference{Name: "new-secret-2"},
+			},
+		},
+		expectedSecrets: []corev1.LocalObjectReference{
+			corev1.LocalObjectReference{Name: "new-secret-1"},
+			corev1.LocalObjectReference{Name: "new-secret-2"},
+		},
+	},
+	{
+		name:            "MergesAdditionalSecretsWithAnyPreexisting",
+		existingSecrets: []corev1.LocalObjectReference{corev1.LocalObjectReference{Name: "existing-secret"}},
+		registry: servingv1alpha1.Registry{
+			ImagePullSecrets: []corev1.LocalObjectReference{
+				corev1.LocalObjectReference{Name: "new-secret"},
+			},
+		},
+		expectedSecrets: []corev1.LocalObjectReference{
+			corev1.LocalObjectReference{Name: "existing-secret"},
+			corev1.LocalObjectReference{Name: "new-secret"},
+		},
+	},
+}
+
+func TestImagePullSecrets(t *testing.T) {
+	for _, tt := range addImagePullSecretsTests {
+		t.Run(tt.name, func(t *testing.T) {
+			runImagePullSecretsTest(t, &tt)
+		})
 	}
-	return unstructured.Unstructured{
-		Object: unstructuredDeployment,
+}
+
+func runImagePullSecretsTest(t *testing.T, tt *addImagePullSecretsTest) {
+	unstructuredDeployment := makeUnstructured(t, makeDeployment(t, tt.name, corev1.PodSpec{ImagePullSecrets: tt.existingSecrets}))
+	instance := &servingv1alpha1.KnativeServing{
+		Spec: servingv1alpha1.KnativeServingSpec{
+			Registry: tt.registry,
+		},
 	}
+	deploymentTransform := DeploymentTransform(instance, log)
+	deploymentTransform(&unstructuredDeployment)
+
+	var deployment = &appsv1.Deployment{}
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredDeployment.Object, deployment)
+
+	assertEqual(t, err, nil)
+	assertDeepEqual(t, deployment.Spec.Template.Spec.ImagePullSecrets, tt.expectedSecrets)
 }
 
 func assertEqual(t *testing.T, actual, expected interface{}) {
@@ -218,4 +304,11 @@ func assertEqual(t *testing.T, actual, expected interface{}) {
 		return
 	}
 	t.Fatalf("expected does not equal actual. \nExpected: %v\nActual: %v", expected, actual)
+}
+
+func assertDeepEqual(t *testing.T, actual, expected interface{}) {
+	if reflect.DeepEqual(actual, expected) {
+		return
+	}
+	t.Fatalf("expected does not deep equal actual. \nExpected: %T %+v\nActual:   %T %+v", expected, expected, actual, actual)
 }
