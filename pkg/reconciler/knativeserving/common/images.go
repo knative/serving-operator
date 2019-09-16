@@ -149,11 +149,9 @@ func replaceName(imageTemplate string, name string) string {
 func updatePodImagePullSecrets(deployment *appsv1.Deployment, registry *servingv1alpha1.Registry, log *zap.SugaredLogger) {
 	if len(registry.ImagePullSecrets) > 0 {
 		log.Debugf("Adding ImagePullSecrets: %v", registry.ImagePullSecrets)
-		existingSecrets := deployment.Spec.Template.Spec.ImagePullSecrets
-		if len(existingSecrets) > 0 {
-			deployment.Spec.Template.Spec.ImagePullSecrets = append(existingSecrets, registry.ImagePullSecrets...)
-		} else {
-			deployment.Spec.Template.Spec.ImagePullSecrets = registry.ImagePullSecrets
-		}
+		deployment.Spec.Template.Spec.ImagePullSecrets = append(
+			deployment.Spec.Template.Spec.ImagePullSecrets,
+			registry.ImagePullSecrets...,
+		)
 	}
 }
