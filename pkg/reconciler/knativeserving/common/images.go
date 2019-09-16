@@ -150,6 +150,10 @@ func updatePodImagePullSecrets(deployment *appsv1.Deployment, registry *servingv
 	if len(registry.ImagePullSecrets) > 0 {
 		log.Debugf("Adding ImagePullSecrets: %v", registry.ImagePullSecrets)
 		existingSecrets := deployment.Spec.Template.Spec.ImagePullSecrets
-		deployment.Spec.Template.Spec.ImagePullSecrets = append(registry.ImagePullSecrets, existingSecrets...)
+		if len(existingSecrets) > 0 {
+			deployment.Spec.Template.Spec.ImagePullSecrets = append(existingSecrets, registry.ImagePullSecrets...)
+		} else {
+			deployment.Spec.Template.Spec.ImagePullSecrets = registry.ImagePullSecrets
+		}
 	}
 }

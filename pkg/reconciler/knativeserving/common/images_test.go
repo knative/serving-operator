@@ -253,8 +253,8 @@ var addImagePullSecretsTests = []addImagePullSecretsTest{
 			},
 		},
 		expectedSecrets: []corev1.LocalObjectReference{
-			corev1.LocalObjectReference{Name: "new-secret"},
 			corev1.LocalObjectReference{Name: "existing-secret"},
+			corev1.LocalObjectReference{Name: "new-secret"},
 		},
 	},
 }
