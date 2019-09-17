@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Copyright 2019 The Knative Authors
 #
@@ -83,7 +83,7 @@ function go_test_e2e() {
   local go_options=""
   (( EMIT_METRICS )) && test_options="-emitmetrics"
   [[ ! " $@" == *" -tags="* ]] && go_options="-tags=e2e"
-  report_go_test -v -count=1 ${go_options} $@ ${test_options}
+  report_go_test -v -race -count=1 ${go_options} $@ ${test_options}
 }
 
 # Dump info about the test cluster. If dump_extra_cluster_info() is defined, calls it too.
@@ -146,7 +146,7 @@ function resolve_k8s_version() {
       --format='value(validMasterVersions)' \
       --zone=$2)"
   [[ -z "${versions}" ]] && return 1
-  local gke_versions=($(echo -n "${versions//;/ /}"))
+  local gke_versions=($(echo -n "${versions//;/ }"))
   echo "Available GKE versions in $2 are [${versions//;/, }]"
   if [[ "${target_version}" == "gke-latest" ]]; then
     # Get first (latest) version, excluding the "-gke.#" suffix
@@ -214,16 +214,19 @@ function create_test_cluster() {
   [[ -n "${GCP_PROJECT}" ]] && test_cmd_args+=" --gcp-project ${GCP_PROJECT}"
   [[ -n "${E2E_SCRIPT_CUSTOM_FLAGS[@]}" ]] && test_cmd_args+=" ${E2E_SCRIPT_CUSTOM_FLAGS[@]}"
   local extra_flags=()
-  # If using boskos, save time and let it tear down the cluster
-  (( ! IS_BOSKOS )) && extra_flags+=(--down)
+  if (( IS_BOSKOS )); then # Add arbitrary duration, wait for Boskos projects acquisition before error out
+    extra_flags+=(--boskos-wait-duration=20m)
+  else # Only let kubetest tear down the cluster if not using Boskos, it's done by Janitor if using Boskos
+    extra_flags+=(--down)
+  fi
 
   # Set a minimal kubernetes environment that satisfies kubetest
   # TODO(adrcunha): Remove once https://github.com/kubernetes/test-infra/issues/13029 is fixed.
-  local kubedir="$(mktemp -d --tmpdir kubernetes.XXXXXXXXXX)"
+  local kubedir="$(mktemp -d -t kubernetes.XXXXXXXXXX)"
   local test_wrapper="${kubedir}/e2e-test.sh"
   mkdir ${kubedir}/cluster
   ln -s "$(which kubectl)" ${kubedir}/cluster/kubectl.sh
-  echo "#!/bin/bash" > ${test_wrapper}
+  echo "#!/usr/bin/env bash" > ${test_wrapper}
   echo "cd $(pwd) && set -x" >> ${test_wrapper}
   echo "${E2E_SCRIPT} ${test_cmd_args}" >> ${test_wrapper}
   chmod +x ${test_wrapper}
@@ -307,7 +310,8 @@ function setup_test_cluster() {
   # Set the actual project the test cluster resides in
   # It will be a project assigned by Boskos if test is running on Prow,
   # otherwise will be ${GCP_PROJECT} set up by user.
-  readonly export E2E_PROJECT_ID="$(gcloud config get-value project)"
+  export E2E_PROJECT_ID="$(gcloud config get-value project)"
+  readonly E2E_PROJECT_ID
 
   # Save some metadata about cluster creation for using in prow and testgrid
   save_metadata
@@ -319,20 +323,23 @@ function setup_test_cluster() {
     abort "kubeconfig context set to ${k8s_cluster}, which is forbidden"
 
   # If cluster admin role isn't set, this is a brand new cluster
-  # Setup the admin role and also KO_DOCKER_REPO
-  if [[ -z "$(kubectl get clusterrolebinding cluster-admin-binding 2> /dev/null)" ]]; then
+  # Setup the admin role and also KO_DOCKER_REPO if it is a GKE cluster
+  if [[ -z "$(kubectl get clusterrolebinding cluster-admin-binding 2> /dev/null)" && "${k8s_cluster}" =~ ^gke_.* ]]; then
     acquire_cluster_admin_role ${k8s_user} ${E2E_CLUSTER_NAME} ${E2E_CLUSTER_REGION} ${E2E_CLUSTER_ZONE}
-    kubectl config set-context ${k8s_cluster} --namespace=default
-    export KO_DOCKER_REPO=gcr.io/${E2E_PROJECT_ID}/${E2E_BASE_NAME}-e2e-img
+    # Incorporate an element of randomness to ensure that each run properly publishes images.
+    export KO_DOCKER_REPO=gcr.io/${E2E_PROJECT_ID}/${E2E_BASE_NAME}-e2e-img/${RANDOM}
   fi
 
   # Safety checks
   is_protected_gcr ${KO_DOCKER_REPO} && \
     abort "\$KO_DOCKER_REPO set to ${KO_DOCKER_REPO}, which is forbidden"
 
-  echo "- Project is ${E2E_PROJECT_ID}"
+  # Use default namespace for all subsequent kubectl commands in this context
+  kubectl config set-context ${k8s_cluster} --namespace=default
+
+  echo "- gcloud project is ${E2E_PROJECT_ID}"
+  echo "- gcloud user is ${k8s_user}"
   echo "- Cluster is ${k8s_cluster}"
-  echo "- User is ${k8s_user}"
   echo "- Docker is ${KO_DOCKER_REPO}"
 
   export KO_DATA_PATH="${REPO_ROOT_DIR}/.git"
