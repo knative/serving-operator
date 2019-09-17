@@ -241,35 +241,35 @@ var addImagePullSecretsTests = []addImagePullSecretsTest{
 		name:            "AddsImagePullSecrets",
 		existingSecrets: nil,
 		registry: servingv1alpha1.Registry{
-			ImagePullSecrets: []corev1.LocalObjectReference{corev1.LocalObjectReference{Name: "new-secret"}},
+			ImagePullSecrets: []corev1.LocalObjectReference{{Name: "new-secret"}},
 		},
-		expectedSecrets: []corev1.LocalObjectReference{corev1.LocalObjectReference{Name: "new-secret"}},
+		expectedSecrets: []corev1.LocalObjectReference{{Name: "new-secret"}},
 	},
 	{
 		name:            "SupportsMultipleImagePullSecrets",
 		existingSecrets: nil,
 		registry: servingv1alpha1.Registry{
 			ImagePullSecrets: []corev1.LocalObjectReference{
-				corev1.LocalObjectReference{Name: "new-secret-1"},
-				corev1.LocalObjectReference{Name: "new-secret-2"},
+				{Name: "new-secret-1"},
+				{Name: "new-secret-2"},
 			},
 		},
 		expectedSecrets: []corev1.LocalObjectReference{
-			corev1.LocalObjectReference{Name: "new-secret-1"},
-			corev1.LocalObjectReference{Name: "new-secret-2"},
+			{Name: "new-secret-1"},
+			{Name: "new-secret-2"},
 		},
 	},
 	{
 		name:            "MergesAdditionalSecretsWithAnyPreexisting",
-		existingSecrets: []corev1.LocalObjectReference{corev1.LocalObjectReference{Name: "existing-secret"}},
+		existingSecrets: []corev1.LocalObjectReference{{Name: "existing-secret"}},
 		registry: servingv1alpha1.Registry{
 			ImagePullSecrets: []corev1.LocalObjectReference{
-				corev1.LocalObjectReference{Name: "new-secret"},
+				{Name: "new-secret"},
 			},
 		},
 		expectedSecrets: []corev1.LocalObjectReference{
-			corev1.LocalObjectReference{Name: "existing-secret"},
-			corev1.LocalObjectReference{Name: "new-secret"},
+			{Name: "existing-secret"},
+			{Name: "new-secret"},
 		},
 	},
 }
