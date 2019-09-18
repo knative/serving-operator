@@ -51,8 +51,8 @@ required = [
 
 [[override]]
   name = "knative.dev/test-infra"
-  # HEAD as of 2019-06-18
-  revision = "6c3132259e7b5062a719b393536c216397110e01"
+  # HEAD as of 2019-09-17
+  revision = "e09d3c7669d2268d5ce11ea53cd7e9429722c1a7"
 
 [[constraint]]
   name = "github.com/jcrossley3/manifestival"

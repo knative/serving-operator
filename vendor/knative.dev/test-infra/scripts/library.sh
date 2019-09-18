@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Copyright 2018 The Knative Authors
 #
@@ -76,6 +76,9 @@ function make_banner() {
     local msg="$1$1$1$1 $2 $1$1$1$1"
     local border="${msg//[-0-9A-Za-z _.,\/()\']/$1}"
     echo -e "${border}\n${msg}\n${border}"
+    # TODO(adrcunha): Remove once logs have timestamps on Prow
+    # For details, see https://github.com/kubernetes/test-infra/issues/10100
+    echo -e "$1$1$1$1 $(TZ='America/Los_Angeles' date)\n${border}"
 }
 
 # Simple header for logging purposes.
@@ -254,7 +257,7 @@ function dump_app_logs() {
   for pod in $(get_app_pods "$1" "$2")
   do
     echo ">>> Pod: $pod"
-    kubectl -n "$2" logs "$pod" -c "$1"
+    kubectl -n "$2" logs "$pod" --all-containers
   done
 }
 
@@ -280,9 +283,9 @@ function acquire_cluster_admin_role() {
     local key=$(mktemp)
     echo "Certificate in ${cert}, key in ${key}"
     gcloud --format="value(masterAuth.clientCertificate)" \
-      container clusters describe $2 ${geoflag} | base64 -d > ${cert}
+      container clusters describe $2 ${geoflag} | base64 --decode > ${cert}
     gcloud --format="value(masterAuth.clientKey)" \
-      container clusters describe $2 ${geoflag} | base64 -d > ${key}
+      container clusters describe $2 ${geoflag} | base64 --decode > ${key}
     kubectl config set-credentials cluster-admin \
       --client-certificate=${cert} --client-key=${key}
   fi
@@ -296,28 +299,86 @@ function acquire_cluster_admin_role() {
       $2 ${geoflag} --project $(gcloud config get-value project)
 }
 
+# Run a command through tee and capture its output.
+# Parameters: $1 - file where the output will be stored.
+#             $2... - command to run.
+function capture_output() {
+  local report="$1"
+  shift
+  "$@" 2>&1 | tee "${report}"
+  local failed=( ${PIPESTATUS[@]} )
+  [[ ${failed[0]} -eq 0 ]] && failed=${failed[1]} || failed=${failed[0]}
+  return ${failed}
+}
+
+# Create a temporary file with the given extension in a way that works on both Linux and macOS.
+# Parameters: $1 - file name without extension (e.g. 'myfile_XXXX')
+#             $2 - file extension (e.g. 'xml')
+function mktemp_with_extension() {
+  local nameprefix
+  local fullname
+
+  nameprefix="$(mktemp $1)"
+  fullname="${nameprefix}.$2"
+  mv ${nameprefix} ${fullname}
+
+  echo ${fullname}
+}
+
+# Create a JUnit XML for a test.
+# Parameters: $1 - check class name as an identifier (e.g. BuildTests)
+#             $2 - check name as an identifier (e.g., GoBuild)
+#             $3 - failure message (can contain newlines), optional (means success)
+function create_junit_xml() {
+  local xml="$(mktemp_with_extension ${ARTIFACTS}/junit_XXXXXXXX xml)"
+  local failure=""
+  if [[ "$3" != "" ]]; then
+    # Transform newlines into HTML code.
+    # Also escape `<` and `>` as here: https://github.com/golang/go/blob/50bd1c4d4eb4fac8ddeb5f063c099daccfb71b26/src/encoding/json/encode.go#L48, 
+    # this is temporary solution for fixing https://github.com/knative/test-infra/issues/1204,
+    # which should be obsolete once Test-infra 2.0 is in place
+    local msg="$(echo -n "$3" | sed 's/$/\&#xA;/g' | sed 's/</\\u003c/' | sed 's/>/\\u003e/' | tr -d '\n')"
+    failure="<failure message=\"Failed\" type=\"\">${msg}</failure>"
+  fi
+  cat << EOF > "${xml}"
+<testsuites>
+	<testsuite tests="1" failures="1" time="0.000" name="$1">
+		<testcase classname="" name="$2" time="0.0">
+			${failure}
+		</testcase>
+	</testsuite>
+</testsuites>
+EOF
+}
+
 # Runs a go test and generate a junit summary.
 # Parameters: $1... - parameters to go test
 function report_go_test() {
   # Run tests in verbose mode to capture details.
   # go doesn't like repeating -v, so remove if passed.
   local args=" $@ "
-  local go_test="go test -race -v ${args/ -v / }"
+  local go_test="go test -v ${args/ -v / }"
   # Just run regular go tests if not on Prow.
   echo "Running tests with '${go_test}'"
-  local report=$(mktemp)
-  ${go_test} | tee ${report}
-  local failed=( ${PIPESTATUS[@]} )
-  [[ ${failed[0]} -eq 0 ]] && failed=${failed[1]} || failed=${failed[0]}
+  local report="$(mktemp)"
+  capture_output "${report}" ${go_test}
+  local failed=$?
   echo "Finished run, return code is ${failed}"
   # Install go-junit-report if necessary.
   run_go_tool github.com/jstemmer/go-junit-report go-junit-report --help > /dev/null 2>&1
-  local xml=$(mktemp ${ARTIFACTS}/junit_XXXXXXXX.xml)
+  local xml="$(mktemp_with_extension ${ARTIFACTS}/junit_XXXXXXXX xml)"
   cat ${report} \
       | go-junit-report \
-      | sed -e "s#\"github.com/knative/${REPO_NAME}/#\"#g" \
+      | sed -e "s#\"\(github\.com/knative\|knative\.dev\)/${REPO_NAME}/#\"#g" \
       > ${xml}
   echo "XML report written to ${xml}"
+  if [[ -n "$(grep '<testsuites></testsuites>' ${xml})" ]]; then
+    # XML report is empty, something's wrong; use the output as failure reason
+    create_junit_xml _go_tests "GoTests" "$(cat ${report})"
+  fi
+  # Capture and report any race condition errors
+  local race_errors="$(sed -n '/^WARNING: DATA RACE$/,/^==================$/p' ${report})"
+  create_junit_xml _go_tests "DataRaceAnalysis" "${race_errors}"
   if (( ! IS_PROW )); then
     # Keep the suffix, so files are related.
     local logfile=${xml/junit_/go_test_}
@@ -373,16 +434,17 @@ function update_licenses() {
   cd ${REPO_ROOT_DIR} || return 1
   local dst=$1
   shift
-  run_go_tool ./vendor/github.com/knative/test-infra/tools/dep-collector dep-collector $@ > ./${dst}
+  run_go_tool knative.dev/test-infra/tools/dep-collector dep-collector $@ > ./${dst}
 }
 
 # Run dep-collector to check for forbidden liceses.
 # Parameters: $1...$n - directories and files to inspect.
 function check_licenses() {
   # Fetch the google/licenseclassifier for its license db
+  rm -fr ${GOPATH}/src/github.com/google/licenseclassifier
   go get -u github.com/google/licenseclassifier
   # Check that we don't have any forbidden licenses in our images.
-  run_go_tool ./vendor/github.com/knative/test-infra/tools/dep-collector dep-collector -check $@
+  run_go_tool knative.dev/test-infra/tools/dep-collector dep-collector -check $@
 }
 
 # Run the given linter on the given files, checking it exists first.
@@ -463,7 +525,7 @@ function remove_broken_symlinks() {
     target="${target##* -> }"
     [[ ${target} == /* ]] || target="./${target}"
     target="$(cd `dirname ${link}` && cd ${target%/*} && echo $PWD/${target##*/})"
-    if [[ ${target} != *github.com/knative/* ]]; then
+    if [[ ${target} != *github.com/knative/* && ${target} != *knative.dev/* ]]; then
       unlink ${link}
       continue
     fi
@@ -481,19 +543,24 @@ function get_canonical_path() {
   echo "$(cd ${path%/*} && echo $PWD/${path##*/})"
 }
 
-# Returns the URL to the latest manifest for the given Knative project.
-# Parameters: $1 - repository name of the given project
-#             $2 - name of the yaml file, without extension
-function get_latest_knative_yaml_source() {
+# Returns whether the current branch is a release branch.
+function is_release_branch() {
   local branch_name=""
-  local repo_name="$1"
-  local yaml_name="$2"
   # Get the branch name from Prow's env var, see https://github.com/kubernetes/test-infra/blob/master/prow/jobs.md.
   # Otherwise, try getting the current branch from git.
   (( IS_PROW )) && branch_name="${PULL_BASE_REF:-}"
   [[ -z "${branch_name}" ]] && branch_name="$(git rev-parse --abbrev-ref HEAD)"
+  [[ ${branch_name} =~ ^release-[0-9\.]+$ ]]
+}
+
+# Returns the URL to the latest manifest for the given Knative project.
+# Parameters: $1 - repository name of the given project
+#             $2 - name of the yaml file, without extension
+function get_latest_knative_yaml_source() {
+  local repo_name="$1"
+  local yaml_name="$2"
   # If it's a release branch, the yaml source URL should point to a specific version.
-  if [[ ${branch_name} =~ ^release-[0-9\.]+$ ]]; then
+  if is_release_branch; then
     # Get the latest tag name for the current branch, which is likely formatted as v0.5.0
     local tag_name="$(git describe --tags --abbrev=0)"
     # The given repo might not have this tag, so we need to find its latest release manifest with the same major&minor version.
@@ -513,9 +580,9 @@ function get_latest_knative_yaml_source() {
 # These MUST come last.
 
 readonly _TEST_INFRA_SCRIPTS_DIR="$(dirname $(get_canonical_path ${BASH_SOURCE[0]}))"
-readonly REPO_NAME_FORMATTED="Knative $(capitalize ${REPO_NAME//-/})"
+readonly REPO_NAME_FORMATTED="Knative $(capitalize ${REPO_NAME//-/ })"
 
 # Public latest nightly or release yaml files.
 readonly KNATIVE_SERVING_RELEASE="$(get_latest_knative_yaml_source "serving" "serving")"
-readonly KNATIVE_BUILD_RELEASE="$(get_latest_knative_yaml_source "build" "build")"
 readonly KNATIVE_EVENTING_RELEASE="$(get_latest_knative_yaml_source "eventing" "release")"
+readonly KNATIVE_MONITORING_RELEASE="$(get_latest_knative_yaml_source "serving" "monitoring")"
