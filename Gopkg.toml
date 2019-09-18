@@ -13,11 +13,6 @@ required = [
 ]
 
 [[override]]
-  name = "k8s.io/code-generator"
-  # revision for tag "kubernetes-1.13.1"
-  revision = "c2090bec4d9b1fb25de3812f868accc2bc9ecbae"
-
-[[override]]
   name = "k8s.io/kube-openapi"
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
@@ -31,28 +26,27 @@ required = [
 
 [[override]]
   name = "k8s.io/api"
-  # revision for tag "kubernetes-1.13.1"
-  revision = "05914d821849570fba9eacfb29466f2d8d3cd229"
-
-[[override]]
-  name = "k8s.io/apiextensions-apiserver"
-  # revision for tag "kubernetes-1.13.1"
-  revision = "0fe22c71c47604641d9aa352c785b7912c200562"
+  version = "kubernetes-1.15.3"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  # revision for tag "kubernetes-1.13.1"
-  revision = "2b1284ed4c93a43499e781493253e2ac5959c4fd"
+  version = "kubernetes-1.15.3"
+
+[[override]]
+  name = "k8s.io/code-generator"
+  version = "kubernetes-1.15.3"
+
+[[override]]
+  name = "k8s.io/apiextensions-apiserver"
+  version = "kubernetes-1.15.3"
 
 [[override]]
   name = "k8s.io/client-go"
-  # revision for tag "kubernetes-1.13.1"
-  revision = "8d9ed539ba3134352c586810e749e58df4e94e4f"
+  version = "kubernetes-1.15.3"
 
 [[override]]
-  name = "knative.dev/test-infra"
-  # HEAD as of 2019-09-17
-  revision = "e09d3c7669d2268d5ce11ea53cd7e9429722c1a7"
+  name = "k8s.io/metrics"
+  version = "kubernetes-1.15.3"
 
 [[constraint]]
   name = "github.com/jcrossley3/manifestival"
@@ -60,6 +54,10 @@ required = [
 
 [[constraint]]
   name = "knative.dev/pkg"
+  branch = "master"
+
+[[override]]
+  name = "knative.dev/test-infra"
   branch = "master"
 
 [prune]

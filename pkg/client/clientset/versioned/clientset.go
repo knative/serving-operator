@@ -28,8 +28,6 @@ import (
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	ServingV1alpha1() servingv1alpha1.ServingV1alpha1Interface
-	// Deprecated: please explicitly pick a version if possible.
-	Serving() servingv1alpha1.ServingV1alpha1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
@@ -41,12 +39,6 @@ type Clientset struct {
 
 // ServingV1alpha1 retrieves the ServingV1alpha1Client
 func (c *Clientset) ServingV1alpha1() servingv1alpha1.ServingV1alpha1Interface {
-	return c.servingV1alpha1
-}
-
-// Deprecated: Serving retrieves the default version of ServingClient.
-// Please explicitly pick a version.
-func (c *Clientset) Serving() servingv1alpha1.ServingV1alpha1Interface {
 	return c.servingV1alpha1
 }
 
