@@ -37,6 +37,7 @@
 
 set -o errexit
 set -o pipefail
+set -o xtrace
 
 readonly YAML_REPO_ROOT=${1:?"First argument must be the repo root dir"}
 readonly YAML_LIST_FILE=${2:?"Second argument must be the output file"}
