@@ -68,11 +68,10 @@ func TestKnativeServingDeployment(t *testing.T) {
 		deploymentRecreation(t, clients, names)
 	})
 
-	// Delete the KnativeServing to see if all the deployments will be removed as well
+	// Delete the KnativeServing to see if all resources will be removed
 	t.Run("delete", func(t *testing.T) {
 		knativeServingVerify(t, clients, names)
-		knativeServingDeletion(t, clients, names)
-		verifyClusterResourceDeletion(t, clients)
+		knativeServingDelete(t, clients, names)
 	})
 }
 
@@ -167,36 +166,11 @@ func deploymentRecreation(t *testing.T, clients *test.Clients, names test.Resour
 	t.Logf("The deployment %s/%s reached the desired state.", deployment.Namespace, deployment.Name)
 }
 
-// knativeServingDeletion deletes tha KnativeServing to see if all the deployments will be removed.
-func knativeServingDeletion(t *testing.T, clients *test.Clients, names test.ResourceNames) {
+// knativeServingDelete deletes tha KnativeServing to see if all resources will be deleted
+func knativeServingDelete(t *testing.T, clients *test.Clients, names test.ResourceNames) {
 	if err := clients.KnativeServing().Delete(names.KnativeServing, &metav1.DeleteOptions{}); err != nil {
-		t.Fatalf("KnativeService %q failed to delete: %v", names.KnativeServing, err)
+		t.Fatalf("KnativeServing %q failed to delete: %v", names.KnativeServing, err)
 	}
-
-	dpList, err := clients.KubeClient.Kube.AppsV1().Deployments(names.Namespace).List(metav1.ListOptions{})
-	if err != nil {
-		t.Fatalf("Error getting any deployment under the namespace %q: %v", names.Namespace, err)
-	}
-
-	for _, deployment := range dpList.Items {
-		waitErr := wait.PollImmediate(resources.Interval, resources.Timeout, func() (bool, error) {
-			if _, err := clients.KubeClient.Kube.AppsV1().Deployments(deployment.Namespace).Get(deployment.Name, metav1.GetOptions{}); err != nil {
-				if apierrs.IsNotFound(err) {
-					return true, nil
-				}
-				return false, err
-			}
-			return false, nil
-		})
-
-		if waitErr != nil {
-			t.Fatalf("The deployment %s/%s failed to be deleted: %v", deployment.Namespace, deployment.Name, waitErr)
-		}
-		t.Logf("The deployment %s/%s has been deleted.", deployment.Namespace, deployment.Name)
-	}
-}
-
-func verifyClusterResourceDeletion(t *testing.T, clients *test.Clients) {
 	_, b, _, _ := runtime.Caller(0)
 	m, err := mf.NewManifest(filepath.Join((filepath.Dir(b)+"/.."), "config/"), false, clients.Config)
 	if err != nil {
@@ -206,21 +180,19 @@ func verifyClusterResourceDeletion(t *testing.T, clients *test.Clients) {
 		t.Fatal(err)
 	}
 	for _, u := range m.Resources {
-		if u.GetNamespace() == "" && u.GetKind() != "Namespace" {
-			waitErr := wait.PollImmediate(resources.Interval, resources.Timeout, func() (bool, error) {
-				gvrs, _ := meta.UnsafeGuessKindToResource(u.GroupVersionKind())
-				if _, err := clients.Dynamic.Resource(gvrs).Get(u.GetName(), metav1.GetOptions{}); apierrs.IsNotFound(err) {
-					return true, nil
-				} else {
-					return false, err
-				}
-			})
-
-			if waitErr != nil {
-				t.Fatalf("The %s %s failed to be deleted: %v", u.GetKind(), u.GetName(), waitErr)
+		waitErr := wait.PollImmediate(resources.Interval, resources.Timeout, func() (bool, error) {
+			gvrs, _ := meta.UnsafeGuessKindToResource(u.GroupVersionKind())
+			if _, err := clients.Dynamic.Resource(gvrs).Get(u.GetName(), metav1.GetOptions{}); apierrs.IsNotFound(err) {
+				return true, nil
+			} else {
+				return false, err
 			}
-			t.Logf("The %s %s has been deleted.", u.GetKind(), u.GetName())
+		})
+
+		if waitErr != nil {
+			t.Fatalf("The %s %s failed to be deleted: %v", u.GetKind(), u.GetName(), waitErr)
 		}
+		t.Logf("The %s %s has been deleted.", u.GetKind(), u.GetName())
 	}
 }
 
