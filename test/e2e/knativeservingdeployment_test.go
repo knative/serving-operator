@@ -86,16 +86,22 @@ func knativeServingVerify(t *testing.T, clients *test.Clients, names test.Resour
 
 // knativeServingConfigure verifies that KnativeServing config is set properly
 func knativeServingConfigure(t *testing.T, clients *test.Clients, names test.ResourceNames) {
-	// We'll arbitrarily choose the logging config
-	configKey := "logging"
-	configMapName := fmt.Sprintf("%s/config-%s", names.Namespace, configKey)
+	// We'll arbitrarily choose logging and defaults config
+	loggingConfigKey := "logging"
+	loggingConfigMapName := fmt.Sprintf("%s/config-%s", names.Namespace, loggingConfigKey)
+	defaultsConfigKey := "defaults"
+	defaultsConfigMapName := fmt.Sprintf("%s/config-%s", names.Namespace, defaultsConfigKey)
 	// Get the existing KS without any spec
 	ks, err := clients.KnativeServing().Get(names.KnativeServing, metav1.GetOptions{})
 	// Add config to its spec
 	ks.Spec = v1alpha1.KnativeServingSpec{
 		Config: map[string]map[string]string{
-			configKey: {
+			defaultsConfigKey: {
+				"revision-timeout-seconds": "200",
+			},
+			loggingConfigKey: {
 				"loglevel.controller": "debug",
+				"loglevel.autoscaler": "debug",
 			},
 		},
 	}
@@ -103,20 +109,58 @@ func knativeServingConfigure(t *testing.T, clients *test.Clients, names test.Res
 	if ks, err = clients.KnativeServing().Update(ks); err != nil {
 		t.Fatalf("KnativeServing %q failed to update: %v", names.KnativeServing, err)
 	}
-	// Verifty the relevant configmap has been updated
-	err = resources.WaitForConfigMap(configMapName, clients.KubeClient.Kube, func(m map[string]string) bool {
-		return m["loglevel.controller"] == "debug"
+	// Verify the relevant configmaps have been updated
+	err = resources.WaitForConfigMap(defaultsConfigMapName, clients.KubeClient.Kube, func(m map[string]string) bool {
+		return m["revision-timeout-seconds"] == "200"
+	})
+	if err != nil {
+		t.Fatalf("The operator failed to update %s configmap", defaultsConfigMapName)
+	}
+	err = resources.WaitForConfigMap(loggingConfigMapName, clients.KubeClient.Kube, func(m map[string]string) bool {
+		return m["loglevel.controller"] == "debug" && m["loglevel.autoscaler"] == "debug"
+	})
+	if err != nil {
+		t.Fatalf("The operator failed to update %s configmap", loggingConfigMapName)
+	}
+
+	// Delete a single key/value pair
+	delete(ks.Spec.Config[loggingConfigKey], "loglevel.autoscaler")
+	// Update it
+	if ks, err = clients.KnativeServing().Update(ks); err != nil {
+		t.Fatalf("KnativeServing %q failed to update: %v", names.KnativeServing, err)
+	}
+	// Verify the relevant configmap has been updated
+	err = resources.WaitForConfigMap(loggingConfigMapName, clients.KubeClient.Kube, func(m map[string]string) bool {
+		_, autoscalerKeyExists := m["loglevel.autoscaler"]
+		// deleted key/value pair should be removed from the target config map
+		return m["loglevel.controller"] == "debug" && !autoscalerKeyExists
 	})
 	if err != nil {
 		t.Fatal("The operator failed to update the configmap")
 	}
+
+	// Use an empty map as the value
+	ks.Spec.Config[defaultsConfigKey] = map[string]string{}
+	// Update it
+	if ks, err = clients.KnativeServing().Update(ks); err != nil {
+		t.Fatalf("KnativeServing %q failed to update: %v", names.KnativeServing, err)
+	}
+	// Verify the relevant configmap has been updated and does not contain any keys except "_example"
+	err = resources.WaitForConfigMap(defaultsConfigMapName, clients.KubeClient.Kube, func(m map[string]string) bool {
+		_, exampleExists := m["_example"]
+		return len(m) == 1 && exampleExists
+	})
+	if err != nil {
+		t.Fatal("The operator failed to update the configmap")
+	}
+
 	// Now remove the config from the spec and update
 	ks.Spec = v1alpha1.KnativeServingSpec{}
 	if ks, err = clients.KnativeServing().Update(ks); err != nil {
 		t.Fatalf("KnativeServing %q failed to update: %v", names.KnativeServing, err)
 	}
 	// And verify the configmap entry is gone
-	err = resources.WaitForConfigMap(configMapName, clients.KubeClient.Kube, func(m map[string]string) bool {
+	err = resources.WaitForConfigMap(loggingConfigMapName, clients.KubeClient.Kube, func(m map[string]string) bool {
 		_, exists := m["loglevel.controller"]
 		return !exists
 	})
@@ -184,9 +228,8 @@ func knativeServingDelete(t *testing.T, clients *test.Clients, names test.Resour
 			gvrs, _ := meta.UnsafeGuessKindToResource(u.GroupVersionKind())
 			if _, err := clients.Dynamic.Resource(gvrs).Get(u.GetName(), metav1.GetOptions{}); apierrs.IsNotFound(err) {
 				return true, nil
-			} else {
-				return false, err
 			}
+			return false, err
 		})
 
 		if waitErr != nil {
