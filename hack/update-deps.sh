@@ -27,6 +27,5 @@ dep ensure
 
 rm -rf $(find vendor/ -name 'OWNERS')
 rm -rf $(find vendor/ -name '*_test.go')
-rm -fr vendor/knative.dev/test-infra/devstats
 
 remove_broken_symlinks ./vendor
