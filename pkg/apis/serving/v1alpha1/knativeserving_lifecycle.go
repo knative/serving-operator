@@ -20,7 +20,14 @@ import (
 	"knative.dev/pkg/apis"
 )
 
+const (
+	// KnativeServingConditionReady is set when the KnativeServing's latest
+	// underlying revision has reported readiness.
+	KnativeServingConditionReady = apis.ConditionReady
+)
+
 var conditions = apis.NewLivingConditionSet(
+	KnativeServingConditionReady,
 	DeploymentsAvailable,
 	InstallSucceeded,
 )
