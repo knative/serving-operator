@@ -111,8 +111,6 @@ func (r *Reconciler) reconcile(ctx context.Context, ks *servingv1alpha1.KnativeS
 	reqLogger := r.Logger.With(zap.String("Request.Namespace", ks.Namespace)).With("Request.Name", ks.Name)
 	reqLogger.Infow("Reconciling KnativeServing", "status", ks.Status)
 
-	// TODO: We need to find a better way to make sure the instance has the updated info.
-	ks.SetGroupVersionKind(servingv1alpha1.SchemeGroupVersion.WithKind("KnativeServing"))
 	stages := []func(*mf.Manifest, *servingv1alpha1.KnativeServing) error{
 		r.initStatus,
 		r.install,
