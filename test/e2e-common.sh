@@ -77,29 +77,19 @@ function install_istio() {
 }
 
 function install_serving_operator() {
-  header "Installing Knative Serving operator"
+  echo ">> Creating test namespaces"
+  kubectl create namespace $TEST_NAMESPACE
 
+  header "Installing Knative Serving operator"
   # Deploy the operator
   kubectl apply -f config/crds/serving_v1alpha1_knativeserving_crd.yaml
   ko apply -f config/
+  wait_until_pods_running default || fail_test "Serving Operator did not come up"
 }
 
 function knative_setup() {
   install_istio || fail_test "Istio installation failed"
   install_serving_operator
-}
-
-# Create test resources
-function test_setup() {
-  echo ">> Creating test namespaces"
-  kubectl create namespace $TEST_NAMESPACE
-}
-
-# Delete test resources
-function test_teardown() {
-  echo ">> Removing test namespaces"
-  kubectl delete all --all --ignore-not-found --now --timeout 60s -n $TEST_NAMESPACE
-  kubectl delete --ignore-not-found --now --timeout 300s namespace $TEST_NAMESPACE
 }
 
 # Uninstalls Knative Serving from the current cluster.
@@ -111,4 +101,9 @@ function knative_teardown() {
   echo ">> Bringing down Istio"
   kubectl delete --ignore-not-found=true -f "${INSTALL_ISTIO_YAML}" || return 1
   kubectl delete --ignore-not-found=true clusterrolebinding cluster-admin-binding
+  echo ">> Bringing down Serving Operator"
+  ko delete --ignore-not-found=true -f config/ || return 1
+  echo ">> Removing test namespaces"
+  kubectl delete all --all --ignore-not-found --now --timeout 60s -n $TEST_NAMESPACE
+  kubectl delete --ignore-not-found --now --timeout 300s namespace $TEST_NAMESPACE
 }
