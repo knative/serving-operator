@@ -27,7 +27,7 @@ var conditions = apis.NewLivingConditionSet(
 
 // GroupVersionKind returns SchemeGroupVersion of a KnativeServing
 func (ks *KnativeServing) GroupVersionKind() schema.GroupVersionKind {
-	return SchemeGroupVersion.WithKind("KnativeServing")
+	return SchemeGroupVersion.WithKind(Kind)
 }
 
 // GetConditions implements apis.ConditionsAccessor
