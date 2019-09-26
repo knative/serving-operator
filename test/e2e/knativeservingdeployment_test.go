@@ -224,6 +224,11 @@ func knativeServingDelete(t *testing.T, clients *test.Clients, names test.Resour
 		t.Fatal(err)
 	}
 	for _, u := range m.Resources {
+		if u.GetKind() == "Namespace" {
+			// The namespace should be skipped, because when the CR is removed, the Manifest to be removed has
+			// been modified, since the namespace can be injected.
+			continue
+		}
 		waitErr := wait.PollImmediate(resources.Interval, resources.Timeout, func() (bool, error) {
 			gvrs, _ := meta.UnsafeGuessKindToResource(u.GroupVersionKind())
 			if _, err := clients.Dynamic.Resource(gvrs).Get(u.GetName(), metav1.GetOptions{}); apierrs.IsNotFound(err) {
