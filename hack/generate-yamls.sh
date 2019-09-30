@@ -68,5 +68,5 @@ ko resolve ${KO_YAML_FLAGS} -f config/ > "${SERVING_OPERATOR_YAML}"
 # List generated YAML files. We have only one serving-operator.yaml so far.
 
 ls -1 ${SERVING_OPERATOR_YAML} > ${YAML_LIST_FILE}
-# grep return 1 if there is no match, appending || true to avoid failure
-ls -1 ${YAML_OUTPUT_DIR}/*.yaml | grep -v ${SERVING_OPERATOR_YAML} >> ${YAML_LIST_FILE} || true
+# TODO(adrcunha): Uncomment once there's more than one YAML generated.
+# ls -1 ${YAML_OUTPUT_DIR}/*.yaml | grep -v ${SERVING_OPERATOR_YAML} >> ${YAML_LIST_FILE}
