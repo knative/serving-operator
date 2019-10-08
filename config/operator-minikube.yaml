@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: knative-serving-minikube-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: knative-serving-minikube-operator
+  template:
+    metadata:
+      labels:
+        name: knative-serving-minikube-operator
+        app: knativeserving-admission-server
+    spec:
+      serviceAccountName: knative-serving-operator
+      containers:
+        - name: knative-serving-minikube-operator
+          image: docker.io/jcrossley3/knative-serving-minikube:dev
+          command:
+          - knative-serving-minikube-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "knative-serving-minikube-operator"
