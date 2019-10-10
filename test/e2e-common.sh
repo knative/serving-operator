@@ -82,7 +82,6 @@ function install_serving_operator() {
 
   header "Installing Knative Serving operator"
   # Deploy the operator
-  kubectl apply -f config/crds/serving_v1alpha1_knativeserving_crd.yaml
   ko apply -f config/
   wait_until_pods_running default || fail_test "Serving Operator did not come up"
 }
