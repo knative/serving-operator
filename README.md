@@ -8,14 +8,7 @@ The following steps will install
 appropriately for your cluster in the `knative-serving` namespace. Please make
 sure the [prerequisites](#Prerequisites) are installed first.
 
-1. Install the
-   [KnativeServing CRD](config/crds/serving_v1alpha1_knativeserving_crd.yaml)
-
-   ```
-   kubectl apply -f config/crds/serving_v1alpha1_knativeserving_crd.yaml
-   ```
-
-2. Install the operator
+1. Install the operator
 
    To install from source code, run the command:
 
@@ -32,7 +25,7 @@ sure the [prerequisites](#Prerequisites) are installed first.
    kubectl apply -f config/
    ```
 
-3. Install the
+2. Install the
    [KnativeServing custom resource](#the-knativeserving-custom-resource)
 
 ```sh
@@ -86,7 +79,7 @@ strictly required but does provide some handy tooling.
 
 The installation of Knative Serving is triggered by the creation of a
 `KnativeServing` custom resource (CR) as defined by
-[this CRD](config/crds/serving_v1alpha1_knativeserving_crd.yaml). The operator
+[this CRD](config/300-serving-v1alpha1-knativeserving-crd.yaml). The operator
 will deploy Knative Serving in the same namespace containing the
 `KnativeServing` CR, and this CR will trigger the installation, reconfiguration,
 or removal of the knative serving resources.
