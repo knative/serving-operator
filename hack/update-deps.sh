@@ -28,4 +28,6 @@ dep ensure
 rm -rf $(find vendor/ -name 'OWNERS')
 rm -rf $(find vendor/ -name '*_test.go')
 
+update_licenses third_party/VENDOR-LICENSE "./cmd/*"
+
 remove_broken_symlinks ./vendor
