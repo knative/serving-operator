@@ -86,11 +86,6 @@ function install_serving_operator() {
   wait_until_pods_running default || fail_test "Serving Operator did not come up"
 }
 
-function knative_setup() {
-  install_istio || fail_test "Istio installation failed"
-  install_serving_operator
-}
-
 # Uninstalls Knative Serving from the current cluster.
 function knative_teardown() {
   echo ">> Uninstalling Knative serving"
