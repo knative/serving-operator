@@ -63,7 +63,6 @@ function generate_latest_serving_manifest() {
   # Copy the serving.yaml into cmd/manager/kodata/knative-serving
   SERVING_YAML=$KNATIVE_SERVING_DIR/serving/output/serving.yaml
   if [[ -f "$SERVING_YAML" ]]; then
-    cat $SERVING_YAML
     rm -rf $OPERATOR_DIR/cmd/manager/kodata/knative-serving/*
     cp $SERVING_YAML $OPERATOR_DIR/cmd/manager/kodata/knative-serving/latest.yaml
   fi
