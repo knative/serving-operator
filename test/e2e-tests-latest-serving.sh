@@ -34,7 +34,7 @@
 source $(dirname $0)/e2e-common.sh
 
 OPERATOR_DIR=$(dirname $0)/..
-KNATIVE_SERVING_DIR=$OPERATOR_DIR/..
+KNATIVE_SERVING_DIR=${OPERATOR_DIR}/..
 
 function knative_setup() {
   install_istio || fail_test "Istio installation failed"
@@ -44,7 +44,7 @@ function knative_setup() {
 
 function generate_latest_serving_manifest() {
   # Go the directory to download the source code of knative serving
-  cd $KNATIVE_SERVING_DIR
+  cd ${KNATIVE_SERVING_DIR}
 
   # Download the source code of knative serving
   git clone https://github.com/knative/serving.git
@@ -52,21 +52,21 @@ function generate_latest_serving_manifest() {
   mkdir -p output
 
   # Generate the manifest
-  export YAML_OUTPUT_DIR=$KNATIVE_SERVING_DIR/serving/output
-  ./hack/generate-yamls.sh $KNATIVE_SERVING_DIR/serving $YAML_OUTPUT_DIR/output.yaml
+  export YAML_OUTPUT_DIR=${KNATIVE_SERVING_DIR}/serving/output
+  ./hack/generate-yamls.sh ${KNATIVE_SERVING_DIR}/serving ${YAML_OUTPUT_DIR}/output.yaml
 
   # Copy the serving.yaml into cmd/manager/kodata/knative-serving
-  SERVING_YAML=$KNATIVE_SERVING_DIR/serving/output/serving.yaml
-  if [[ -f "$SERVING_YAML" ]]; then
+  SERVING_YAML=${KNATIVE_SERVING_DIR}/serving/output/serving.yaml
+  if [[ -f "${SERVING_YAML}" ]]; then
     echo ">> Replacing the current manifest in operator with the generated manifest"
-    rm -rf $OPERATOR_DIR/cmd/manager/kodata/knative-serving/*
-    cp $SERVING_YAML $OPERATOR_DIR/cmd/manager/kodata/knative-serving/serving.yaml
+    rm -rf ${OPERATOR_DIR}/cmd/manager/kodata/knative-serving/*
+    cp ${SERVING_YAML} ${OPERATOR_DIR}/cmd/manager/kodata/knative-serving/serving.yaml
   else
     echo ">> The serving.yaml was not generated, so keep the current manifest"
   fi
 
   # Go back to the directory of operator
-  cd $OPERATOR_DIR
+  cd ${OPERATOR_DIR}
 }
 
 # Skip installing istio as an add-on
