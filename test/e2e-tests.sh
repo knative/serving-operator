@@ -28,14 +28,13 @@
 
 source $(dirname $0)/e2e-common.sh
 
-# Script entry point.
+function knative_setup() {
+  install_istio || fail_test "Istio installation failed"
+  install_serving_operator
+}
 
 # Skip installing istio as an add-on
 initialize $@ --skip-istio-addon
-
-# Let's see what the operator did
-#kubectl get pod --all-namespaces
-#kubectl logs deployment/knative-serving-operator
 
 # If we got this far, the operator installed Knative Serving
 header "Running tests for Knative Serving Operator"
