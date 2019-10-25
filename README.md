@@ -1,5 +1,7 @@
 # Knative Serving Operator
 
+
+
 Knative Serving Operator is a project aiming to deploy and manage Knative
 Serving in an automated way.
 
