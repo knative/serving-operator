@@ -114,7 +114,7 @@ func (r *Reconciler) reconcile(ctx context.Context, ks *servingv1alpha1.KnativeS
 	stages := []func(*mf.Manifest, *servingv1alpha1.KnativeServing) error{
 		r.initStatus,
 		r.install,
-		r.checkDeployments,
+		//r.checkDeployments,
 		r.deleteObsoleteResources,
 	}
 
