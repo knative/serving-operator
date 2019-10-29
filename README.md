@@ -35,7 +35,7 @@ kind: Namespace
 metadata:
  name: knative-serving
 ---
-apiVersion: serving.knative.dev/v1alpha1
+apiVersion: operator.knative.dev/v1alpha1
 kind: KnativeServing
 metadata:
   name: knative-serving
@@ -92,7 +92,7 @@ version of Knative Serving the operator installed.
 The following are all equivalent:
 
 ```
-kubectl get knativeservings.serving.knative.dev -oyaml
+kubectl get knativeservings.operator.knative.dev -oyaml
 kubectl get knativeserving -oyaml
 kubectl get ks -oyaml
 ```
