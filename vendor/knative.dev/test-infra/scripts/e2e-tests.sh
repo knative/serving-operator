@@ -93,13 +93,32 @@ function dump_cluster_state() {
   echo "***         E2E TEST FAILED         ***"
   echo "***    Start of information dump    ***"
   echo "***************************************"
-  echo ">>> All resources:"
-  kubectl get all --all-namespaces
-  echo ">>> Services:"
-  kubectl get services --all-namespaces
-  echo ">>> Events:"
-  kubectl get events --all-namespaces
-  function_exists dump_extra_cluster_state && dump_extra_cluster_state
+
+  local output="${ARTIFACTS}/k8s.dump.txt"
+  echo ">>> The dump is located at ${output}"
+
+  for crd in $(kubectl api-resources --verbs=list -o name | sort); do
+    local count="$(kubectl get $crd --all-namespaces --no-headers 2>/dev/null | wc -l)"
+    echo ">>> ${crd} (${count} objects)"
+    if [[ "${count}" > "0" ]]; then
+      echo ">>> ${crd} (${count} objects)" >> ${output}
+
+      echo ">>> Listing" >> ${output}
+      kubectl get ${crd} --all-namespaces >> ${output}
+
+      echo ">>> Details" >> ${output}
+      if [[ "${crd}" == "secrets" ]]; then
+        echo "Secrets are ignored for security reasons" >> ${output}
+      else
+        kubectl get ${crd} --all-namespaces -o yaml >> ${output}
+      fi
+    fi
+  done
+
+  if function_exists dump_extra_cluster_state; then
+    echo ">>> Extra dump" >> ${output}
+    dump_extra_cluster_state >> ${output}
+  fi
   echo "***************************************"
   echo "***         E2E TEST FAILED         ***"
   echo "***     End of information dump     ***"
@@ -292,6 +311,7 @@ function create_test_cluster_with_retries() {
       [[ -z "$(grep -Fo 'does not have enough resources available to fulfill' ${cluster_creation_log})" \
           && -z "$(grep -Fo 'ResponseError: code=400, message=No valid versions with the prefix' ${cluster_creation_log})" \
           && -z "$(grep -Po 'ResponseError: code=400, message=Master version "[0-9a-z\-\.]+" is unsupported' ${cluster_creation_log})" ]] \
+          && -z "$(grep -Po 'only \d+ nodes out of \d+ have registered; this is likely due to Nodes failing to start correctly' ${cluster_creation_log})" ]] \
           && return 1
     done
   done
