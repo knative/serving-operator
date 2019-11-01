@@ -33,6 +33,8 @@
 
 source $(dirname $0)/e2e-common.sh
 
+set -o xtrace
+
 OPERATOR_DIR=$(dirname $0)/..
 KNATIVE_SERVING_DIR=${OPERATOR_DIR}/..
 
@@ -49,6 +51,9 @@ function generate_latest_serving_manifest() {
   # Download the source code of knative serving
   git clone https://github.com/knative/serving.git
   cd serving
+  git checkout 143c72e47c3076e9d392c7c90c60f33da649554a
+  COMMIT_ID=$(git rev-parse --verify HEAD)
+  echo ">> The latest commit ID of Knative Serving is ${COMMIT_ID}."
   mkdir -p output
 
   # Generate the manifest
