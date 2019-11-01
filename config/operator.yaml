@@ -32,3 +32,10 @@ spec:
                   fieldPath: metadata.namespace
             - name: METRICS_DOMAIN
               value: knative.dev/serving-operator
+            - name: CONFIG_LOGGING_NAME
+              value: config-logging
+            - name: CONFIG_OBSERVABILITY_NAME
+              value: config-observability
+            ports:
+            - name: metrics
+              containerPort: 9090
