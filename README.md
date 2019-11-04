@@ -16,10 +16,11 @@ sure the [prerequisites](#Prerequisites) are installed first.
    ko apply -f config/
    ```
 
-   To install from an existing image, change the value of `image` into
-   `quay.io/openshift-knative/knative-serving-operator:v0.6.0` or any other
-   valid operator image in the file config/operator.yaml, and run the following
-   command:
+   To install from an existing image, change the value of `image` in
+   `config/operator.yaml` to one you've published or a nightly build,
+   e.g.
+   `gcr.io/knative-nightly/knative.dev/serving-operator/cmd/manager:latest`,
+   and then run:
 
    ```
    kubectl apply -f config/
@@ -63,11 +64,7 @@ build your own image.
 On OpenShift, Istio will get installed automatically if not already present by
 using the [Maistra Operator](https://maistra.io/).
 
-For other platforms, version 0.6.x of Knative Serving requires Istio CRD's:
-
-```
-kubectl apply -f https://raw.githubusercontent.com/knative/serving/v0.6.0/third_party/istio-1.0.7/istio-crds.yaml
-```
+For other platforms, see [the docs](https://knative.dev/docs/install/installing-istio/)
 
 ### Operator SDK
 
