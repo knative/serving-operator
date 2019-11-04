@@ -784,14 +784,6 @@ webhooks:
       matchExpressions:
         - key: serving.knative.dev/release
           operator: Exists
----
-apiVersion: v1
-kind: Secret
-metadata:
-  labels:
-    serving.knative.dev/release: devel
-  name: webhook-certs
-  namespace: knative-serving
 
 ---
 apiVersion: caching.internal.knative.dev/v1alpha1

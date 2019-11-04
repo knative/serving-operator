@@ -63,16 +63,16 @@ func TestKnativeServingDeployment(t *testing.T) {
 	})
 
 	// Delete the deployments one by one to see if they will be recreated.
-	t.Run("restore", func(t *testing.T) {
-		knativeServingVerify(t, clients, names)
-		deploymentRecreation(t, clients, names)
-	})
+	//t.Run("restore", func(t *testing.T) {
+	//	knativeServingVerify(t, clients, names)
+	//	deploymentRecreation(t, clients, names)
+	//})
 
 	// Delete the KnativeServing to see if all resources will be removed
-	t.Run("delete", func(t *testing.T) {
-		knativeServingVerify(t, clients, names)
-		knativeServingDelete(t, clients, names)
-	})
+	//t.Run("delete", func(t *testing.T) {
+	//	knativeServingVerify(t, clients, names)
+	//	knativeServingDelete(t, clients, names)
+	//})
 }
 
 // knativeServingVerify verifies if the KnativeServing can reach the READY status.

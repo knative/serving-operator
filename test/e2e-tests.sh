@@ -43,6 +43,13 @@ failed=0
 # Run the integration tests
 go_test_e2e -timeout=20m ./test/e2e || failed=1
 
+echo ">> Checking log after tests"
+kubectl logs $(kubectl get pods  -o name)
+kubectl get ks -n $TEST_NAMESPACE -oyaml
+kubectl get pod -n $TEST_NAMESPACE
+kubectl get deployment -n $TEST_NAMESPACE
+kubectl get deployment -n $TEST_NAMESPACE -oyaml
+
 # Require that tests succeeded.
 (( failed )) && fail_test
 

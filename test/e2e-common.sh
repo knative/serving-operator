@@ -84,6 +84,10 @@ function install_serving_operator() {
   # Deploy the operator
   ko apply -f config/
   wait_until_pods_running default || fail_test "Serving Operator did not come up"
+  echo ">> Checking log after installation"
+  kubectl logs $(kubectl get pods  -o name)
+  kubectl get pod -n $TEST_NAMESPACE
+  kubectl get deployment -n $TEST_NAMESPACE
 }
 
 # Uninstalls Knative Serving from the current cluster.
