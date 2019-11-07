@@ -18,6 +18,7 @@ package knativeserving
 
 import (
 	"context"
+	"time"
 
 	mf "github.com/jcrossley3/manifestival"
 	"go.uber.org/zap"
@@ -60,6 +61,7 @@ var _ controller.Reconciler = (*Reconciler)(nil)
 // converge the two. It then updates the Status block of the Knativeserving resource
 // with the current status of the resource.
 func (r *Reconciler) Reconcile(ctx context.Context, key string) error {
+	tStart := time.Now()
 	// Convert the namespace/name string into a distinct namespace and name
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
@@ -104,6 +106,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, key string) error {
 		r.Recorder.Event(knativeServing, corev1.EventTypeWarning, "InternalError", reconcileErr.Error())
 		return reconcileErr
 	}
+
+	r.StatsReporter.ReportReconcile(namespace, name, time.Since(tStart))
 	return nil
 }
 
