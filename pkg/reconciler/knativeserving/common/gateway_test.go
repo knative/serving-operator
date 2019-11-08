@@ -19,11 +19,15 @@ import (
 	"testing"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/kubernetes/scheme"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	"knative.dev/pkg/apis/istio/v1alpha3"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 )
+
+func init() {
+	v1alpha3.AddToScheme(scheme.Scheme)
+}
 
 type updateGatewayTest struct {
 	name                  string
@@ -119,7 +123,7 @@ func runGatewayTransformTest(t *testing.T, tt *updateGatewayTest) {
 
 func validateUnstructedGatewayChanged(t *testing.T, tt *updateGatewayTest, u *unstructured.Unstructured) {
 	var gateway = &v1alpha3.Gateway{}
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, gateway)
+	err := scheme.Scheme.Convert(u, gateway, nil)
 	assertEqual(t, err, nil)
 	for expectedKey, expectedValue := range tt.expected {
 		assertEqual(t, gateway.Spec.Selector[expectedKey], expectedValue)
@@ -135,11 +139,10 @@ func makeUnstructuredGateway(t *testing.T, tt *updateGatewayTest) unstructured.U
 	gateway.APIVersion = "networking.istio.io/v1alpha3"
 	gateway.Kind = "Gateway"
 	gateway.Name = tt.gatewayName
-	unstructuredDeployment, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&gateway)
+	result := unstructured.Unstructured{}
+	err := scheme.Scheme.Convert(&gateway, &result, nil)
 	if err != nil {
-		t.Fatalf("Could not create unstructured deployment object: %v, err: %v", unstructuredDeployment, err)
+		t.Fatalf("Could not create unstructured deployment object: %v, err: %v", result, err)
 	}
-	return unstructured.Unstructured{
-		Object: unstructuredDeployment,
-	}
+	return result
 }

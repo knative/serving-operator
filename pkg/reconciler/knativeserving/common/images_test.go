@@ -23,12 +23,16 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
 	caching "knative.dev/caching/pkg/apis/caching/v1alpha1"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 
 	appsv1 "k8s.io/api/apps/v1"
 )
+
+func init() {
+	caching.AddToScheme(scheme.Scheme)
+}
 
 type updateDeploymentImageTest struct {
 	name       string
@@ -131,7 +135,7 @@ func runDeploymentTransformTest(t *testing.T, tt *updateDeploymentImageTest) {
 
 func validateUnstructedDeploymentChanged(t *testing.T, tt *updateDeploymentImageTest, u *unstructured.Unstructured) {
 	var deployment = &appsv1.Deployment{}
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, deployment)
+	err := scheme.Scheme.Convert(u, deployment, nil)
 	assertEqual(t, err, nil)
 	for i, expected := range tt.expected {
 		assertEqual(t, deployment.Spec.Template.Spec.Containers[i].Image, expected)
@@ -155,13 +159,12 @@ func makeDeployment(t *testing.T, name string, podSpec corev1.PodSpec) *appsv1.D
 }
 
 func makeUnstructured(t *testing.T, obj interface{}) unstructured.Unstructured {
-	unstructuredObject, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&obj)
+	var result = unstructured.Unstructured{}
+	err := scheme.Scheme.Convert(obj, &result, nil)
 	if err != nil {
-		t.Fatalf("Could not create unstructured object: %v, err: %v", unstructuredObject, err)
+		t.Fatalf("Could not create unstructured object: %v, err: %v", result, err)
 	}
-	return unstructured.Unstructured{
-		Object: unstructuredObject,
-	}
+	return result
 }
 
 type updateImageSpecTest struct {
@@ -203,7 +206,7 @@ func runImageTransformTest(t *testing.T, tt *updateImageSpecTest) {
 
 func validateUnstructedImageChanged(t *testing.T, tt *updateImageSpecTest, u *unstructured.Unstructured) {
 	var image = &caching.Image{}
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, image)
+	err := scheme.Scheme.Convert(u, image, nil)
 	assertEqual(t, err, nil)
 	assertEqual(t, image.Spec.Image, tt.expected)
 }
@@ -293,7 +296,7 @@ func runImagePullSecretsTest(t *testing.T, tt *addImagePullSecretsTest) {
 	deploymentTransform(&unstructuredDeployment)
 
 	var deployment = &appsv1.Deployment{}
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredDeployment.Object, deployment)
+	err := scheme.Scheme.Convert(&unstructuredDeployment, deployment, nil)
 
 	assertEqual(t, err, nil)
 	assertDeepEqual(t, deployment.Spec.Template.Spec.ImagePullSecrets, tt.expectedSecrets)
