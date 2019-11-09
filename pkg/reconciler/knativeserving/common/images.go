@@ -28,6 +28,10 @@ import (
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 )
 
+func init() {
+	caching.AddToScheme(scheme.Scheme)
+}
+
 var (
 	// The string to be replaced by the container name
 	containerNameVariable = "${NAME}"

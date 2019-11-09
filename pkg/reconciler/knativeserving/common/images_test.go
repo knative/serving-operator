@@ -30,10 +30,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-func init() {
-	caching.AddToScheme(scheme.Scheme)
-}
-
 type updateDeploymentImageTest struct {
 	name       string
 	containers []corev1.Container
