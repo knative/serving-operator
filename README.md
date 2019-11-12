@@ -10,22 +10,24 @@ sure the [prerequisites](#Prerequisites) are installed first.
 
 1. Install the operator
 
-  * Installing from source code:
+- Installing from source code:
 
-   To install from source code, run the command:
+To install from source code, run the command:
 
-   ```
-   ko apply -f config/
-   ```
+```
+ko apply -f config/
+```
 
-  * Installing a released version:
+- Installing a released version:
 
-   To install a released version of the operator go and download the latest `serving-operator.yaml` file from [here](https://github.com/knative/serving-operator/releases) and apply it (`kubectl apply -f serving-operator.yaml`), or directly run:
+To install a released version of the operator go and download the latest
+`serving-operator.yaml` file from
+[here](https://github.com/knative/serving-operator/releases) and apply it
+(`kubectl apply -f serving-operator.yaml`), or directly run:
 
-
-   ```
-   kubectl apply -f https://github.com/knative/serving-operator/releases/download/v0.10.0/serving-operator.yaml
-   ```
+```
+kubectl apply -f https://github.com/knative/serving-operator/releases/download/v0.10.0/serving-operator.yaml
+```
 
 2. Install the
    [KnativeServing custom resource](#the-knativeserving-custom-resource)
@@ -65,7 +67,8 @@ build your own image.
 On OpenShift, Istio will get installed automatically if not already present by
 using the [Maistra Operator](https://maistra.io/).
 
-For other platforms, see [the docs](https://knative.dev/docs/install/installing-istio/)
+For other platforms, see
+[the docs](https://knative.dev/docs/install/installing-istio/)
 
 ### Operator SDK
 
