@@ -49,6 +49,8 @@ function generate_latest_serving_manifest() {
   # Download the source code of knative serving
   git clone https://github.com/knative/serving.git
   cd serving
+  COMMIT_ID=$(git rev-parse --verify HEAD)
+  echo ">> The latest commit ID of Knative Serving is ${COMMIT_ID}."
   mkdir -p output
 
   # Generate the manifest
