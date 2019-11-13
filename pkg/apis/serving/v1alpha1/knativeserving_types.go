@@ -57,8 +57,8 @@ type IstioGatewayOverride struct {
 	Selector map[string]string `json:"selector,omitempty"`
 }
 
-// Refers to either a ConfigMap or Secret containing valid CA
-// certificates
+// CustomCerts refers to either a ConfigMap or Secret containing valid
+// CA certificates
 type CustomCerts struct {
 	// One of ConfigMap or Secret
 	Type string `json:"type"`
