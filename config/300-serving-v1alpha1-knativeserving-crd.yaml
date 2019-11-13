@@ -100,7 +100,10 @@ spec:
                 type:
                   description: One of ConfigMap or Secret
                   type: string
-                  enum: [ConfigMap, Secret]
+                  enum:
+                  - ConfigMap
+                  - Secret
+                  - ""
                 name:
                   description: The name of the ConfigMap or Secret
                   type: string
