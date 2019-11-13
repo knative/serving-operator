@@ -93,6 +93,17 @@ spec:
                       name:
                         description: The name of the secret.
                         type: string
+            controller-custom-certs:
+              description: Enabling the controller to trust registries with self-signed certificates
+              type: object
+              properties:
+                type:
+                  description: One of ConfigMap or Secret
+                  type: string
+                  enum: [ConfigMap, Secret]
+                name:
+                  description: The name of the ConfigMap or Secret
+                  type: string
           type: object
         status:
           description: Status defines the observed state of KnativeServing
