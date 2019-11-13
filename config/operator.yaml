@@ -36,6 +36,6 @@ spec:
               value: config-logging
             - name: CONFIG_OBSERVABILITY_NAME
               value: config-observability
-            ports:
+          ports:
             - name: metrics
               containerPort: 9090
