@@ -19,9 +19,19 @@ limitations under the License.
 
 package test
 
-const (
+import "os"
+
+var (
 	// ServingOperatorNamespace is the default namespace for serving operator e2e tests
-	ServingOperatorNamespace = "operator-tests"
+	ServingOperatorNamespace = getenv("TEST_NAMESPACE", "operator-tests")
 	// ServingOperatorName is the default operator name for serving operator e2e tests
-	ServingOperatorName = "knative-serving"
+	ServingOperatorName = getenv("TEST_RESOURCE", "knative-serving")
 )
+
+func getenv(name, defaultValue string) string {
+	value, set := os.LookupEnv(name)
+	if !set {
+		value = defaultValue
+	}
+	return value
+}
