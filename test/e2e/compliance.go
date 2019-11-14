@@ -1,5 +1,3 @@
-// +build e2e
-
 /*
 Copyright 2019 The Knative Authors
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +13,14 @@ limitations under the License.
 
 package e2e
 
-import (
-	"testing"
-)
+import "knative.dev/serving-operator/test"
 
-// TestKnativeServingDeployment verifies the KnativeServing creation, deployment recreation, and KnativeServing deletion.
-func TestKnativeServingDeployment(t *testing.T) {
-	testKnativeServingDeployment(t)
+// ComplianceSuite can be executed by productized code's test plan to assert
+// compliance with upstream knative
+func ComplianceSuite() []test.Specification {
+	return specifications
+}
+
+var specifications = []test.Specification{
+	test.NewSpec("TestKnativeServingDeployment", testKnativeServingDeployment),
 }

@@ -1,5 +1,3 @@
-// +build e2e
-
 /*
 Copyright 2019 The Knative Authors
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,13 +11,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package e2e
+package test
 
-import (
-	"testing"
-)
+import "testing"
 
-// TestKnativeServingDeployment verifies the KnativeServing creation, deployment recreation, and KnativeServing deletion.
-func TestKnativeServingDeployment(t *testing.T) {
-	testKnativeServingDeployment(t)
+// Specification describes a test with name and method that will be use as test
+type Specification struct {
+	Name string
+	Func func(*testing.T)
+}
+
+// NewSpec creates a new test specification
+func NewSpec(name string, lambda func(*testing.T)) Specification {
+	return Specification{
+		Name: name,
+		Func: lambda,
+	}
 }
