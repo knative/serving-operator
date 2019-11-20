@@ -1,5 +1,3 @@
-// +build e2e
-
 /*
 Copyright 2019 The Knative Authors
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,15 +11,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package e2e
+package test
 
-import (
-	"knative.dev/serving-operator/test"
-	"testing"
-)
+import "testing"
 
-// TestKnativeServingDeployment verifies the KnativeServing creation, deployment recreation, and KnativeServing deletion.
-func TestKnativeServingDeployment(t *testing.T) {
-	ctx := test.NewContext(t)
-	testKnativeServingDeployment(ctx)
+// Runner is a test runner that takes a context into consideration
+type Runner interface {
+	Run(name string, testfunc func(t *testing.T)) bool
+}
+
+func (spec Specification) run(ctx *Context) bool {
+	tt := ctx.t
+	if spec.contextual() {
+		cspec := spec.contextSpec
+		return tt.Run(cspec.name, func(t *testing.T) {
+			ctx.t = t
+			ctx.push(cspec.name)
+			defer ctx.pop()
+			cspec.testfunc(ctx)
+		})
+	}
+	return tt.Run(spec.regularSpec.name, spec.regularSpec.testfunc)
 }

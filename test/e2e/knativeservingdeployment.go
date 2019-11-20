@@ -31,8 +31,10 @@ import (
 	"knative.dev/serving-operator/test/resources"
 )
 
-func testKnativeServingDeployment(t *testing.T) {
+func testKnativeServingDeployment(ctx *test.Context) {
 
+	t := ctx.T()
+	r := ctx.Runner()
 	cancel := logstream.Start(t)
 	defer cancel()
 	clients := Setup(t)
@@ -51,23 +53,23 @@ func testKnativeServingDeployment(t *testing.T) {
 	}
 
 	// Test if KnativeServing can reach the READY status
-	t.Run("create", func(t *testing.T) {
+	r.Run("create", func(t *testing.T) {
 		knativeServingVerify(t, clients, names)
 	})
 
-	t.Run("configure", func(t *testing.T) {
+	r.Run("configure", func(t *testing.T) {
 		knativeServingVerify(t, clients, names)
 		knativeServingConfigure(t, clients, names)
 	})
 
 	// Delete the deployments one by one to see if they will be recreated.
-	t.Run("restore", func(t *testing.T) {
+	r.Run("restore", func(t *testing.T) {
 		knativeServingVerify(t, clients, names)
 		deploymentRecreation(t, clients, names)
 	})
 
 	// Delete the KnativeServing to see if all resources will be removed
-	t.Run("delete", func(t *testing.T) {
+	r.Run("delete", func(t *testing.T) {
 		knativeServingVerify(t, clients, names)
 		knativeServingDelete(t, clients, names)
 	})

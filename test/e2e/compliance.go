@@ -18,9 +18,9 @@ import "knative.dev/serving-operator/test"
 // ComplianceSuite can be executed by productized code's test plan to assert
 // compliance with upstream knative
 func ComplianceSuite() []test.Specification {
-	return specifications
+	return suite
 }
 
-var specifications = []test.Specification{
-	test.NewSpec("TestKnativeServingDeployment", testKnativeServingDeployment),
+var suite = []test.Specification{
+	test.NewContextualSpec("TestKnativeServingDeployment", testKnativeServingDeployment),
 }
