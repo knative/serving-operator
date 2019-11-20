@@ -167,7 +167,7 @@ type updateImageSpecTest struct {
 	name     string
 	in       string
 	registry servingv1alpha1.Registry
-	expected string
+	expected caching.ImageSpec
 }
 
 var updateImageSpecTests = []updateImageSpecTest{
@@ -177,7 +177,24 @@ var updateImageSpecTests = []updateImageSpecTest{
 		registry: servingv1alpha1.Registry{
 			Default: "new-registry.io/test/path/${NAME}:new-tag",
 		},
-		expected: "new-registry.io/test/path/UsesNameFromDefault:new-tag",
+		expected: caching.ImageSpec{
+			Image: "new-registry.io/test/path/UsesNameFromDefault:new-tag",
+		},
+	},
+	{
+		name: "AddsImagePullSecrets",
+		in:   "gcr.io/knative-releases/github.com/knative/serving/cmd/queue@sha256:1e40c99ff5977daa2d69873fff604c6d09651af1f9ff15aadf8849b3ee77ab45",
+		registry: servingv1alpha1.Registry{
+			ImagePullSecrets: []corev1.LocalObjectReference{
+				{Name: "new-secret"},
+			},
+		},
+		expected: caching.ImageSpec{
+			Image: "gcr.io/knative-releases/github.com/knative/serving/cmd/queue@sha256:1e40c99ff5977daa2d69873fff604c6d09651af1f9ff15aadf8849b3ee77ab45",
+			ImagePullSecrets: []corev1.LocalObjectReference{
+				{Name: "new-secret"},
+			},
+		},
 	},
 }
 
@@ -204,7 +221,7 @@ func validateUnstructedImageChanged(t *testing.T, tt *updateImageSpecTest, u *un
 	var image = &caching.Image{}
 	err := scheme.Scheme.Convert(u, image, nil)
 	assertEqual(t, err, nil)
-	assertEqual(t, image.Spec.Image, tt.expected)
+	assertDeepEqual(t, image.Spec, tt.expected)
 }
 
 func makeImage(t *testing.T, tt *updateImageSpecTest) *caching.Image {
