@@ -16,10 +16,11 @@ limitations under the License.
 package version
 
 import (
-	mf "github.com/jcrossley3/manifestival"
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	mf "github.com/jcrossley3/manifestival"
 )
 
 func TestManifestVersionSame(t *testing.T) {
