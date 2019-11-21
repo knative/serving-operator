@@ -63,7 +63,6 @@ func TestReporter_ReportInstall(t *testing.T) {
 		keyTagKey.Name():        fmt.Sprintf("%s/%s", testResourceNamespace, testResourceName),
 		reconcilerTagKey.Name(): reconcilerMockName,
 	}
-	
 	shortTime, longTime := 1100.0, 50000.0
 	if err = reporter.ReportInstallSuccess(testResourceNamespace, testResourceName, time.Duration(shortTime)*time.Millisecond); err != nil {
 		t.Error(err)
