@@ -16,6 +16,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"time"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"knative.dev/pkg/apis"
 )
@@ -84,4 +85,12 @@ func (is *KnativeServingStatus) MarkDeploymentsNotReady() {
 		DeploymentsAvailable,
 		"NotReady",
 		"Waiting on deployments")
+}
+
+func (is *KnativeServingStatus) LastInstallStatusTransitionTime() time.Time {
+	return is.GetCondition(InstallSucceeded).LastTransitionTime.Inner.Time
+}
+
+func (is *KnativeServingStatus) LastDeploymentStatusTransitionTime() time.Time {
+	return is.GetCondition(DeploymentsAvailable).LastTransitionTime.Inner.Time
 }

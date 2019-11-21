@@ -18,6 +18,7 @@ package knativeserving
 
 import (
 	"context"
+	"time"
 
 	mf "github.com/jcrossley3/manifestival"
 	"go.uber.org/zap"
@@ -174,6 +175,10 @@ func (r *Reconciler) install(manifest *mf.Manifest, instance *servingv1alpha1.Kn
 		instance.Status.MarkInstallFailed(err.Error())
 		return err
 	}
+	if !instance.Status.IsInstalled() {
+		duration := time.Since(instance.Status.LastInstallStatusTransitionTime())
+		r.StatsReporter.ReportInstallSuccess(instance.Namespace, instance.Name, duration)
+	}
 	instance.Status.MarkInstallSucceeded()
 	instance.Status.Version = version.Version
 	return nil
@@ -205,6 +210,10 @@ func (r *Reconciler) checkDeployments(manifest *mf.Manifest, instance *servingv1
 				return nil
 			}
 		}
+	}
+	if instance.Status.IsDeploying() {
+		duration := time.Since(instance.Status.LastDeploymentStatusTransitionTime())
+		r.StatsReporter.ReportDeploymentReady(instance.Namespace, instance.Name, duration)
 	}
 	instance.Status.MarkDeploymentsAvailable()
 	return nil
