@@ -215,6 +215,16 @@ func knativeServingDelete(t *testing.T, clients *test.Clients, names test.Resour
 	if err := clients.KnativeServing().Delete(names.KnativeServing, &metav1.DeleteOptions{}); err != nil {
 		t.Fatalf("KnativeServing %q failed to delete: %v", names.KnativeServing, err)
 	}
+	err := wait.PollImmediate(resources.Interval, resources.Timeout, func() (bool, error) {
+		_, err := clients.KnativeServing().Get(names.KnativeServing, metav1.GetOptions{})
+		if apierrs.IsNotFound(err) {
+			return true, nil
+		}
+		return false, err
+	})
+	if err != nil {
+		t.Fatal("Timed out waiting on KnativeServing to delete", err)
+	}
 	_, b, _, _ := runtime.Caller(0)
 	m, err := mf.NewManifest(filepath.Join((filepath.Dir(b)+"/.."), "config/"), false, clients.Config)
 	if err != nil {
@@ -229,18 +239,10 @@ func knativeServingDelete(t *testing.T, clients *test.Clients, names test.Resour
 			// been modified, since the namespace can be injected.
 			continue
 		}
-		waitErr := wait.PollImmediate(resources.Interval, resources.Timeout, func() (bool, error) {
-			gvrs, _ := meta.UnsafeGuessKindToResource(u.GroupVersionKind())
-			if _, err := clients.Dynamic.Resource(gvrs).Get(u.GetName(), metav1.GetOptions{}); apierrs.IsNotFound(err) {
-				return true, nil
-			}
-			return false, err
-		})
-
-		if waitErr != nil {
-			t.Fatalf("The %s %s failed to be deleted: %v", u.GetKind(), u.GetName(), waitErr)
+		gvrs, _ := meta.UnsafeGuessKindToResource(u.GroupVersionKind())
+		if _, err := clients.Dynamic.Resource(gvrs).Get(u.GetName(), metav1.GetOptions{}); !apierrs.IsNotFound(err) {
+			t.Fatalf("The %s %s failed to be deleted", u.GetKind(), u.GetName())
 		}
-		t.Logf("The %s %s has been deleted.", u.GetKind(), u.GetName())
 	}
 }
 
