@@ -316,12 +316,12 @@
   version = "v0.3.8"
 
 [[projects]]
-  branch = "immutable-transform"
-  digest = "1:0c097d7b8850cf0e75aa9a44e491efe1d42098f8b5e099921d68f219c92581f5"
+  branch = "client-go"
+  digest = "1:ca0e2c3f72dd218000ee434b91b9f082a7d1f6a36dfd4dcb11b1e736928df367"
   name = "github.com/jcrossley3/manifestival"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "d0c6823509db87c4d4f4314fb25e539e980f4a69"
+  revision = "6a601d02309cdd03932c50d1f986570bc513289d"
 
 [[projects]]
   digest = "1:1f2aebae7e7c856562355ec0198d8ca2fa222fb05e5b1b66632a1fce39631885"
