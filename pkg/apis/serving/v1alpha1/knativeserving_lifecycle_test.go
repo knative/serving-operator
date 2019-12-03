@@ -32,3 +32,22 @@ func TestKnativeServingGroupVersionKind(t *testing.T) {
 		t.Errorf("got: %v, want: %v", got, want)
 	}
 }
+
+func TestAssumeDepsInstalled(t *testing.T) {
+	ks := &KnativeServingStatus{}
+	ks.InitializeConditions()
+	assertEqual(t, ks.GetCondition(DependenciesInstalled).IsUnknown(), true)
+	assertEqual(t, ks.GetCondition(DependenciesInstalled).IsTrue(), false)
+	ks.MarkInstallSucceeded()
+	assertEqual(t, ks.GetCondition(DependenciesInstalled).IsUnknown(), false)
+	assertEqual(t, ks.GetCondition(DependenciesInstalled).IsTrue(), true)
+	assertEqual(t, ks.IsInstalled(), true)
+	assertEqual(t, ks.IsFullySupported(), true)
+}
+
+func assertEqual(t *testing.T, actual, expected interface{}) {
+	if actual == expected {
+		return
+	}
+	t.Fatalf("Expected: %v\nActual: %v", expected, actual)
+}
