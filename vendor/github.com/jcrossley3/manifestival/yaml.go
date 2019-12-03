@@ -79,8 +79,12 @@ func readDir(pathname string, recursive bool) ([]unstructured.Unstructured, erro
 	aggregated := []unstructured.Unstructured{}
 	for _, f := range list {
 		name := path.Join(pathname, f.Name())
-		pathDirOrFile, _ := os.Stat(name)
+		pathDirOrFile, err := os.Stat(name)
 		var els []unstructured.Unstructured
+
+		if os.IsNotExist(err) || os.IsPermission(err) {
+			return aggregated, err
+		}
 
 		switch {
 		case pathDirOrFile.IsDir() && recursive:
@@ -132,6 +136,9 @@ func decode(reader io.Reader) ([]unstructured.Unstructured, error) {
 
 // isURL checks whether or not the given path parses as a URL.
 func isURL(pathname string) bool {
+	if _, err := os.Lstat(pathname); err == nil {
+		return false
+	}
 	url, err := url.ParseRequestURI(pathname)
 	return err == nil && url.Scheme != ""
 }
