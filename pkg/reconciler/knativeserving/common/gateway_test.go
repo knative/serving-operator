@@ -21,7 +21,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes/scheme"
 
-	"knative.dev/pkg/apis/istio/v1alpha3"
+	istiov1alpha3 "istio.io/api/networking/v1alpha3"
+	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 )
 
@@ -132,7 +133,7 @@ func validateUnstructedGatewayChanged(t *testing.T, tt *updateGatewayTest, u *un
 
 func makeUnstructuredGateway(t *testing.T, tt *updateGatewayTest) unstructured.Unstructured {
 	gateway := v1alpha3.Gateway{
-		Spec: v1alpha3.GatewaySpec{
+		Spec: istiov1alpha3.Gateway{
 			Selector: tt.in,
 		},
 	}
