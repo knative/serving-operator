@@ -20,13 +20,13 @@ set -o pipefail
 
 source $(dirname $0)/../vendor/knative.dev/test-infra/scripts/library.sh
 
-cd ${REPO_ROOT_DIR}
+cd "${REPO_ROOT_DIR}"
 
 # Ensure we have everything we need under vendor/
 dep ensure
 
-rm -rf $(find vendor/ -name 'OWNERS')
-rm -rf $(find vendor/ -name '*_test.go')
+find vendor/ -name 'OWNERS' -delete
+find vendor/ -name '*_test.go' -delete
 
 update_licenses third_party/VENDOR-LICENSE "./cmd/*"
 
