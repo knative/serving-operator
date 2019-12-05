@@ -26,22 +26,22 @@ import (
 )
 
 const (
-	knativeServingChangeCountName = "knativeserving_change_count"
+	knativeservingChangeCountName = "knativeserving_change_count"
 )
 
 var (
-	knativeServingChangeCountStat = stats.Int64(
-		knativeServingChangeCountName,
-		"Number of KnativeServing changes including creation, edit and deletion",
+	knativeservingChangeCountStat = stats.Int64(
+		knativeservingChangeCountName,
+		"Number of changes to the KnativeServing Custom Resource where a change can be creation, edit, or deletion",
 		stats.UnitDimensionless)
 	// Create the tag keys that will be used to add tags to our measurements.
 	// Tag keys must conform to the restrictions described in
 	// go.opencensus.io/tag/validate.go. Currently those restrictions are:
 	// - length between 1 and 255 inclusive
 	// - characters are printable US-ASCII
-	reconcilerTagKey     = tag.MustNewKey("reconciler")
-	knativeServingTagKey = tag.MustNewKey("knativeServing")
-	changeTagKey         = tag.MustNewKey("change")
+	reconcilerNameTagKey             = tag.MustNewKey("reconciler_name")
+	knativeservingResourceNameTagKey = tag.MustNewKey("knativeserving_resource_name")
+	changeTagKey                     = tag.MustNewKey("change")
 )
 
 func init() {
@@ -49,10 +49,10 @@ func init() {
 	// a previously-registered view has the same name with a different value.
 	// View name defaults to the measure name if unspecified.
 	views := []*view.View{{
-		Description: knativeServingChangeCountStat.Description(),
-		Measure:     knativeServingChangeCountStat,
+		Description: knativeservingChangeCountStat.Description(),
+		Measure:     knativeservingChangeCountStat,
 		Aggregation: view.Count(),
-		TagKeys:     []tag.Key{reconcilerTagKey, knativeServingTagKey, changeTagKey},
+		TagKeys:     []tag.Key{reconcilerNameTagKey, knativeservingResourceNameTagKey, changeTagKey},
 	}}
 
 	if err := view.Register(views...); err != nil {
@@ -62,8 +62,8 @@ func init() {
 
 // StatsReporter defines the interface for sending metrics.
 type StatsReporter interface {
-	// ReportKnativeServingChange reports the count of KnativeServing CR changes.
-	ReportKnativeServingChange(knativeServing, change string) error
+	// ReportKnativeServingChange reports the count of KnativeServing changes.
+	ReportKnativeservingChange(knativeservingResourceName, change string) error
 }
 
 // reporter holds cached metric objects to report metrics.
@@ -77,24 +77,24 @@ func NewStatsReporter(reconcilerName string) (StatsReporter, error) {
 	// Reconciler tag is static. Create a context containing that and cache it.
 	ctx, err := tag.New(
 		context.Background(),
-		tag.Insert(reconcilerTagKey, reconcilerName))
+		tag.Insert(reconcilerNameTagKey, reconcilerName))
 	if err != nil {
 		return nil, err
 	}
 	return &reporter{reconcilerName: reconcilerName, ctx: ctx}, nil
 }
 
-// ReportKnativeServingChange reports the count of KnativeServing CR changes
-// including creation, edit and deletion.
-func (r *reporter) ReportKnativeServingChange(knativeServing, change string) error {
+// ReportKnativeServingChange reports the number of changes to the KnativeServing
+// Custom Resource where a change can be creation, edit, or deletion.
+func (r *reporter) ReportKnativeservingChange(knativeservingResourceName, change string) error {
 	ctx, err := tag.New(
 		r.ctx,
-		tag.Insert(knativeServingTagKey, knativeServing),
+		tag.Insert(knativeservingResourceNameTagKey, knativeservingResourceName),
 		tag.Insert(changeTagKey, change))
 	if err != nil {
 		return err
 	}
 
-	metrics.Record(ctx, knativeServingChangeCountStat.M(1))
+	metrics.Record(ctx, knativeservingChangeCountStat.M(1))
 	return nil
 }

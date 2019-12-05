@@ -19,47 +19,47 @@ package reconciler
 import (
 	"testing"
 
-	"go.opencensus.io/tag"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/tag"
 	"knative.dev/pkg/metrics/metricstest"
 )
 
 const (
-	reconcilerMockName = "mock_reconciler"
-	testKey            = "test/key"
+	testReconcilerName             = "test_reconciler"
+	testKnativeservingResourceName = "ns/name"
 )
 
 func TestNewStatsReporter(t *testing.T) {
-	r, err := NewStatsReporter(reconcilerMockName)
+	r, err := NewStatsReporter(testReconcilerName)
 	if err != nil {
 		t.Errorf("Failed to create reporter: %v", err)
 	}
 
 	m := tag.FromContext(r.(*reporter).ctx)
-	v, ok := m.Value(reconcilerTagKey)
+	v, ok := m.Value(reconcilerNameTagKey)
 	if !ok {
-		t.Fatalf("Expected tag %q", reconcilerTagKey)
+		t.Fatalf("Expected tag %q", reconcilerNameTagKey)
 	}
-	if v != reconcilerMockName {
-		t.Fatalf("Expected %q for tag %q, got %q", reconcilerMockName, reconcilerTagKey, v)
+	if v != testReconcilerName {
+		t.Fatalf("Expected %q for tag %q, got %q", testReconcilerName, reconcilerNameTagKey, v)
 	}
 }
 
 func TestReportKnativeServingChange(t *testing.T) {
-	r, _ := NewStatsReporter(reconcilerMockName)
+	r, _ := NewStatsReporter(testReconcilerName)
 	wantTags := map[string]string{
-		reconcilerTagKey.Name():     reconcilerMockName,
-		knativeServingTagKey.Name(): testKey,
-		changeTagKey.Name():         "creation",
+		reconcilerNameTagKey.Name():             testReconcilerName,
+		knativeservingResourceNameTagKey.Name(): testKnativeservingResourceName,
+		changeTagKey.Name():                     "creation",
 	}
 	countWas := int64(0)
-	if d, err := view.RetrieveData(knativeServingChangeCountName); err == nil && len(d) == 1 {
+	if d, err := view.RetrieveData(knativeservingChangeCountName); err == nil && len(d) == 1 {
 		countWas = d[0].Data.(*view.CountData).Value
 	}
 
-	if err := r.ReportKnativeServingChange(testKey, "creation"); err != nil {
+	if err := r.ReportKnativeservingChange(testKnativeservingResourceName, "creation"); err != nil {
 		t.Error(err)
 	}
 
-	metricstest.CheckCountData(t, knativeServingChangeCountName, wantTags, countWas+1)
+	metricstest.CheckCountData(t, knativeservingChangeCountName, wantTags, countWas+1)
 }

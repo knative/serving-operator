@@ -17,6 +17,7 @@ limitations under the License.
 package knativeserving
 
 import (
+	"fmt"
 	"context"
 
 	mf "github.com/jcrossley3/manifestival"
@@ -84,17 +85,24 @@ func (r *Reconciler) Reconcile(ctx context.Context, key string) error {
 	if original.GetDeletionTimestamp() != nil {
 		if _, ok := r.servings[key]; ok {
 			delete(r.servings, key)
-			r.StatsReporter.ReportKnativeServingChange(key, deletionChange)
+			r.StatsReporter.ReportKnativeservingChange(key, deletionChange)
 		}
 		return r.delete(original)
 	}
 	// Keep track of the number and generation of KnativeServings in the cluster.
 	newGen := original.Generation
-	oldGen, ok := r.servings[key]
-	if !ok && newGen == 1 {
-		r.StatsReporter.ReportKnativeServingChange(key, creationChange)
-	} else if ok && newGen == oldGen+1 {
-		r.StatsReporter.ReportKnativeServingChange(key, editChange)
+	if oldGen, ok := r.servings[key]; ok {
+		if newGen > oldGen {
+			r.StatsReporter.ReportKnativeservingChange(key, editChange)
+		} else if newGen < oldGen {
+			return fmt.Errorf("reconciling obsolete generation of KnativeServing %s: newGen = %d and oldGen = %d", key, newGen, oldGen)
+		}
+	} else {
+		// No metrics are emitted when newGen > 1: the first reconciling of
+		// a new operator on an existing KnativeServing resource.
+		if newGen == 1 {
+			r.StatsReporter.ReportKnativeservingChange(key, creationChange)
+		}
 	}
 	r.servings[key] = newGen
 

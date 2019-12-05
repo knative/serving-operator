@@ -104,7 +104,6 @@ func NewBase(ctx context.Context, controllerAgentName string, cmw configmap.Watc
 	}
 
 	// Create metrics reporter
-	logger.Debug("Creating stats reporter")
 	statsReporter, err := NewStatsReporter(controllerAgentName)
 	if err != nil {
 		logger.Fatal(err)
