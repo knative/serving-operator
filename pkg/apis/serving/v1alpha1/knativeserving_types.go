@@ -77,7 +77,7 @@ type KnativeServingSpec struct {
 
 	// A means to override the corresponding entries in the upstream configmaps
 	// +optional
-	Config map[string]map[string]string `json:"config,omitempty"`
+	ConfigBeta map[string]map[string]string `json:"config-beta,omitempty"`
 
 	// A means to override the corresponding deployment images in the upstream.
 	// If no registry is provided, the knative release images will be used.

@@ -26,7 +26,7 @@ func ConfigMapTransform(instance *servingv1alpha1.KnativeServing, log *zap.Sugar
 	return func(u *unstructured.Unstructured) error {
 		// Let any config in instance override everything else
 		if u.GetKind() == "ConfigMap" {
-			if data, ok := instance.Spec.Config[u.GetName()[len(`config-`):]]; ok {
+			if data, ok := instance.Spec.ConfigBeta[u.GetName()[len(`config-`):]]; ok {
 				UpdateConfigMap(u, data, log)
 			}
 		}

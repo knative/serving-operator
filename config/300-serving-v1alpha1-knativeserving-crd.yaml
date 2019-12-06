@@ -43,7 +43,7 @@ spec:
         spec:
           description: Spec defines the desired state of KnativeServing
           properties:
-            config:
+            config-beta:
               additionalProperties:
                 additionalProperties:
                   type: string
