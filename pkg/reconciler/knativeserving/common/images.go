@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes/scheme"
 	caching "knative.dev/caching/pkg/apis/caching/v1alpha1"
@@ -75,6 +76,9 @@ func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.
 	if err != nil {
 		return err
 	}
+	// The zero-value timestamp defaulted by the conversion causes
+	// superfluous updates
+	u.SetCreationTimestamp(metav1.Time{})
 
 	log.Debugw("Finished conversion", "name", u.GetName(), "unstructured", u.Object)
 	return nil
@@ -109,6 +113,10 @@ func updateCachingImage(instance *servingv1alpha1.KnativeServing, u *unstructure
 	if err != nil {
 		return err
 	}
+	// Cleanup zero-value default to prevent superfluous updates
+	u.SetCreationTimestamp(metav1.Time{})
+	delete(u.Object, "status")
+
 	log.Debugw("Finished conversion", "name", u.GetName(), "unstructured", u.Object)
 	return nil
 }
