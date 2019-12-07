@@ -62,6 +62,9 @@ type Base struct {
 	// Kubernetes API.
 	Recorder record.EventRecorder
 
+	// StatsReporter reports reconciler's metrics.
+	StatsReporter StatsReporter
+
 	// Sugared logger is easier to use but is not as performant as the
 	// raw logger. In performance critical paths, call logger.Desugar()
 	// and use the returned raw logger instead. In addition to the
@@ -100,6 +103,12 @@ func NewBase(ctx context.Context, controllerAgentName string, cmw configmap.Watc
 		}()
 	}
 
+	// Create metrics reporter
+	statsReporter, err := NewStatsReporter(controllerAgentName)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	base := &Base{
 		KubeClientSet:           kubeClient,
 		SharedClientSet:         sharedclient.Get(ctx),
@@ -107,6 +116,7 @@ func NewBase(ctx context.Context, controllerAgentName string, cmw configmap.Watc
 		DynamicClientSet:        dynamicclient.Get(ctx),
 		ConfigMapWatcher:        cmw,
 		Recorder:                recorder,
+		StatsReporter:           statsReporter,
 		Logger:                  logger,
 	}
 

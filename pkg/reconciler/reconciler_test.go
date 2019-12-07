@@ -49,4 +49,7 @@ func TestNewBase(t *testing.T) {
 	if r.Recorder == nil {
 		t.Fatal("Expected NewBase to add a Recorder")
 	}
+	if r.StatsReporter == nil {
+		t.Fatal("Expected NewBase to add a StatsReporter")
+	}
 }
