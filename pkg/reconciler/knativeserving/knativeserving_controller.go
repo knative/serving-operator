@@ -17,8 +17,8 @@ limitations under the License.
 package knativeserving
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 
 	mf "github.com/jcrossley3/manifestival"
 	"go.uber.org/zap"
