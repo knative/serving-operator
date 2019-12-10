@@ -317,11 +317,14 @@
 
 [[projects]]
   branch = "client-go"
-  digest = "1:ca0e2c3f72dd218000ee434b91b9f082a7d1f6a36dfd4dcb11b1e736928df367"
+  digest = "1:e1795db5018a02477e3ae7cd61ff67c460748ca6597b0fc1fed45b62a7ab9e21"
   name = "github.com/jcrossley3/manifestival"
-  packages = ["."]
+  packages = [
+    ".",
+    "patch",
+  ]
   pruneopts = "NUT"
-  revision = "6a601d02309cdd03932c50d1f986570bc513289d"
+  revision = "144622fb1ed6d5ea8f60aa29abfbbd56ad8306c1"
 
 [[projects]]
   digest = "1:1f2aebae7e7c856562355ec0198d8ca2fa222fb05e5b1b66632a1fce39631885"
@@ -877,7 +880,7 @@
   version = "kubernetes-1.15.3"
 
 [[projects]]
-  digest = "1:e47c9cc452f507b8be0fad9e7023205274823aeb848927d1880d9737ec2dab2d"
+  digest = "1:f01ac8448d8d22426edf7a2b446575dfc0bba323742f77e733f06ec0916e0997"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/equality",
@@ -911,6 +914,7 @@
     "pkg/util/framer",
     "pkg/util/intstr",
     "pkg/util/json",
+    "pkg/util/jsonmergepatch",
     "pkg/util/mergepatch",
     "pkg/util/naming",
     "pkg/util/net",

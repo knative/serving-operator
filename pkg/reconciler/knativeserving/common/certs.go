@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes/scheme"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
@@ -54,6 +55,8 @@ func CustomCertsTransform(instance *servingv1alpha1.KnativeServing, log *zap.Sug
 			if err := scheme.Scheme.Convert(deployment, u, nil); err != nil {
 				return err
 			}
+			// Avoid superfluous updates from converted zero defaults
+			u.SetCreationTimestamp(metav1.Time{})
 		}
 		return nil
 	}
