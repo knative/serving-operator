@@ -60,9 +60,9 @@ required = [
   name = "github.com/jcrossley3/manifestival"
   branch = "client-go"
 
-[[constraint]]
+[[override]]
   name = "knative.dev/pkg"
-  branch = "master"
+  branch = "release-0.11"
 
 [[override]]
   name = "knative.dev/test-infra"
