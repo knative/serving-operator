@@ -28,9 +28,9 @@ import (
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/record"
 
-	sharedclientset "knative.dev/pkg/client/clientset/versioned"
-	sharedclient "knative.dev/pkg/client/injection/client"
 	kubeclient "knative.dev/pkg/client/injection/kube/client"
+	istioclientset "knative.dev/pkg/client/istio/clientset/versioned"
+	istioclient "knative.dev/pkg/client/istio/injection/client"
 	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/controller"
 	"knative.dev/pkg/injection/clients/dynamicclient"
@@ -46,8 +46,8 @@ type Base struct {
 	// KubeClientSet allows us to talk to the k8s for core APIs
 	KubeClientSet kubernetes.Interface
 
-	// SharedClientSet allows us to configure shared objects
-	SharedClientSet sharedclientset.Interface
+	// IstioClientSet allows us to configure Istio objects
+	IstioClientSet istioclientset.Interface
 
 	// ServingClientSet allows us to configure Serving objects
 	KnativeServingClientSet clientset.Interface
@@ -111,7 +111,7 @@ func NewBase(ctx context.Context, controllerAgentName string, cmw configmap.Watc
 
 	base := &Base{
 		KubeClientSet:           kubeClient,
-		SharedClientSet:         sharedclient.Get(ctx),
+		IstioClientSet:          istioclient.Get(ctx),
 		KnativeServingClientSet: servingclient.Get(ctx),
 		DynamicClientSet:        dynamicclient.Get(ctx),
 		ConfigMapWatcher:        cmw,
