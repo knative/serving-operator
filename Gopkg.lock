@@ -1319,22 +1319,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:0acb373e575dad4358e868e2caa57d8e044f4605da275b525bc3390f976eb7e0"
-  name = "knative.dev/serving"
-  packages = [
-    "pkg/client/istio/clientset/versioned",
-    "pkg/client/istio/clientset/versioned/fake",
-    "pkg/client/istio/clientset/versioned/scheme",
-    "pkg/client/istio/clientset/versioned/typed/networking/v1alpha3",
-    "pkg/client/istio/clientset/versioned/typed/networking/v1alpha3/fake",
-    "pkg/client/istio/injection/client",
-    "pkg/client/istio/injection/client/fake",
-  ]
-  pruneopts = "NUT"
-  revision = "25658ef8c7b1bee4e0996566833e2ced22cdef9b"
-
-[[projects]]
-  branch = "master"
   digest = "1:c20a6bc69c6e4299afa4e4cb6016451fc751c5bb14025a271f3436f212ae73f7"
   name = "knative.dev/test-infra"
   packages = [
@@ -1421,7 +1405,6 @@
     "knative.dev/pkg/test",
     "knative.dev/pkg/test/logging",
     "knative.dev/pkg/test/logstream",
-    "knative.dev/serving/pkg/client/istio/injection/client/fake",
     "knative.dev/test-infra/scripts",
     "knative.dev/test-infra/tools/dep-collector",
   ]
