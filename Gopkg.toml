@@ -14,15 +14,15 @@ required = [
 
 [[override]]
   name = "k8s.io/kube-openapi"
-  revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
+  revision = "743ec37842bffe49dd4221d9026f30fb1d5adbc4"
 
-[[override]]
-  name = "github.com/go-openapi/spec"
-  branch = "master"
+#[[override]]
+#  name = "github.com/go-openapi/spec"
+#  branch = "master"
 
-[[override]]
-  name = "sigs.k8s.io/controller-tools"
-  revision = "9d55346c2bde73fb3326ac22eac2e5210a730207"
+#[[override]]
+#  name = "sigs.k8s.io/controller-tools"
+#  revision = "9d55346c2bde73fb3326ac22eac2e5210a730207"
 
 [[override]]
   name = "k8s.io/api"
