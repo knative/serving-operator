@@ -45,6 +45,7 @@ const (
 	creationChange = "creation"
 	editChange     = "edit"
 	deletionChange = "deletion"
+	selectorKey    = "serving.knative.dev/release"
 )
 
 var (
@@ -59,6 +60,7 @@ type Reconciler struct {
 	knativeServingLister listers.KnativeServingLister
 	config               mf.Manifest
 	servings             map[string]int64
+	oldVersion           string
 }
 
 // Check that our Reconciler implements controller.Reconciler
@@ -105,6 +107,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, key string) error {
 		}
 	}
 	r.servings[key] = newGen
+
+	// Save the version of the original CR
+	r.oldVersion = original.Status.Version
 
 	// Don't modify the informers copy.
 	knativeServing := original.DeepCopy()
@@ -295,5 +300,26 @@ func (r *Reconciler) deleteObsoleteResources(manifest *mf.Manifest, instance *se
 	if err := manifest.Delete(resource, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
+
+	// If there used to be a CR at an older version, we need to remove the old resources with
+	// the label serving.knative.dev/release="<oldVersion>"
+	if r.oldVersion != "" && r.oldVersion != version.Version {
+		selector := fmt.Sprintf("%s=%s", selectorKey, r.oldVersion)
+		listOptions := metav1.ListOptions{ LabelSelector: selector }
+
+		// Remove all the deployments at the old version
+		deploymentList, err := r.KubeClientSet.AppsV1().Deployments(instance.GetNamespace()).List(listOptions)
+		if err == nil {
+			for _, dep := range deploymentList.Items {
+				if e := r.KubeClientSet.AppsV1().Deployments(instance.GetNamespace()).Delete(dep.Name,
+					&metav1.DeleteOptions{}); e != nil {
+					return e
+				}
+			}
+		} else if !apierrs.IsNotFound(err) {
+			return err
+		}
+	}
+
 	return nil
 }
