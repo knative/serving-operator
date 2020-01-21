@@ -37,6 +37,7 @@ type updateGatewayTest struct {
 	knativeIngressGateway servingv1alpha1.IstioGatewayOverride
 	clusterLocalGateway   servingv1alpha1.IstioGatewayOverride
 	expected              map[string]string
+	expectedServers       []istiov1alpha3.Server
 }
 
 var updateGatewayTests = []updateGatewayTest{
@@ -58,6 +59,83 @@ var updateGatewayTests = []updateGatewayTest{
 		},
 		expected: map[string]string{
 			"istio": "knative-ingress",
+		},
+	},
+	{
+		name:        "UpdatesKnativeIngressGatewayTlsNoSelector",
+		gatewayName: "knative-ingress-gateway",
+		in: map[string]string{
+			"istio": "old-istio",
+		},
+		knativeIngressGateway: servingv1alpha1.IstioGatewayOverride{
+			Servers: []istiov1alpha3.Server{
+				{
+					Hosts: []string{"*"},
+					Port: &istiov1alpha3.Port{
+						Name:     "https",
+						Number:   443,
+						Protocol: "HTTPS",
+					},
+				},
+			},
+		},
+		clusterLocalGateway: servingv1alpha1.IstioGatewayOverride{
+			Selector: map[string]string{
+				"istio": "cluster-local",
+			},
+		},
+		expected: map[string]string{
+			"istio": "old-istio",
+		},
+		expectedServers: []istiov1alpha3.Server{
+			{
+				Hosts: []string{"*"},
+				Port: &istiov1alpha3.Port{
+					Name:     "https",
+					Number:   443,
+					Protocol: "HTTPS",
+				},
+			},
+		},
+	},
+	{
+		name:        "UpdatesKnativeIngressGatewayTls",
+		gatewayName: "knative-ingress-gateway",
+		in: map[string]string{
+			"istio": "old-istio",
+		},
+		knativeIngressGateway: servingv1alpha1.IstioGatewayOverride{
+			Selector: map[string]string{
+				"istio": "knative-ingress",
+			},
+			Servers: []istiov1alpha3.Server{
+				{
+					Hosts: []string{"*"},
+					Port: &istiov1alpha3.Port{
+						Name:     "https",
+						Number:   443,
+						Protocol: "HTTPS",
+					},
+				},
+			},
+		},
+		clusterLocalGateway: servingv1alpha1.IstioGatewayOverride{
+			Selector: map[string]string{
+				"istio": "cluster-local",
+			},
+		},
+		expected: map[string]string{
+			"istio": "knative-ingress",
+		},
+		expectedServers: []istiov1alpha3.Server{
+			{
+				Hosts: []string{"*"},
+				Port: &istiov1alpha3.Port{
+					Name:     "https",
+					Number:   443,
+					Protocol: "HTTPS",
+				},
+			},
 		},
 	},
 	{
@@ -128,6 +206,13 @@ func validateUnstructedGatewayChanged(t *testing.T, tt *updateGatewayTest, u *un
 	assertEqual(t, err, nil)
 	for expectedKey, expectedValue := range tt.expected {
 		assertEqual(t, gateway.Spec.Selector[expectedKey], expectedValue)
+	}
+	if len(tt.expectedServers) > 0 {
+		assertEqual(t, len(tt.expectedServers), len(gateway.Spec.Servers))
+		for index := range tt.expectedServers {
+			expectedServer := &tt.expectedServers[index]
+			assertDeepEqual(t, gateway.Spec.Servers[index], expectedServer)
+		}
 	}
 }
 

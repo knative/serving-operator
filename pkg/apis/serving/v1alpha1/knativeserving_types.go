@@ -16,6 +16,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	istiov1alpha3 "istio.io/api/networking/v1alpha3"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
@@ -56,6 +57,8 @@ type Registry struct {
 type IstioGatewayOverride struct {
 	// A map of values to replace the "selector" values in the knative-ingress-gateway and cluster-local-gateway
 	Selector map[string]string `json:"selector,omitempty"`
+	// A list of server specifications.
+	Servers []istiov1alpha3.Server `json:"servers,omitempty"`
 }
 
 // CustomCerts refers to either a ConfigMap or Secret containing valid
