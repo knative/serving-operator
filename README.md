@@ -1,5 +1,10 @@
 # Knative Serving Operator
 
+[![Go Report Card](https://goreportcard.com/badge/knative/serving-operator)](https://goreportcard.com/report/knative/serving-operator)
+[![Releases](https://img.shields.io/github/release-pre/knative/serving-operator.svg)](https://github.com/knative/serving-operator/releases)
+[![LICENSE](https://img.shields.io/github/license/knative/serving-operator.svg)](https://github.com/knative/serving-operator/blob/master/LICENSE)
+[![Slack Status](https://img.shields.io/badge/slack-join_chat-white.svg?logo=slack&style=social)](https://knative.slack.com)
+
 Knative Serving Operator is a project aiming to deploy and manage Knative
 Serving in an automated way.
 
