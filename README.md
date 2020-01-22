@@ -142,3 +142,39 @@ output of the above `ko publish` command.
 The image should match what's in [config/operator.yaml](config/operator.yaml)
 and the `$VERSION` should match [version.go](version/version.go) and correspond
 to the contents of [config/](config/).
+
+## Operator Lifecycle Manager and OperatorHub
+
+Knative Serving operator has the metadata in Operator Lifecycle Manager (OLM)
+checked in at `deploy/olm-catalog`. Files in there are for reference purposes
+and also for testing and tooling.
+
+In order to install the operator `CatalogSource` to a
+[cluster with OLM](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/install/install.md),
+run these commands:
+
+```
+OLM_NS=$(kubectl get deploy --all-namespaces | grep olm-operator | awk '{print $1}')
+./hack/generate-olm-catalog-source.sh | kubectl apply -n $OLM_NS -f -
+```
+
+Then install the operator by creating a subscription:
+
+```
+OLM_NS=$(kubectl get operatorgroups --all-namespaces | grep olm-operators | awk '{print $1}')
+OPERATOR_NS=$(kubectl get operatorgroups --all-namespaces | grep global-operators | awk '{print $1}')
+
+cat <<-EOF | kubectl apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: knative-serving-operator-sub
+  generateName: knative-serving-operator-
+  namespace: $OPERATOR_NS
+spec:
+  source: knative-serving-operator
+  sourceNamespace: $OLM_NS
+  name: knative-serving-operator
+  channel: alpha
+EOF
+```
