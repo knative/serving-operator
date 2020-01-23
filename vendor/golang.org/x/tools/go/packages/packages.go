@@ -23,6 +23,7 @@ import (
 	"sync"
 
 	"golang.org/x/tools/go/gcexportdata"
+	"golang.org/x/tools/internal/packagesinternal"
 )
 
 // A LoadMode controls the amount of detail to return when loading.
@@ -160,7 +161,7 @@ type Config struct {
 	Tests bool
 
 	// Overlay provides a mapping of absolute file paths to file contents.
-	// If the file  with the given path already exists, the parser will use the
+	// If the file with the given path already exists, the parser will use the
 	// alternative file contents provided by the map.
 	//
 	// Overlays provide incomplete support for when a given file doesn't
@@ -292,6 +293,15 @@ type Package struct {
 
 	// TypesSizes provides the effective size function for types in TypesInfo.
 	TypesSizes types.Sizes
+
+	// forTest is the package under test, if any.
+	forTest string
+}
+
+func init() {
+	packagesinternal.GetForTest = func(p interface{}) string {
+		return p.(*Package).forTest
+	}
 }
 
 // An Error describes a problem with a package's metadata, syntax, or types.
@@ -500,12 +510,23 @@ func (ld *loader) refine(roots []string, list ...*Package) ([]*Package, error) {
 		if i, found := rootMap[pkg.ID]; found {
 			rootIndex = i
 		}
+
+		// Overlays can invalidate export data.
+		// TODO(matloob): make this check fine-grained based on dependencies on overlaid files
+		exportDataInvalid := len(ld.Overlay) > 0 || pkg.ExportFile == "" && pkg.PkgPath != "unsafe"
+		// This package needs type information if the caller requested types and the package is
+		// either a root, or it's a non-root and the user requested dependencies ...
+		needtypes := (ld.Mode&NeedTypes|NeedTypesInfo != 0 && (rootIndex >= 0 || ld.Mode&NeedDeps != 0))
+		// This package needs source if the call requested source (or types info, which implies source)
+		// and the package is either a root, or itas a non- root and the user requested dependencies...
+		needsrc := ((ld.Mode&(NeedSyntax|NeedTypesInfo) != 0 && (rootIndex >= 0 || ld.Mode&NeedDeps != 0)) ||
+			// ... or if we need types and the exportData is invalid. We fall back to (incompletely)
+			// typechecking packages from source if they fail to compile.
+			(ld.Mode&NeedTypes|NeedTypesInfo != 0 && exportDataInvalid)) && pkg.PkgPath != "unsafe"
 		lpkg := &loaderPackage{
 			Package:   pkg,
-			needtypes: (ld.Mode&(NeedTypes|NeedTypesInfo) != 0 && ld.Mode&NeedDeps != 0 && rootIndex < 0) || rootIndex >= 0,
-			needsrc: (ld.Mode&(NeedSyntax|NeedTypesInfo) != 0 && ld.Mode&NeedDeps != 0 && rootIndex < 0) || rootIndex >= 0 ||
-				len(ld.Overlay) > 0 || // Overlays can invalidate export data. TODO(matloob): make this check fine-grained based on dependencies on overlaid files
-				pkg.ExportFile == "" && pkg.PkgPath != "unsafe",
+			needtypes: needtypes,
+			needsrc:   needsrc,
 		}
 		ld.pkgs[lpkg.ID] = lpkg
 		if rootIndex >= 0 {
@@ -713,7 +734,7 @@ func (ld *loader) loadPackage(lpkg *loaderPackage) {
 	// which would then require that such created packages be explicitly
 	// inserted back into the Import graph as a final step after export data loading.
 	// The Diamond test exercises this case.
-	if !lpkg.needtypes {
+	if !lpkg.needtypes && !lpkg.needsrc {
 		return
 	}
 	if !lpkg.needsrc {
