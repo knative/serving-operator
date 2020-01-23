@@ -1,6 +1,8 @@
 # Temporary Build Files
 build/_output
 build/_test
+# Scratch dir used by hack/generate-olm-catalog-source.sh
+.crds/
 # Goland
 .idea
 
