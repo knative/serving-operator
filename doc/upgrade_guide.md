@@ -26,7 +26,3 @@ Both of v0.10 and v0.11 versions are able to upgrade to the version v0.12.0 by r
 ```
 kubectl apply -f https://github.com/knative/serving-operator/releases/download/v0.12.0/serving-operator.yaml
 ```
-
-## v0.9.0 or earlier
-
-There is no upgrade support for the version v0.9.0 or any unofficial version prior to it.
