@@ -183,3 +183,7 @@ spec:
   channel: alpha
 EOF
 ```
+
+## Upgrade
+
+Please refer to the [upgrade guide](doc/upgrade_guide.md) for a safe upgrade process.
