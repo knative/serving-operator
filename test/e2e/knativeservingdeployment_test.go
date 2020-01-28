@@ -241,7 +241,7 @@ func knativeServingDelete(t *testing.T, clients *test.Clients, names test.Resour
 		}
 		gvrs, _ := meta.UnsafeGuessKindToResource(u.GroupVersionKind())
 		if _, err := clients.Dynamic.Resource(gvrs).Get(u.GetName(), metav1.GetOptions{}); !apierrs.IsNotFound(err) {
-			t.Fatalf("The %s %s failed to be deleted", u.GetKind(), u.GetName())
+			t.Fatalf("The %s %s failed to be deleted: %v", u.GetKind(), u.GetName(), err)
 		}
 	}
 }
