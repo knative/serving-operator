@@ -30,14 +30,14 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-type updateDeploymentImageTest struct {
+type updateImageTest struct {
 	name       string
 	containers []corev1.Container
 	registry   servingv1alpha1.Registry
 	expected   []string
 }
 
-var updateDeploymentImageTests = []updateDeploymentImageTest{
+var updateImageTests = []updateImageTest{
 	{
 		name: "UsesNameFromDefault",
 		containers: []corev1.Container{{
@@ -110,26 +110,39 @@ var updateDeploymentImageTests = []updateDeploymentImageTest{
 	},
 }
 
-func TestDeploymentTransform(t *testing.T) {
-	for _, tt := range updateDeploymentImageTests {
+func TestResourceTransform(t *testing.T) {
+	for _, tt := range updateImageTests {
 		t.Run(tt.name, func(t *testing.T) {
-			runDeploymentTransformTest(t, &tt)
+			runResourceTransformTest(t, &tt)
 		})
 	}
 }
-func runDeploymentTransformTest(t *testing.T, tt *updateDeploymentImageTest) {
-	unstructuredDeployment := makeUnstructured(t, makeDeployment(t, tt.name, corev1.PodSpec{Containers: tt.containers}))
+
+func runResourceTransformTest(t *testing.T, tt *updateImageTest) {
+	// test for deployment
+	unstructuredDeployment := makeUnstructured(t, makeDeployment(tt.name, corev1.PodSpec{Containers: tt.containers}))
 	instance := &servingv1alpha1.KnativeServing{
 		Spec: servingv1alpha1.KnativeServingSpec{
 			Registry: tt.registry,
 		},
 	}
-	deploymentTransform := DeploymentTransform(instance, log)
+	deploymentTransform := ResourceTransform(instance, log)
 	deploymentTransform(&unstructuredDeployment)
 	validateUnstructedDeploymentChanged(t, tt, &unstructuredDeployment)
+
+	// test for daemonSet
+	unstructuredDaemonSet := makeUnstructured(t, makeDaemonSet(tt.name, corev1.PodSpec{Containers: tt.containers}))
+	instance = &servingv1alpha1.KnativeServing{
+		Spec: servingv1alpha1.KnativeServingSpec{
+			Registry: tt.registry,
+		},
+	}
+	daemonSetTransform := ResourceTransform(instance, log)
+	daemonSetTransform(&unstructuredDaemonSet)
+	validateUnstructedDaemonSetChanged(t, tt, &unstructuredDaemonSet)
 }
 
-func validateUnstructedDeploymentChanged(t *testing.T, tt *updateDeploymentImageTest, u *unstructured.Unstructured) {
+func validateUnstructedDeploymentChanged(t *testing.T, tt *updateImageTest, u *unstructured.Unstructured) {
 	var deployment = &appsv1.Deployment{}
 	err := scheme.Scheme.Convert(u, deployment, nil)
 	assertEqual(t, err, nil)
@@ -138,7 +151,16 @@ func validateUnstructedDeploymentChanged(t *testing.T, tt *updateDeploymentImage
 	}
 }
 
-func makeDeployment(t *testing.T, name string, podSpec corev1.PodSpec) *appsv1.Deployment {
+func validateUnstructedDaemonSetChanged(t *testing.T, tt *updateImageTest, u *unstructured.Unstructured) {
+	var daemonSet = &appsv1.DaemonSet{}
+	err := scheme.Scheme.Convert(u, daemonSet, nil)
+	assertEqual(t, err, nil)
+	for i, expected := range tt.expected {
+		assertEqual(t, daemonSet.Spec.Template.Spec.Containers[i].Image, expected)
+	}
+}
+
+func makeDeployment(name string, podSpec corev1.PodSpec) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Deployment",
@@ -147,6 +169,22 @@ func makeDeployment(t *testing.T, name string, podSpec corev1.PodSpec) *appsv1.D
 			Name: name,
 		},
 		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: podSpec,
+			},
+		},
+	}
+}
+
+func makeDaemonSet(name string, podSpec corev1.PodSpec) *appsv1.DaemonSet {
+	return &appsv1.DaemonSet{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "DaemonSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: appsv1.DaemonSetSpec{
 			Template: corev1.PodTemplateSpec{
 				Spec: podSpec,
 			},
@@ -299,13 +337,13 @@ func TestImagePullSecrets(t *testing.T) {
 }
 
 func runImagePullSecretsTest(t *testing.T, tt *addImagePullSecretsTest) {
-	unstructuredDeployment := makeUnstructured(t, makeDeployment(t, tt.name, corev1.PodSpec{ImagePullSecrets: tt.existingSecrets}))
+	unstructuredDeployment := makeUnstructured(t, makeDeployment(tt.name, corev1.PodSpec{ImagePullSecrets: tt.existingSecrets}))
 	instance := &servingv1alpha1.KnativeServing{
 		Spec: servingv1alpha1.KnativeServingSpec{
 			Registry: tt.registry,
 		},
 	}
-	deploymentTransform := DeploymentTransform(instance, log)
+	deploymentTransform := ResourceTransform(instance, log)
 	deploymentTransform(&unstructuredDeployment)
 
 	var deployment = &appsv1.Deployment{}
@@ -313,6 +351,21 @@ func runImagePullSecretsTest(t *testing.T, tt *addImagePullSecretsTest) {
 
 	assertEqual(t, err, nil)
 	assertDeepEqual(t, deployment.Spec.Template.Spec.ImagePullSecrets, tt.expectedSecrets)
+
+	unstructuredDaemonSet := makeUnstructured(t, makeDaemonSet(tt.name, corev1.PodSpec{ImagePullSecrets: tt.existingSecrets}))
+	daemonSetinstance := &servingv1alpha1.KnativeServing{
+		Spec: servingv1alpha1.KnativeServingSpec{
+			Registry: tt.registry,
+		},
+	}
+	daemonSetTransform := ResourceTransform(daemonSetinstance, log)
+	daemonSetTransform(&unstructuredDaemonSet)
+
+	var daemonSet = &appsv1.DaemonSet{}
+	err = scheme.Scheme.Convert(&unstructuredDaemonSet, daemonSet, nil)
+
+	assertEqual(t, err, nil)
+	assertDeepEqual(t, daemonSet.Spec.Template.Spec.ImagePullSecrets, tt.expectedSecrets)
 }
 
 func assertEqual(t *testing.T, actual, expected interface{}) {

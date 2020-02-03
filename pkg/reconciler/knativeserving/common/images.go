@@ -38,11 +38,16 @@ var (
 	containerNameVariable = "${NAME}"
 )
 
-func DeploymentTransform(instance *servingv1alpha1.KnativeServing, log *zap.SugaredLogger) mf.Transformer {
+// ResourceTransform updates deployment and daemonSet with a new registry and tag
+func ResourceTransform(instance *servingv1alpha1.KnativeServing, log *zap.SugaredLogger) mf.Transformer {
 	return func(u *unstructured.Unstructured) error {
 		// Update the deployment with the new registry and tag
 		if u.GetKind() == "Deployment" {
 			return updateDeployment(instance, u, log)
+		}
+		// Update the daemonSet with the new registry and tag
+		if u.GetKind() == "DaemonSet" {
+			return updateDaemonSet(instance, u, log)
 		}
 		return nil
 	}
@@ -60,8 +65,7 @@ func ImageTransform(instance *servingv1alpha1.KnativeServing, log *zap.SugaredLo
 
 func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured, log *zap.SugaredLogger) error {
 	var deployment = &appsv1.Deployment{}
-	err := scheme.Scheme.Convert(u, deployment, nil)
-	if err != nil {
+	if err := scheme.Scheme.Convert(u, deployment, nil); err != nil {
 		log.Error(err, "Error converting Unstructured to Deployment", "unstructured", u, "deployment", deployment)
 		return err
 	}
@@ -69,11 +73,10 @@ func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.
 	registry := instance.Spec.Registry
 	log.Debugw("Updating Deployment", "name", u.GetName(), "registry", registry)
 
-	updateDeploymentImage(deployment, &registry, log)
+	updateImage(deployment.Spec.Template.Spec.Containers, deployment.GetName(), &registry, log)
 	deployment.Spec.Template.Spec.ImagePullSecrets = addImagePullSecrets(
 		deployment.Spec.Template.Spec.ImagePullSecrets, &registry, log)
-	err = scheme.Scheme.Convert(deployment, u, nil)
-	if err != nil {
+	if err := scheme.Scheme.Convert(deployment, u, nil); err != nil {
 		return err
 	}
 	// The zero-value timestamp defaulted by the conversion causes
@@ -84,23 +87,44 @@ func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.
 	return nil
 }
 
-// updateDeploymentImage updates the image of the deployment with a new registry and tag
-func updateDeploymentImage(deployment *appsv1.Deployment, registry *servingv1alpha1.Registry, log *zap.SugaredLogger) {
-	containers := deployment.Spec.Template.Spec.Containers
+func updateDaemonSet(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured, log *zap.SugaredLogger) error {
+	var daemonSet = &appsv1.DaemonSet{}
+	if err := scheme.Scheme.Convert(u, daemonSet, nil); err != nil {
+		log.Error(err, "Error converting Unstructured to DaemonSet", "unstructured", u, "daemonSet", daemonSet)
+		return err
+	}
+
+	registry := instance.Spec.Registry
+	log.Debugw("Updating DaemonSet", "name", u.GetName(), "registry", registry)
+
+	updateImage(daemonSet.Spec.Template.Spec.Containers, daemonSet.GetName(), &registry, log)
+	daemonSet.Spec.Template.Spec.ImagePullSecrets = addImagePullSecrets(
+		daemonSet.Spec.Template.Spec.ImagePullSecrets, &registry, log)
+	if err := scheme.Scheme.Convert(daemonSet, u, nil); err != nil {
+		return err
+	}
+	// The zero-value timestamp defaulted by the conversion causes
+	// superfluous updates
+	u.SetCreationTimestamp(metav1.Time{})
+
+	log.Debugw("Finished conversion", "name", u.GetName(), "unstructured", u.Object)
+	return nil
+}
+
+// updateImage updates the image of the deployment and daemonSet with a new registry and tag
+func updateImage(containers []corev1.Container, name string, registry *servingv1alpha1.Registry, log *zap.SugaredLogger) {
 	for index := range containers {
 		container := &containers[index]
-		newImage := getNewImage(registry, container.Name)
-		if newImage != "" {
+		if newImage := getNewImage(registry, container.Name); newImage != "" {
 			updateContainer(container, newImage, log)
 		}
 	}
-	log.Debugw("Finished updating images", "name", deployment.GetName(), "containers", deployment.Spec.Template.Spec.Containers)
+	log.Debugw("Finished updating images", "name", name, "containers", containers)
 }
 
 func updateCachingImage(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured) error {
 	var image = &caching.Image{}
-	err := scheme.Scheme.Convert(u, image, nil)
-	if err != nil {
+	if err := scheme.Scheme.Convert(u, image, nil); err != nil {
 		log.Error(err, "Error converting Unstructured to Image", "unstructured", u, "image", image)
 		return err
 	}
@@ -109,8 +133,7 @@ func updateCachingImage(instance *servingv1alpha1.KnativeServing, u *unstructure
 	log.Debugw("Updating Image", "name", u.GetName(), "registry", registry)
 
 	updateImageSpec(image, &registry, log)
-	err = scheme.Scheme.Convert(image, u, nil)
-	if err != nil {
+	if err := scheme.Scheme.Convert(image, u, nil); err != nil {
 		return err
 	}
 	// Cleanup zero-value default to prevent superfluous updates
@@ -123,8 +146,7 @@ func updateCachingImage(instance *servingv1alpha1.KnativeServing, u *unstructure
 
 // updateImageSpec updates the image of a with a new registry and tag
 func updateImageSpec(image *caching.Image, registry *servingv1alpha1.Registry, log *zap.SugaredLogger) {
-	newImage := getNewImage(registry, image.Name)
-	if newImage != "" {
+	if newImage := getNewImage(registry, image.Name); newImage != "" {
 		log.Debugf("Updating image from: %v, to: %v", image.Spec.Image, newImage)
 		image.Spec.Image = newImage
 	}
@@ -133,8 +155,7 @@ func updateImageSpec(image *caching.Image, registry *servingv1alpha1.Registry, l
 }
 
 func getNewImage(registry *servingv1alpha1.Registry, containerName string) string {
-	overrideImage := registry.Override[containerName]
-	if overrideImage != "" {
+	if overrideImage := registry.Override[containerName]; overrideImage != "" {
 		return overrideImage
 	}
 	return replaceName(registry.Default, containerName)

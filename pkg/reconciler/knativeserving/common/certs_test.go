@@ -84,7 +84,7 @@ var customCertsTests = []customCertsTest{
 }
 
 func TestOnlyTransformCustomCertsForController(t *testing.T) {
-	before := makeDeployment(t, "not-controller", v1.PodSpec{
+	before := makeDeployment("not-controller", v1.PodSpec{
 		Containers: []v1.Container{{
 			Name: "definitely-not-controller",
 		}},
@@ -116,7 +116,7 @@ func TestCustomCertsTransform(t *testing.T) {
 }
 
 func runCustomCertsTransformTest(t *testing.T, tt *customCertsTest) {
-	unstructured := makeUnstructured(t, makeDeployment(t, "controller", v1.PodSpec{
+	unstructured := makeUnstructured(t, makeDeployment("controller", v1.PodSpec{
 		Containers: []v1.Container{{
 			Name: "controller",
 		}},
