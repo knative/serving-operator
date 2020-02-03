@@ -41,15 +41,14 @@ var (
 // ResourceTransform updates deployment and daemonSet with a new registry and tag
 func ResourceTransform(instance *servingv1alpha1.KnativeServing, log *zap.SugaredLogger) mf.Transformer {
 	return func(u *unstructured.Unstructured) error {
-		// Update the deployment with the new registry and tag
-		if u.GetKind() == "Deployment" {
+		switch u.GetKind() {
+		case "Deployment":
 			return updateDeployment(instance, u, log)
-		}
-		// Update the daemonSet with the new registry and tag
-		if u.GetKind() == "DaemonSet" {
+		case "DaemonSet":
 			return updateDaemonSet(instance, u, log)
+		default:
+			return nil
 		}
-		return nil
 	}
 }
 
