@@ -20,17 +20,19 @@ import (
 
 	mf "github.com/jcrossley3/manifestival"
 	"go.uber.org/zap"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes/scheme"
 	caching "knative.dev/caching/pkg/apis/caching/v1alpha1"
+	"knative.dev/pkg/apis/duck"
+	"knative.dev/pkg/apis/duck/v1"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 )
 
 func init() {
 	caching.AddToScheme(scheme.Scheme)
+	v1.AddToScheme(scheme.Scheme)
 }
 
 var (
@@ -38,44 +40,42 @@ var (
 	containerNameVariable = "${NAME}"
 )
 
-// ResourceTransform updates deployment and daemonSet with a new registry and tag
-func ResourceTransform(instance *servingv1alpha1.KnativeServing, log *zap.SugaredLogger) mf.Transformer {
+// ImageTransform updates image with a new registry and tag
+func ImageTransform(instance *servingv1alpha1.KnativeServing, log *zap.SugaredLogger) mf.Transformer {
 	return func(u *unstructured.Unstructured) error {
 		switch u.GetKind() {
-		case "Deployment":
+		case "Deployment", "DaemonSet":
 			return updateDeployment(instance, u, log)
-		case "DaemonSet":
-			return updateDaemonSet(instance, u, log)
+		case "Image":
+			if u.GetAPIVersion() == "caching.internal.knative.dev/v1alpha1" {
+				return updateCachingImage(instance, u)
+			}
+			return nil
 		default:
 			return nil
 		}
 	}
 }
 
-func ImageTransform(instance *servingv1alpha1.KnativeServing, log *zap.SugaredLogger) mf.Transformer {
-	return func(u *unstructured.Unstructured) error {
-		// Update the image with the new registry and tag
-		if u.GetAPIVersion() == "caching.internal.knative.dev/v1alpha1" && u.GetKind() == "Image" {
-			return updateCachingImage(instance, u)
-		}
-		return nil
-	}
-}
-
 func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured, log *zap.SugaredLogger) error {
-	var deployment = &appsv1.Deployment{}
-	if err := scheme.Scheme.Convert(u, deployment, nil); err != nil {
-		log.Error(err, "Error converting Unstructured to Deployment", "unstructured", u, "deployment", deployment)
+	specData := &v1.WithPod{}
+	if err := duck.FromUnstructured(u, specData); err != nil {
+		log.Error(err, "error converting Unstructured to Duck type")
 		return err
 	}
-
 	registry := instance.Spec.Registry
 	log.Debugw("Updating Deployment", "name", u.GetName(), "registry", registry)
 
-	updateImage(deployment.Spec.Template.Spec.Containers, deployment.GetName(), &registry, log)
-	deployment.Spec.Template.Spec.ImagePullSecrets = addImagePullSecrets(
-		deployment.Spec.Template.Spec.ImagePullSecrets, &registry, log)
-	if err := scheme.Scheme.Convert(deployment, u, nil); err != nil {
+	updateDeploymentImage(specData.Spec.Template.Spec.Containers, specData.GetName(), &registry, log)
+	specData.Spec.Template.Spec.ImagePullSecrets = addImagePullSecrets(
+		specData.Spec.Template.Spec.ImagePullSecrets, &registry, log)
+
+	unstructuredData, err := duck.ToUnstructured(specData.DeepCopyObject().(duck.OneOfOurs))
+	if err != nil {
+		log.Error(err, "error while converting to Unstructured data")
+		return err
+	}
+	if err = scheme.Scheme.Convert(unstructuredData, u, nil); err != nil {
 		return err
 	}
 	// The zero-value timestamp defaulted by the conversion causes
@@ -86,32 +86,8 @@ func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.
 	return nil
 }
 
-func updateDaemonSet(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured, log *zap.SugaredLogger) error {
-	var daemonSet = &appsv1.DaemonSet{}
-	if err := scheme.Scheme.Convert(u, daemonSet, nil); err != nil {
-		log.Error(err, "Error converting Unstructured to DaemonSet", "unstructured", u, "daemonSet", daemonSet)
-		return err
-	}
-
-	registry := instance.Spec.Registry
-	log.Debugw("Updating DaemonSet", "name", u.GetName(), "registry", registry)
-
-	updateImage(daemonSet.Spec.Template.Spec.Containers, daemonSet.GetName(), &registry, log)
-	daemonSet.Spec.Template.Spec.ImagePullSecrets = addImagePullSecrets(
-		daemonSet.Spec.Template.Spec.ImagePullSecrets, &registry, log)
-	if err := scheme.Scheme.Convert(daemonSet, u, nil); err != nil {
-		return err
-	}
-	// The zero-value timestamp defaulted by the conversion causes
-	// superfluous updates
-	u.SetCreationTimestamp(metav1.Time{})
-
-	log.Debugw("Finished conversion", "name", u.GetName(), "unstructured", u.Object)
-	return nil
-}
-
-// updateImage updates the image of the deployment and daemonSet with a new registry and tag
-func updateImage(containers []corev1.Container, name string, registry *servingv1alpha1.Registry, log *zap.SugaredLogger) {
+// updateDeploymentImage updates the image of the deployment and daemonSet with a new registry and tag
+func updateDeploymentImage(containers []corev1.Container, name string, registry *servingv1alpha1.Registry, log *zap.SugaredLogger) {
 	for index := range containers {
 		container := &containers[index]
 		if newImage := getNewImage(registry, container.Name); newImage != "" {

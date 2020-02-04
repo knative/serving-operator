@@ -126,7 +126,7 @@ func runResourceTransformTest(t *testing.T, tt *updateImageTest) {
 			Registry: tt.registry,
 		},
 	}
-	deploymentTransform := ResourceTransform(instance, log)
+	deploymentTransform := ImageTransform(instance, log)
 	deploymentTransform(&unstructuredDeployment)
 	validateUnstructedDeploymentChanged(t, tt, &unstructuredDeployment)
 
@@ -137,7 +137,7 @@ func runResourceTransformTest(t *testing.T, tt *updateImageTest) {
 			Registry: tt.registry,
 		},
 	}
-	daemonSetTransform := ResourceTransform(instance, log)
+	daemonSetTransform := ImageTransform(instance, log)
 	daemonSetTransform(&unstructuredDaemonSet)
 	validateUnstructedDaemonSetChanged(t, tt, &unstructuredDaemonSet)
 }
@@ -343,7 +343,7 @@ func runImagePullSecretsTest(t *testing.T, tt *addImagePullSecretsTest) {
 			Registry: tt.registry,
 		},
 	}
-	deploymentTransform := ResourceTransform(instance, log)
+	deploymentTransform := ImageTransform(instance, log)
 	deploymentTransform(&unstructuredDeployment)
 
 	var deployment = &appsv1.Deployment{}
@@ -358,7 +358,7 @@ func runImagePullSecretsTest(t *testing.T, tt *addImagePullSecretsTest) {
 			Registry: tt.registry,
 		},
 	}
-	daemonSetTransform := ResourceTransform(daemonSetinstance, log)
+	daemonSetTransform := ImageTransform(daemonSetinstance, log)
 	daemonSetTransform(&unstructuredDaemonSet)
 
 	var daemonSet = &appsv1.DaemonSet{}
