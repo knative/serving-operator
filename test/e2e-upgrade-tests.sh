@@ -36,8 +36,48 @@ source $(dirname $0)/e2e-common.sh
 OPERATOR_DIR=$(dirname $0)/..
 KNATIVE_SERVING_DIR=${OPERATOR_DIR}/..
 
-function knative_setup() {
+function install_latest_operator_release() {
+  header "Installing Knative Serving operator latest public release"
+  local url="https://github.com/knative/serving-operator/releases/download/${LATEST_SERVING_RELEASE_VERSION}"
+  local yaml="serving-operator.yaml"
+
+  local RELEASE_YAML="$(mktemp)"
+  wget "${url}/${yaml}" -O "${RELEASE_YAML}" \
+      || fail_test "Unable to download latest Knative Serving Operator release."
+
   install_istio || fail_test "Istio installation failed"
+  kubectl apply -f "${RELEASE_YAML}" || fail_test "Knative Serving Operator latest release installation failed"
+  create_custom_resource
+  wait_until_pods_running ${TEST_NAMESPACE}
+}
+
+function create_custom_resource() {
+  echo ">> Creating the custom resource of Knative Serving:"
+  cat <<EOF | kubectl apply -f -
+apiVersion: operator.knative.dev/v1alpha1
+kind: KnativeServing
+metadata:
+  name: knative-serving
+  namespace: ${TEST_NAMESPACE}
+spec:
+  config:
+    defaults:
+      revision-timeout-seconds: "300"  # 5 minutes
+    autoscaler:
+      stable-window: "60s"
+    deployment:
+      registriesSkippingTagResolving: "ko.local,dev.local"
+    logging:
+      loglevel.controller: "debug"
+EOF
+}
+
+function knative_setup() {
+  create_namespace
+  install_latest_operator_release
+}
+
+function install_head() {
   generate_latest_serving_manifest
   install_serving_operator
 }
@@ -75,6 +115,8 @@ function generate_latest_serving_manifest() {
 initialize $@ --skip-istio-addon
 
 TIMEOUT=20m
+
+install_head
 
 # If we got this far, the operator installed Knative Serving of the latest source code.
 header "Running tests for Knative Serving Operator"

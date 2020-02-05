@@ -25,8 +25,9 @@ import (
 	"knative.dev/serving-operator/test/common"
 )
 
-// TestKnativeServingUpgrade verifies the KnativeServing creation, deployment recreation, and KnativeServing deletion.
-func TestKnativeServingUpgrade(t *testing.T) {
+// TestKnativeServingPostUpgrade verifies the KnativeServing creation, deployment recreation, and KnativeServing deletion
+// after the operator upgrades with the latest generated manifest of Knative Serving.
+func TestKnativeServingPostUpgrade(t *testing.T) {
 	cancel := logstream.Start(t)
 	defer cancel()
 	clients := common.Setup(t)
@@ -39,29 +40,28 @@ func TestKnativeServingUpgrade(t *testing.T) {
 	test.CleanupOnInterrupt(func() { test.TearDown(clients, names) })
 	defer test.TearDown(clients, names)
 
-	// Create a KnativeServing
+	// Create a KnativeServing custom resource, if it does not exist
 	if _, err := resources.CreateKnativeServing(clients.KnativeServing(), names); err != nil {
 		t.Fatalf("KnativeService %q failed to create: %v", names.KnativeServing, err)
 	}
 
-	// Test if KnativeServing can reach the READY status
+	// Test if KnativeServing can reach the READY status after upgrade
 	t.Run("create", func(t *testing.T) {
 		common.KnativeServingVerify(t, clients, names)
-		knativeServingVerifyDeployment(t, clients, names)
 	})
 
-	t.Run("configure", func(t *testing.T) {
+	// Verify if resources match the latest requirement after upgrade
+	t.Run("verify resources", func(t *testing.T) {
 		common.KnativeServingVerify(t, clients, names)
-		common.KnativeServingConfigure(t, clients, names)
+		// TODO: We only verify the deployment, but we need to add other resources as well, like ServiceAccount, ClusterRoleBinding, etc.
+		ExpectedDeployments := []string{"networking-istio", "webhook", "controller", "activator", "autoscaler-hpa",
+			"autoscaler"}
+		knativeServingVerifyDeployment(t, clients, names, ExpectedDeployments)
 	})
 
-	// Delete the deployments one by one to see if they will be recreated.
-	t.Run("restore", func(t *testing.T) {
-		common.KnativeServingVerify(t, clients, names)
-		common.DeploymentRecreation(t, clients, names)
-	})
+	// TODO: We will add one or sections here to run the tests tagged with postupgrade in knative serving.
 
-	// Delete the KnativeServing to see if all resources will be removed
+	// Delete the KnativeServing to see if all resources will be removed after upgrade
 	t.Run("delete", func(t *testing.T) {
 		common.KnativeServingVerify(t, clients, names)
 		common.KnativeServingDelete(t, clients, names)
@@ -69,15 +69,13 @@ func TestKnativeServingUpgrade(t *testing.T) {
 }
 
 // knativeServingVerifyDeployment verify whether the deployments have the correct number and names.
-func knativeServingVerifyDeployment(t *testing.T, clients *test.Clients, names test.ResourceNames) {
-	// Knative Serving has 6 deployments.
-	expectedNumDeployments := 6
-	deploys := []string{"networking-istio", "webhook", "controller", "activator", "autoscaler-hpa", "autoscaler"}
+func knativeServingVerifyDeployment(t *testing.T, clients *test.Clients, names test.ResourceNames,
+	expectedDeployments []string) {
 	dpList, err := clients.KubeClient.Kube.AppsV1().Deployments(names.Namespace).List(metav1.ListOptions{})
 	assertEqual(t, err, nil)
-	assertEqual(t, expectedNumDeployments, len(dpList.Items))
+	assertEqual(t, len(dpList.Items), len(expectedDeployments))
 	for _, deployment := range dpList.Items {
-		assertEqual(t, stringInList(deployment.Name, deploys), true)
+		assertEqual(t, stringInList(deployment.Name, expectedDeployments), true)
 	}
 }
 

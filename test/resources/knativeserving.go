@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,14 +66,18 @@ func WaitForKnativeServingState(clients servingv1alpha1.KnativeServingInterface,
 
 // CreateKnativeServing creates a KnativeServing with the name names.KnativeServing under the namespace names.Namespace.
 func CreateKnativeServing(clients servingv1alpha1.KnativeServingInterface, names test.ResourceNames) (*v1alpha1.KnativeServing, error) {
-	ks := &v1alpha1.KnativeServing{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      names.KnativeServing,
-			Namespace: names.Namespace,
-		},
+	// If this function is called by the upgrade tests, we only create the custom resource, if it does not exist.
+	ks, err := clients.Get(names.KnativeServing, metav1.GetOptions{})
+	if apierrs.IsNotFound(err) {
+		ks := &v1alpha1.KnativeServing{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      names.KnativeServing,
+				Namespace: names.Namespace,
+			},
+		}
+		return clients.Create(ks)
 	}
-	svc, err := clients.Create(ks)
-	return svc, err
+	return ks, err
 }
 
 // WaitForConfigMap takes a condition function that evaluates ConfigMap data
