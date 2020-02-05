@@ -1,4 +1,4 @@
-// +build e2e
+// +build postupgrade
 
 /*
 Copyright 2020 The Knative Authors
@@ -18,14 +18,15 @@ package e2e
 import (
 	"testing"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/test/logstream"
 	"knative.dev/serving-operator/test"
 	"knative.dev/serving-operator/test/resources"
 	"knative.dev/serving-operator/test/common"
 )
 
-// TestKnativeServingDeployment verifies the KnativeServing creation, deployment recreation, and KnativeServing deletion.
-func TestKnativeServingDeployment(t *testing.T) {
+// TestKnativeServingUpgrade verifies the KnativeServing creation, deployment recreation, and KnativeServing deletion.
+func TestKnativeServingUpgrade(t *testing.T) {
 	cancel := logstream.Start(t)
 	defer cancel()
 	clients := common.Setup(t)
@@ -46,6 +47,7 @@ func TestKnativeServingDeployment(t *testing.T) {
 	// Test if KnativeServing can reach the READY status
 	t.Run("create", func(t *testing.T) {
 		common.KnativeServingVerify(t, clients, names)
+		knativeServingVerifyDeployment(t, clients, names)
 	})
 
 	t.Run("configure", func(t *testing.T) {
@@ -64,4 +66,33 @@ func TestKnativeServingDeployment(t *testing.T) {
 		common.KnativeServingVerify(t, clients, names)
 		common.KnativeServingDelete(t, clients, names)
 	})
+}
+
+// knativeServingVerifyDeployment verify whether the deployments have the correct number and names.
+func knativeServingVerifyDeployment(t *testing.T, clients *test.Clients, names test.ResourceNames) {
+	// Knative Serving has 6 deployments.
+	expectedNumDeployments := 6
+	deploys := []string{"networking-istio", "webhook", "controller", "activator", "autoscaler-hpa", "autoscaler"}
+	dpList, err := clients.KubeClient.Kube.AppsV1().Deployments(names.Namespace).List(metav1.ListOptions{})
+	assertEqual(t, err, nil)
+	assertEqual(t, expectedNumDeployments, len(dpList.Items))
+	for _, deployment := range dpList.Items {
+		assertEqual(t, stringInList(deployment.Name, deploys), true)
+	}
+}
+
+func assertEqual(t *testing.T, actual, expected interface{}) {
+	if actual == expected {
+		return
+	}
+	t.Fatalf("expected does not equal actual. \nExpected: %v\nActual: %v", expected, actual)
+}
+
+func stringInList(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
