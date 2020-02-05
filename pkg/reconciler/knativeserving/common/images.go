@@ -20,19 +20,17 @@ import (
 
 	mf "github.com/jcrossley3/manifestival"
 	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes/scheme"
 	caching "knative.dev/caching/pkg/apis/caching/v1alpha1"
-	"knative.dev/pkg/apis/duck"
-	"knative.dev/pkg/apis/duck/v1"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 )
 
 func init() {
 	caching.AddToScheme(scheme.Scheme)
-	v1.AddToScheme(scheme.Scheme)
 }
 
 var (
@@ -44,8 +42,11 @@ var (
 func ImageTransform(instance *servingv1alpha1.KnativeServing, log *zap.SugaredLogger) mf.Transformer {
 	return func(u *unstructured.Unstructured) error {
 		switch u.GetKind() {
-		case "Deployment", "DaemonSet":
+		// TODO need to use PodSpecable duck type in order to remove duplicates of deployment, daemonSet
+		case "Deployment":
 			return updateDeployment(instance, u, log)
+		case "DaemonSet":
+			return updateDaemonSet(instance, u, log)
 		case "Image":
 			if u.GetAPIVersion() == "caching.internal.knative.dev/v1alpha1" {
 				return updateCachingImage(instance, u)
@@ -58,24 +59,16 @@ func ImageTransform(instance *servingv1alpha1.KnativeServing, log *zap.SugaredLo
 }
 
 func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured, log *zap.SugaredLogger) error {
-	specData := &v1.WithPod{}
-	if err := duck.FromUnstructured(u, specData); err != nil {
-		log.Error(err, "error converting Unstructured to Duck type")
-		return err
-	}
-	registry := instance.Spec.Registry
-	log.Debugw("Updating Deployment", "name", u.GetName(), "registry", registry)
-
-	updateDeploymentImage(specData.Spec.Template.Spec.Containers, specData.GetName(), &registry, log)
-	specData.Spec.Template.Spec.ImagePullSecrets = addImagePullSecrets(
-		specData.Spec.Template.Spec.ImagePullSecrets, &registry, log)
-
-	unstructuredData, err := duck.ToUnstructured(specData.DeepCopyObject().(duck.OneOfOurs))
+	var deployment = &appsv1.Deployment{}
+	err := scheme.Scheme.Convert(u, deployment, nil)
 	if err != nil {
-		log.Error(err, "error while converting to Unstructured data")
+		log.Error(err, "Error converting Unstructured to Deployment", "unstructured", u, "deployment", deployment)
 		return err
 	}
-	if err = scheme.Scheme.Convert(unstructuredData, u, nil); err != nil {
+
+	updateRegistry(&deployment.Spec.Template.Spec, instance, log, deployment.GetName())
+	err = scheme.Scheme.Convert(deployment, u, nil)
+	if err != nil {
 		return err
 	}
 	// The zero-value timestamp defaulted by the conversion causes
@@ -86,15 +79,46 @@ func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.
 	return nil
 }
 
-// updateDeploymentImage updates the image of the deployment and daemonSet with a new registry and tag
-func updateDeploymentImage(containers []corev1.Container, name string, registry *servingv1alpha1.Registry, log *zap.SugaredLogger) {
+func updateDaemonSet(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured, log *zap.SugaredLogger) error {
+	var daemonSet = &appsv1.DaemonSet{}
+	err := scheme.Scheme.Convert(u, daemonSet, nil)
+	if err != nil {
+		log.Error(err, "Error converting Unstructured to daemonSet", "unstructured", u, "daemonSet", daemonSet)
+		return err
+	}
+	updateRegistry(&daemonSet.Spec.Template.Spec, instance, log, daemonSet.GetName())
+	err = scheme.Scheme.Convert(daemonSet, u, nil)
+	if err != nil {
+		return err
+	}
+	// The zero-value timestamp defaulted by the conversion causes
+	// superfluous updates
+	u.SetCreationTimestamp(metav1.Time{})
+
+	log.Debugw("Finished conversion", "name", u.GetName(), "unstructured", u.Object)
+	return nil
+}
+
+func updateRegistry(spec *corev1.PodSpec, instance *servingv1alpha1.KnativeServing, log *zap.SugaredLogger, name string) {
+	registry := instance.Spec.Registry
+	log.Debugw("Updating ", "name", name, "registry", registry)
+
+	updateImage(spec, &registry, log, name)
+	spec.ImagePullSecrets = addImagePullSecrets(
+		spec.ImagePullSecrets, &registry, log)
+}
+
+// updateImage updates the image with a new registry and tag
+func updateImage(spec *corev1.PodSpec, registry *servingv1alpha1.Registry, log *zap.SugaredLogger, name string) {
+	containers := spec.Containers
 	for index := range containers {
 		container := &containers[index]
-		if newImage := getNewImage(registry, container.Name); newImage != "" {
+		newImage := getNewImage(registry, container.Name)
+		if newImage != "" {
 			updateContainer(container, newImage, log)
 		}
 	}
-	log.Debugw("Finished updating images", "name", name, "containers", containers)
+	log.Debugw("Finished updating images", "name", name, "containers", spec.Containers)
 }
 
 func updateCachingImage(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured) error {
