@@ -32,7 +32,6 @@ func (platforms Platforms) Transformers(kubeClientSet kubernetes.Interface, inst
 		mf.InjectOwner(instance),
 		mf.InjectNamespace(instance.GetNamespace()),
 		ConfigMapTransform(instance, log),
-		DeploymentTransform(instance, log),
 		ImageTransform(instance, log),
 		GatewayTransform(instance, log),
 		CustomCertsTransform(instance, log),
