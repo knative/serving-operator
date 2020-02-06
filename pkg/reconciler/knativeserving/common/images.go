@@ -51,24 +51,20 @@ func ImageTransform(instance *servingv1alpha1.KnativeServing, log *zap.SugaredLo
 			if u.GetAPIVersion() == "caching.internal.knative.dev/v1alpha1" {
 				return updateCachingImage(instance, u)
 			}
-			return nil
-		default:
-			return nil
 		}
+		return nil
 	}
 }
 
 func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured, log *zap.SugaredLogger) error {
 	var deployment = &appsv1.Deployment{}
-	err := scheme.Scheme.Convert(u, deployment, nil)
-	if err != nil {
+	if err := scheme.Scheme.Convert(u, deployment, nil); err != nil {
 		log.Error(err, "Error converting Unstructured to Deployment", "unstructured", u, "deployment", deployment)
 		return err
 	}
 
 	updateRegistry(&deployment.Spec.Template.Spec, instance, log, deployment.GetName())
-	err = scheme.Scheme.Convert(deployment, u, nil)
-	if err != nil {
+	if err := scheme.Scheme.Convert(deployment, u, nil); err != nil {
 		return err
 	}
 	// The zero-value timestamp defaulted by the conversion causes
@@ -81,14 +77,12 @@ func updateDeployment(instance *servingv1alpha1.KnativeServing, u *unstructured.
 
 func updateDaemonSet(instance *servingv1alpha1.KnativeServing, u *unstructured.Unstructured, log *zap.SugaredLogger) error {
 	var daemonSet = &appsv1.DaemonSet{}
-	err := scheme.Scheme.Convert(u, daemonSet, nil)
-	if err != nil {
+	if err := scheme.Scheme.Convert(u, daemonSet, nil); err != nil {
 		log.Error(err, "Error converting Unstructured to daemonSet", "unstructured", u, "daemonSet", daemonSet)
 		return err
 	}
 	updateRegistry(&daemonSet.Spec.Template.Spec, instance, log, daemonSet.GetName())
-	err = scheme.Scheme.Convert(daemonSet, u, nil)
-	if err != nil {
+	if err := scheme.Scheme.Convert(daemonSet, u, nil); err != nil {
 		return err
 	}
 	// The zero-value timestamp defaulted by the conversion causes
