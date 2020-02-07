@@ -29,4 +29,15 @@ source $(dirname $0)/../vendor/knative.dev/test-infra/scripts/presubmit-tests.sh
 
 # We use the default build, unit and integration test runners.
 
+function integration_tests() {
+  local options=""
+  local failed=0
+  e2e_test="test/e2e-tests.sh"
+  echo "Running integration test ${e2e_test}"
+  if ! ${e2e_test} ${options}; then
+    failed=1
+  fi
+  return ${failed}
+}
+
 main $@
