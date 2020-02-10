@@ -20,15 +20,15 @@ import (
 
 	"knative.dev/pkg/test/logstream"
 	"knative.dev/serving-operator/test"
+	"knative.dev/serving-operator/test/client"
 	"knative.dev/serving-operator/test/resources"
-	"knative.dev/serving-operator/test/common"
 )
 
 // TestKnativeServingDeployment verifies the KnativeServing creation, deployment recreation, and KnativeServing deletion.
 func TestKnativeServingDeployment(t *testing.T) {
 	cancel := logstream.Start(t)
 	defer cancel()
-	clients := common.Setup(t)
+	clients := client.Setup(t)
 
 	names := test.ResourceNames{
 		KnativeServing: test.ServingOperatorName,
@@ -45,23 +45,23 @@ func TestKnativeServingDeployment(t *testing.T) {
 
 	// Test if KnativeServing can reach the READY status
 	t.Run("create", func(t *testing.T) {
-		common.KnativeServingVerify(t, clients, names)
+		resources.KSOperatorCRVerifyStatus(t, clients, names)
 	})
 
 	t.Run("configure", func(t *testing.T) {
-		common.KnativeServingVerify(t, clients, names)
-		common.KnativeServingConfigure(t, clients, names)
+		resources.KSOperatorCRVerifyStatus(t, clients, names)
+		resources.KSOperatorCRVerifyConfiguration(t, clients, names)
 	})
 
 	// Delete the deployments one by one to see if they will be recreated.
 	t.Run("restore", func(t *testing.T) {
-		common.KnativeServingVerify(t, clients, names)
-		common.DeploymentRecreation(t, clients, names)
+		resources.KSOperatorCRVerifyStatus(t, clients, names)
+		resources.DeleteAndVerifyDeployments(t, clients, names)
 	})
 
 	// Delete the KnativeServing to see if all resources will be removed
 	t.Run("delete", func(t *testing.T) {
-		common.KnativeServingVerify(t, clients, names)
-		common.KnativeServingDelete(t, clients, names)
+		resources.KSOperatorCRVerifyStatus(t, clients, names)
+		resources.KSOperatorCRDelete(t, clients, names)
 	})
 }

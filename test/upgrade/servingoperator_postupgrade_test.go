@@ -19,10 +19,11 @@ import (
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"knative.dev/pkg/test/logstream"
 	"knative.dev/serving-operator/test"
+	"knative.dev/serving-operator/test/client"
 	"knative.dev/serving-operator/test/resources"
-	"knative.dev/serving-operator/test/common"
 )
 
 // TestKnativeServingPostUpgrade verifies the KnativeServing creation, deployment recreation, and KnativeServing deletion
@@ -30,7 +31,7 @@ import (
 func TestKnativeServingPostUpgrade(t *testing.T) {
 	cancel := logstream.Start(t)
 	defer cancel()
-	clients := common.Setup(t)
+	clients := client.Setup(t)
 
 	names := test.ResourceNames{
 		KnativeServing: test.ServingOperatorName,
@@ -47,29 +48,29 @@ func TestKnativeServingPostUpgrade(t *testing.T) {
 
 	// Test if KnativeServing can reach the READY status after upgrade
 	t.Run("create", func(t *testing.T) {
-		common.KnativeServingVerify(t, clients, names)
+		resources.KSOperatorCRVerifyStatus(t, clients, names)
 	})
 
 	// Verify if resources match the latest requirement after upgrade
 	t.Run("verify resources", func(t *testing.T) {
-		common.KnativeServingVerify(t, clients, names)
+		resources.KSOperatorCRVerifyStatus(t, clients, names)
 		// TODO: We only verify the deployment, but we need to add other resources as well, like ServiceAccount, ClusterRoleBinding, etc.
-		ExpectedDeployments := []string{"networking-istio", "webhook", "controller", "activator", "autoscaler-hpa",
+		expectedDeployments := []string{"networking-istio", "webhook", "controller", "activator", "autoscaler-hpa",
 			"autoscaler"}
-		knativeServingVerifyDeployment(t, clients, names, ExpectedDeployments)
+		ksVerifyDeployment(t, clients, names, expectedDeployments)
 	})
 
 	// TODO: We will add one or sections here to run the tests tagged with postupgrade in knative serving.
 
 	// Delete the KnativeServing to see if all resources will be removed after upgrade
 	t.Run("delete", func(t *testing.T) {
-		common.KnativeServingVerify(t, clients, names)
-		common.KnativeServingDelete(t, clients, names)
+		resources.KSOperatorCRVerifyStatus(t, clients, names)
+		resources.KSOperatorCRDelete(t, clients, names)
 	})
 }
 
-// knativeServingVerifyDeployment verify whether the deployments have the correct number and names.
-func knativeServingVerifyDeployment(t *testing.T, clients *test.Clients, names test.ResourceNames,
+// ksVerifyDeployment verify whether the deployments have the correct number and names.
+func ksVerifyDeployment(t *testing.T, clients *test.Clients, names test.ResourceNames,
 	expectedDeployments []string) {
 	dpList, err := clients.KubeClient.Kube.AppsV1().Deployments(names.Namespace).List(metav1.ListOptions{})
 	assertEqual(t, err, nil)

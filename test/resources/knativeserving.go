@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Knative Authors
+Copyright 2020 The Knative Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,13 +24,14 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
+
 	"knative.dev/pkg/test/logging"
 	"knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/client/clientset/versioned/typed/serving/v1alpha1"
@@ -42,6 +43,10 @@ const (
 	Interval = 10 * time.Second
 	// Timeout specifies the timeout for the function PollImmediate to reach a certain status.
 	Timeout = 5 * time.Minute
+	// LoggingConfigKey specifies specifies the key name of the logging config map.
+	LoggingConfigKey = "logging"
+	// DefaultsConfigKey specifies the key name of the default config map.
+	DefaultsConfigKey = "defaults"
 )
 
 // WaitForKnativeServingState polls the status of the KnativeServing called name
@@ -109,4 +114,18 @@ func getDeploymentStatus(d *v1.Deployment) corev1.ConditionStatus {
 		}
 	}
 	return "unknown"
+}
+
+func getTestKSOperatorCRSpec() v1alpha1.KnativeServingSpec {
+	return v1alpha1.KnativeServingSpec{
+		Config: map[string]map[string]string{
+			DefaultsConfigKey: {
+				"revision-timeout-seconds": "200",
+			},
+			LoggingConfigKey: {
+				"loglevel.controller": "debug",
+				"loglevel.autoscaler": "debug",
+			},
+		},
+	}
 }
