@@ -69,8 +69,8 @@ func WaitForKnativeServingState(clients servingv1alpha1.KnativeServingInterface,
 	return lastState, nil
 }
 
-// CreateKnativeServing creates a KnativeServing with the name names.KnativeServing under the namespace names.Namespace.
-func CreateKnativeServing(clients servingv1alpha1.KnativeServingInterface, names test.ResourceNames) (*v1alpha1.KnativeServing, error) {
+// EnsureKnativeServingExists creates a KnativeServing with the name names.KnativeServing under the namespace names.Namespace, if it does not exist.
+func EnsureKnativeServingExists(clients servingv1alpha1.KnativeServingInterface, names test.ResourceNames) (*v1alpha1.KnativeServing, error) {
 	// If this function is called by the upgrade tests, we only create the custom resource, if it does not exist.
 	ks, err := clients.Get(names.KnativeServing, metav1.GetOptions{})
 	if apierrs.IsNotFound(err) {

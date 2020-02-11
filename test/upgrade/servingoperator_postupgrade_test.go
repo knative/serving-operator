@@ -42,18 +42,18 @@ func TestKnativeServingPostUpgrade(t *testing.T) {
 	defer test.TearDown(clients, names)
 
 	// Create a KnativeServing custom resource, if it does not exist
-	if _, err := resources.CreateKnativeServing(clients.KnativeServing(), names); err != nil {
+	if _, err := resources.EnsureKnativeServingExists(clients.KnativeServing(), names); err != nil {
 		t.Fatalf("KnativeService %q failed to create: %v", names.KnativeServing, err)
 	}
 
 	// Test if KnativeServing can reach the READY status after upgrade
 	t.Run("create", func(t *testing.T) {
-		resources.KSOperatorCRVerifyStatus(t, clients, names)
+		resources.AssertKSOperatorCRReadyStatus(t, clients, names)
 	})
 
 	// Verify if resources match the latest requirement after upgrade
 	t.Run("verify resources", func(t *testing.T) {
-		resources.KSOperatorCRVerifyStatus(t, clients, names)
+		resources.AssertKSOperatorCRReadyStatus(t, clients, names)
 		// TODO: We only verify the deployment, but we need to add other resources as well, like ServiceAccount, ClusterRoleBinding, etc.
 		expectedDeployments := []string{"networking-istio", "webhook", "controller", "activator", "autoscaler-hpa",
 			"autoscaler"}
@@ -64,7 +64,7 @@ func TestKnativeServingPostUpgrade(t *testing.T) {
 
 	// Delete the KnativeServing to see if all resources will be removed after upgrade
 	t.Run("delete", func(t *testing.T) {
-		resources.KSOperatorCRVerifyStatus(t, clients, names)
+		resources.AssertKSOperatorCRReadyStatus(t, clients, names)
 		resources.KSOperatorCRDelete(t, clients, names)
 	})
 }

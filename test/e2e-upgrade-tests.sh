@@ -38,15 +38,14 @@ KNATIVE_SERVING_DIR=${OPERATOR_DIR}/..
 
 function install_latest_operator_release() {
   header "Installing Knative Serving operator latest public release"
-  local url="https://github.com/knative/serving-operator/releases/download/${LATEST_SERVING_RELEASE_VERSION}"
-  local yaml="serving-operator.yaml"
+  local full_url="https://github.com/knative/serving-operator/releases/download/${LATEST_SERVING_RELEASE_VERSION}/serving-operator.yaml"
 
-  local RELEASE_YAML="$(mktemp)"
-  wget "${url}/${yaml}" -O "${RELEASE_YAML}" \
+  local release_yaml="$(mktemp)"
+  wget "${full_url}" -O "${release_yaml}" \
       || fail_test "Unable to download latest Knative Serving Operator release."
 
   install_istio || fail_test "Istio installation failed"
-  kubectl apply -f "${RELEASE_YAML}" || fail_test "Knative Serving Operator latest release installation failed"
+  kubectl apply -f "${release_yaml}" || fail_test "Knative Serving Operator latest release installation failed"
   create_custom_resource
   wait_until_pods_running ${TEST_NAMESPACE}
 }

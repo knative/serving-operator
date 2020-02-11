@@ -39,29 +39,29 @@ func TestKnativeServingDeployment(t *testing.T) {
 	defer test.TearDown(clients, names)
 
 	// Create a KnativeServing
-	if _, err := resources.CreateKnativeServing(clients.KnativeServing(), names); err != nil {
+	if _, err := resources.EnsureKnativeServingExists(clients.KnativeServing(), names); err != nil {
 		t.Fatalf("KnativeService %q failed to create: %v", names.KnativeServing, err)
 	}
 
 	// Test if KnativeServing can reach the READY status
 	t.Run("create", func(t *testing.T) {
-		resources.KSOperatorCRVerifyStatus(t, clients, names)
+		resources.AssertKSOperatorCRReadyStatus(t, clients, names)
 	})
 
 	t.Run("configure", func(t *testing.T) {
-		resources.KSOperatorCRVerifyStatus(t, clients, names)
+		resources.AssertKSOperatorCRReadyStatus(t, clients, names)
 		resources.KSOperatorCRVerifyConfiguration(t, clients, names)
 	})
 
 	// Delete the deployments one by one to see if they will be recreated.
 	t.Run("restore", func(t *testing.T) {
-		resources.KSOperatorCRVerifyStatus(t, clients, names)
+		resources.AssertKSOperatorCRReadyStatus(t, clients, names)
 		resources.DeleteAndVerifyDeployments(t, clients, names)
 	})
 
 	// Delete the KnativeServing to see if all resources will be removed
 	t.Run("delete", func(t *testing.T) {
-		resources.KSOperatorCRVerifyStatus(t, clients, names)
+		resources.AssertKSOperatorCRReadyStatus(t, clients, names)
 		resources.KSOperatorCRDelete(t, clients, names)
 	})
 }

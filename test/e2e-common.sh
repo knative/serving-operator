@@ -53,15 +53,6 @@ function istio_yaml() {
 # Install Istio.
 function install_istio() {
   local base_url="https://raw.githubusercontent.com/knative/serving/${LATEST_SERVING_RELEASE_VERSION}"
-  # Decide the Istio configuration to install.
-  if [[ -z "$ISTIO_VERSION" ]]; then
-    # Defaults to 1.4-latest
-    ISTIO_VERSION="1.4-latest"
-  fi
-  if [[ -z "$ISTIO_MESH" ]]; then
-    # Defaults to using mesh.
-    ISTIO_MESH=1
-  fi
   INSTALL_ISTIO_CRD_YAML="${base_url}/$(istio_crds_yaml $ISTIO_VERSION)"
   INSTALL_ISTIO_YAML="${base_url}/$(istio_yaml $ISTIO_VERSION $ISTIO_MESH)"
 

@@ -30,13 +30,12 @@ import (
 	"knative.dev/serving-operator/test"
 )
 
-// KSOperatorCRVerifyStatus verifies if the KnativeServing can reach the READY status.
-func KSOperatorCRVerifyStatus(t *testing.T, clients *test.Clients, names test.ResourceNames) {
+// AssertKSOperatorCRReadyStatus verifies if the KnativeServing reaches the READY status.
+func AssertKSOperatorCRReadyStatus(t *testing.T, clients *test.Clients, names test.ResourceNames) {
 	if _, err := WaitForKnativeServingState(clients.KnativeServing(), names.KnativeServing,
 		IsKnativeServingReady); err != nil {
 		t.Fatalf("KnativeService %q failed to get to the READY status: %v", names.KnativeServing, err)
 	}
-
 }
 
 // KSOperatorCRVerifyConfiguration verifies that KnativeServing config is set properly
