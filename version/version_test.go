@@ -20,7 +20,7 @@ import (
 	"runtime"
 	"testing"
 
-	mf "github.com/jcrossley3/manifestival"
+	mf "github.com/manifestival/manifestival"
 )
 
 func TestManifestVersionSame(t *testing.T) {
