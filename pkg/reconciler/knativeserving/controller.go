@@ -15,7 +15,6 @@ package knativeserving
 
 import (
 	"context"
-	"flag"
 	"os"
 	"path/filepath"
 
@@ -23,10 +22,11 @@ import (
 	mf "github.com/manifestival/manifestival"
 	"go.uber.org/zap"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/tools/clientcmd"
+
 	deploymentinformer "knative.dev/pkg/client/injection/kube/informers/apps/v1/deployment"
 	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/controller"
+	"knative.dev/pkg/injection/sharedmain"
 	"knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	knativeServinginformer "knative.dev/serving-operator/pkg/client/injection/informers/serving/v1alpha1/knativeserving"
 	rbase "knative.dev/serving-operator/pkg/reconciler"
@@ -35,12 +35,6 @@ import (
 const (
 	controllerAgentName = "knativeserving-controller"
 	reconcilerName      = "KnativeServing"
-)
-
-var (
-	recursive  = flag.Bool("recursive", false, "If filename is a directory, process all manifests recursively")
-	MasterURL  = flag.String("master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
-	Kubeconfig = flag.String("kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 )
 
 // NewController initializes the controller and is called by the generated code
@@ -60,13 +54,13 @@ func NewController(
 
 	koDataDir := os.Getenv("KO_DATA_PATH")
 
-	cfg, err := clientcmd.BuildConfigFromFlags(*MasterURL, *Kubeconfig)
+	cfg, err := sharedmain.GetConfig("", "")
 	if err != nil {
 		c.Logger.Error(err, "Error building kubeconfig")
 	}
 
 	mf.SetLogger(zapr.NewLogger(zap.NewExample()))
-	config, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving/"), *recursive, cfg)
+	config, err := mf.NewManifest(filepath.Join(koDataDir, "knative-serving/"), false, cfg)
 	if err != nil {
 		c.Logger.Error(err, "Error creating the Manifest for knative-serving")
 		os.Exit(1)
