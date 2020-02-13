@@ -26,8 +26,6 @@ import (
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 )
 
-var pf common.Platforms
-
 func main() {
 	flag.Parse()
 
