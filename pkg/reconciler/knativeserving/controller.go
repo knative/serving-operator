@@ -16,9 +16,10 @@ package knativeserving
 import (
 	"context"
 	"flag"
-	"knative.dev/pkg/injection/sharedmain"
 	"os"
 	"path/filepath"
+
+	"knative.dev/pkg/injection/sharedmain"
 
 	"github.com/go-logr/zapr"
 	mf "github.com/manifestival/manifestival"
