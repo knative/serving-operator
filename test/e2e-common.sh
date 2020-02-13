@@ -20,9 +20,9 @@ source $(dirname $0)/../vendor/knative.dev/test-infra/scripts/e2e-tests.sh
 # Latest serving release. This is intentionally hardcoded for now, but
 # will need the ability to test against the latest successful serving
 # CI runs in the future.
-readonly LATEST_SERVING_RELEASE_VERSION=0.6.0
+readonly LATEST_SERVING_RELEASE_VERSION=$(git describe --match "v[0-9]*" --abbrev=0)
 # Istio version we test with
-readonly ISTIO_VERSION=1.1.3
+readonly ISTIO_VERSION="1.4.2"
 # Test without Istio mesh enabled
 readonly ISTIO_MESH=0
 # Namespace used for tests
@@ -43,23 +43,16 @@ function istio_yaml() {
   local istio_mesh=$2
   local suffix=""
   if [[ $istio_mesh -eq 0 ]]; then
-    suffix="-lean"
+    suffix="ci-no-mesh"
+  else
+    suffix="ci-mesh"
   fi
-  echo "third_party/istio-${istio_version}/istio${suffix}.yaml"
+  echo "third_party/istio-${istio_version}/istio-${suffix}.yaml"
 }
 
 # Install Istio.
 function install_istio() {
-  local base_url="https://raw.githubusercontent.com/knative/serving/v${LATEST_SERVING_RELEASE_VERSION}"
-  # Decide the Istio configuration to install.
-  if [[ -z "$ISTIO_VERSION" ]]; then
-    # Defaults to 1.1-latest
-    ISTIO_VERSION=1.1-latest
-  fi
-  if [[ -z "$ISTIO_MESH" ]]; then
-    # Defaults to using mesh.
-    ISTIO_MESH=1
-  fi
+  local base_url="https://raw.githubusercontent.com/knative/serving/${LATEST_SERVING_RELEASE_VERSION}"
   INSTALL_ISTIO_CRD_YAML="${base_url}/$(istio_crds_yaml $ISTIO_VERSION)"
   INSTALL_ISTIO_YAML="${base_url}/$(istio_yaml $ISTIO_VERSION $ISTIO_MESH)"
 
@@ -76,10 +69,13 @@ function install_istio() {
   kubectl apply -f "${INSTALL_ISTIO_YAML}" || return 1
 }
 
-function install_serving_operator() {
+function create_namespace() {
   echo ">> Creating test namespaces"
+  # All the custom resources and Knative Serving resources are created under this TEST_NAMESPACE.
   kubectl create namespace $TEST_NAMESPACE
+}
 
+function install_serving_operator() {
   header "Installing Knative Serving operator"
   # Deploy the operator
   ko apply -f config/
