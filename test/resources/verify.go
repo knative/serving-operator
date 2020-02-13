@@ -20,7 +20,7 @@ import (
 	"runtime"
 	"testing"
 
-	mf "github.com/manifestival/manifestival"
+	mf "github.com/manifestival/client-go-client"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -202,7 +202,7 @@ func KSOperatorCRDelete(t *testing.T, clients *test.Clients, names test.Resource
 		t.Fatal("Timed out waiting on KnativeServing to delete", err)
 	}
 	_, b, _, _ := runtime.Caller(0)
-	m, err := mf.NewManifest(filepath.Join((filepath.Dir(b)+"/.."), "config/"), false, clients.Config)
+	m, err := mf.NewManifest(filepath.Join((filepath.Dir(b)+"/.."), "config/"), clients.Config)
 	if err != nil {
 		t.Fatal("Failed to load manifest", err)
 	}

@@ -252,7 +252,7 @@ func (r *Reconciler) delete(instance *servingv1alpha1.KnativeServing) error {
 		return nil
 	}
 	if len(r.servings) == 0 {
-		if err := r.config.DeleteAll(&metav1.DeleteOptions{}); err != nil {
+		if err := r.config.DeleteAll(); err != nil {
 			return err
 		}
 	}
@@ -274,17 +274,17 @@ func (r *Reconciler) deleteObsoleteResources(manifest *mf.Manifest, instance *se
 	resource.SetName("knative-ingressgateway")
 	resource.SetAPIVersion("v1")
 	resource.SetKind("Service")
-	if err := manifest.Delete(resource, &metav1.DeleteOptions{}); err != nil {
+	if err := manifest.Delete(resource); err != nil {
 		return err
 	}
 	resource.SetAPIVersion("apps/v1")
 	resource.SetKind("Deployment")
-	if err := manifest.Delete(resource, &metav1.DeleteOptions{}); err != nil {
+	if err := manifest.Delete(resource); err != nil {
 		return err
 	}
 	resource.SetAPIVersion("autoscaling/v1")
 	resource.SetKind("HorizontalPodAutoscaler")
-	if err := manifest.Delete(resource, &metav1.DeleteOptions{}); err != nil {
+	if err := manifest.Delete(resource); err != nil {
 		return err
 	}
 	// config-controller from 0.5
@@ -292,7 +292,7 @@ func (r *Reconciler) deleteObsoleteResources(manifest *mf.Manifest, instance *se
 	resource.SetName("config-controller")
 	resource.SetAPIVersion("v1")
 	resource.SetKind("ConfigMap")
-	if err := manifest.Delete(resource, &metav1.DeleteOptions{}); err != nil {
+	if err := manifest.Delete(resource); err != nil {
 		return err
 	}
 	return nil
