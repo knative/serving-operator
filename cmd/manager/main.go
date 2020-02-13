@@ -19,7 +19,6 @@ import (
 	"flag"
 	"log"
 
-	"k8s.io/client-go/tools/clientcmd"
 	"knative.dev/pkg/injection/sharedmain"
 	"knative.dev/pkg/signals"
 	"knative.dev/serving-operator/minikube-platform-example"
@@ -32,7 +31,7 @@ var pf common.Platforms
 func main() {
 	flag.Parse()
 
-	cfg, err := clientcmd.BuildConfigFromFlags(*knativeserving.MasterURL, *knativeserving.Kubeconfig)
+	cfg, err := sharedmain.GetConfig(*knativeserving.MasterURL, *knativeserving.Kubeconfig)
 	if err != nil {
 		log.Fatal("Error building kubeconfig", err)
 	}
