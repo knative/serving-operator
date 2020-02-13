@@ -28,7 +28,7 @@ var log = zap.NewExample().Sugar()
 
 type Platforms []func(kubernetes.Interface, *zap.SugaredLogger) (mf.Transformer, error)
 
-// pfKey is used as the key for associating Platforms with contexts.
+// pfKey is used as the key for associating Platforms with the context.
 type pfKey struct{}
 
 func (platforms Platforms) Transformers(kubeClientSet kubernetes.Interface, instance *servingv1alpha1.KnativeServing, slog *zap.SugaredLogger) ([]mf.Transformer, error) {

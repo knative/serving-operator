@@ -55,7 +55,7 @@ type Reconciler struct {
 	config               mf.Manifest
 	servings             map[string]int64
 	// Platform-specific behavior to affect the transform
-	platform			 common.Platforms
+	platform             common.Platforms
 }
 
 // Check that our Reconciler implements controller.Reconciler

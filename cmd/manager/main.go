@@ -22,8 +22,12 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"knative.dev/pkg/injection/sharedmain"
 	"knative.dev/pkg/signals"
+	"knative.dev/serving-operator/minikube-platform-example"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving"
+	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 )
+
+var pf common.Platforms
 
 func main() {
 	flag.Parse()
@@ -32,5 +36,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Error building kubeconfig", err)
 	}
-	sharedmain.MainWithConfig(signals.NewContext(), "serving_operator", cfg, knativeserving.NewController)
+	ctx := signals.NewContext()
+	ctx = common.WithPlatforms(ctx, minikube.Platform)
+	sharedmain.MainWithConfig(ctx, "serving_operator", cfg, knativeserving.NewController)
 }

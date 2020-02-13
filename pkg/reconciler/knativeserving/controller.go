@@ -31,7 +31,6 @@ import (
 	knativeServinginformer "knative.dev/serving-operator/pkg/client/injection/informers/serving/v1alpha1/knativeserving"
 	rbase "knative.dev/serving-operator/pkg/reconciler"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
-	"knative.dev/serving-operator/pkg/reconciler/knativeserving/minikube"
 )
 
 const (
@@ -54,13 +53,11 @@ func NewController(
 	knativeServingInformer := knativeServinginformer.Get(ctx)
 	deploymentInformer := deploymentinformer.Get(ctx)
 
-	platform := append(common.GetPlatforms(ctx), minikube.Configure)
-
 	c := &Reconciler{
 		Base:                 rbase.NewBase(ctx, controllerAgentName, cmw),
 		knativeServingLister: knativeServingInformer.Lister(),
 		servings:             map[string]int64{},
-		platform:			  platform,
+		platform:             common.GetPlatforms(ctx),
 	}
 
 	koDataDir := os.Getenv("KO_DATA_PATH")

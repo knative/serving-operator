@@ -26,7 +26,11 @@ import (
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 )
 
-var log *zap.SugaredLogger
+var (
+	log *zap.SugaredLogger
+	// Platform contains the Minikube-specific tranformer functions
+	Platform = common.Platforms{Configure}
+)
 
 // Configure minikube if we're soaking in it
 func Configure(kubeClientSet kubernetes.Interface, slog *zap.SugaredLogger) (mf.Transformer, error) {
