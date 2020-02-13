@@ -16,6 +16,8 @@ limitations under the License.
 package common
 
 import (
+	"context"
+
 	mf "github.com/manifestival/manifestival"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
@@ -25,6 +27,9 @@ import (
 var log = zap.NewExample().Sugar()
 
 type Platforms []func(kubernetes.Interface, *zap.SugaredLogger) (mf.Transformer, error)
+
+// pfKey is used as the key for associating Platforms with contexts.
+type pfKey struct{}
 
 func (platforms Platforms) Transformers(kubeClientSet kubernetes.Interface, instance *servingv1alpha1.KnativeServing, slog *zap.SugaredLogger) ([]mf.Transformer, error) {
 	log = slog.Named("extensions")
@@ -46,4 +51,18 @@ func (platforms Platforms) Transformers(kubeClientSet kubernetes.Interface, inst
 		}
 	}
 	return result, nil
+}
+
+// WithPlatforms attaches the given Platforms to the provided context.
+func WithPlatforms(ctx context.Context, pf Platforms) context.Context {
+	return context.WithValue(ctx, pfKey{}, pf)
+}
+
+// GetPlatforms extracts the Platforms from the context.
+func GetPlatforms(ctx context.Context) Platforms {
+	untyped := ctx.Value(pfKey{})
+	if untyped == nil {
+		return nil
+	}
+	return untyped.(Platforms)
 }
