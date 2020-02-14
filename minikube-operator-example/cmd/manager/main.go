@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Knative Authors
+Copyright 2020 The Knative Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package main
 
 import (
 	"flag"
-	"log"
 
 	"knative.dev/pkg/injection/sharedmain"
 	"knative.dev/pkg/signals"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving"
+	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 )
 
 func main() {
@@ -31,5 +31,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Error building kubeconfig", err)
 	}
-	sharedmain.MainWithConfig(signals.NewContext(), "serving_operator", cfg, knativeserving.NewController)
+	ctx := signals.NewContext()
+	ctx = common.WithPlatforms(ctx, platform)
+	sharedmain.MainWithConfig(ctx, "serving_operator", cfg, knativeserving.NewController)
 }
