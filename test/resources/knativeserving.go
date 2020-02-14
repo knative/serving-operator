@@ -97,6 +97,53 @@ func WaitForConfigMap(name string, client *kubernetes.Clientset, fn func(map[str
 	})
 }
 
+// WaitForKnativeServingDeploymentState polls the status of the Knative deployments every `interval`
+// until `inState` returns `true` indicating the deployments match the desired deployments.
+func WaitForKnativeServingDeploymentState(clients *test.Clients, namespace string, expectedDeployments []string,
+	inState func(deps *v1.DeploymentList, expectedDeployments []string, err error) (bool, error)) (*v1alpha1.KnativeServing, error) {
+	span := logging.GetEmitableSpan(context.Background(), fmt.Sprintf("WaitForKnativeDeploymentState/%s/%s", expectedDeployments, "KnativeDeploymentIsReady"))
+	defer span.End()
+
+	var lastState *v1alpha1.KnativeServing
+	waitErr := wait.PollImmediate(Interval, Timeout, func() (bool, error) {
+		dpList, err := clients.KubeClient.Kube.AppsV1().Deployments(namespace).List(metav1.ListOptions{})
+		return inState(dpList, expectedDeployments, err)
+	})
+
+	if waitErr != nil {
+		return lastState, waitErr
+	}
+	return lastState, nil
+}
+
+
+// IsKnativeServingDeploymentReady will check the status conditions of the deployments and return true if the deployments meet the desired status.
+func IsKnativeServingDeploymentReady(dpList *v1.DeploymentList, expectedDeployments []string, err error) (bool, error) {
+	if err != nil {
+		return false, err
+	}
+	if len(dpList.Items) != len(expectedDeployments) {
+		errMessage := fmt.Sprintf("The expected number of deployments is %v, and got %v.", len(expectedDeployments), len(dpList.Items))
+		return false, errors.New(errMessage)
+	}
+	for _, deployment := range dpList.Items {
+		if !stringInList(deployment.Name, expectedDeployments) {
+			errMessage := fmt.Sprintf("The deployment %v is not found in the expected list of deployment.", deployment.Name)
+			return false, errors.New(errMessage)
+		}
+	}
+	return true, nil
+}
+
+func stringInList(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
 // IsKnativeServingReady will check the status conditions of the KnativeServing and return true if the KnativeServing is ready.
 func IsKnativeServingReady(s *v1alpha1.KnativeServing, err error) (bool, error) {
 	return s.Status.IsReady(), err

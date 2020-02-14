@@ -17,16 +17,24 @@
 # This script provides helper methods to perform cluster actions.
 source $(dirname $0)/../vendor/knative.dev/test-infra/scripts/e2e-tests.sh
 
-# Latest serving release. This is intentionally hardcoded for now, but
-# will need the ability to test against the latest successful serving
-# CI runs in the future.
-readonly LATEST_SERVING_RELEASE_VERSION=$(git describe --match "v[0-9]*" --abbrev=0)
+# Latest serving operator release.
+readonly LATEST_SERVING_OPERATOR_RELEASE_VERSION=$(git tag | sort -V | tail -1)
+# Latest serving release.
+LATEST_SERVING_RELEASE_VERSION="v0.12.1"
 # Istio version we test with
 readonly ISTIO_VERSION="1.4.2"
 # Test without Istio mesh enabled
 readonly ISTIO_MESH=0
 # Namespace used for tests
-readonly TEST_NAMESPACE="operator-tests"
+readonly TEST_NAMESPACE="knative-serving"
+
+OPERATOR_DIR=$(dirname $0)/..
+KNATIVE_SERVING_DIR=${OPERATOR_DIR}/..
+
+INGRESS_CLASS=""
+
+HTTPS=0
+MESH=0
 
 # Choose a correct istio-crds.yaml file.
 # - $1 specifies Istio version.
@@ -48,6 +56,23 @@ function istio_yaml() {
     suffix="ci-mesh"
   fi
   echo "third_party/istio-${istio_version}/istio-${suffix}.yaml"
+}
+
+# Download the repository of Knative Serving.
+# Parameter: $1 - branch of the repository.
+function donwload_knative_serving() {
+  # Go the directory to download the source code of knative serving
+  cd ${KNATIVE_SERVING_DIR}
+  # Download the source code of knative serving
+  git clone https://github.com/knative/serving.git
+  cd serving
+  local branch=$1
+  if [ -n "${branch}" ] ; then
+    git fetch origin ${branch}:${branch}
+    git checkout ${branch}
+  fi
+  LATEST_SERVING_RELEASE_VERSION=$(git tag | sort -V | tail -1)
+  cd ${OPERATOR_DIR}
 }
 
 # Install Istio.
@@ -76,6 +101,7 @@ function create_namespace() {
 }
 
 function install_serving_operator() {
+  cd ${OPERATOR_DIR}
   header "Installing Knative Serving operator"
   # Deploy the operator
   ko apply -f config/
@@ -87,7 +113,7 @@ function knative_teardown() {
   echo ">> Uninstalling Knative serving"
   echo "Istio YAML: ${INSTALL_ISTIO_YAML}"
   echo ">> Bringing down Serving"
-  kubectl delete -n knative-serving knativeserving --all
+  kubectl delete -n $TEST_NAMESPACE KnativeServing --all
   echo ">> Bringing down Istio"
   kubectl delete --ignore-not-found=true -f "${INSTALL_ISTIO_YAML}" || return 1
   kubectl delete --ignore-not-found=true clusterrolebinding cluster-admin-binding
@@ -96,4 +122,51 @@ function knative_teardown() {
   echo ">> Removing test namespaces"
   kubectl delete all --all --ignore-not-found --now --timeout 60s -n $TEST_NAMESPACE
   kubectl delete --ignore-not-found --now --timeout 300s namespace $TEST_NAMESPACE
+}
+
+# Waits until all pods are running in the given namespace and with the given label.
+# Parameters: $1 - namespace. $2 - label
+function wait_until_pods_running_label() {
+  echo -n "Waiting until all pods in namespace $1 are up"
+  local failed_pod=""
+  for i in {1..150}; do  # timeout after 5 minutes
+    local pods="$(kubectl get pods --no-headers -n $1 $2 2>/dev/null)"
+    # All pods must be running
+    local not_running_pods=$(echo "${pods}" | grep -v Running | grep -v Completed)
+    if [[ -n "${pods}" ]] && [[ -z "${not_running_pods}" ]]; then
+      # All Pods are running or completed. Verify the containers on each Pod.
+      local all_ready=1
+      while read pod ; do
+        local status=(`echo -n ${pod} | cut -f2 -d' ' | tr '/' ' '`)
+        # Set this Pod as the failed_pod. If nothing is wrong with it, then after the checks, set
+        # failed_pod to the empty string.
+        failed_pod=$(echo -n "${pod}" | cut -f1 -d' ')
+        # All containers must be ready
+        [[ -z ${status[0]} ]] && all_ready=0 && break
+        [[ -z ${status[1]} ]] && all_ready=0 && break
+        [[ ${status[0]} -lt 1 ]] && all_ready=0 && break
+        [[ ${status[1]} -lt 1 ]] && all_ready=0 && break
+        [[ ${status[0]} -ne ${status[1]} ]] && all_ready=0 && break
+        # All the tests passed, this is not a failed pod.
+        failed_pod=""
+      done <<< "$(echo "${pods}" | grep -v Completed)"
+      if (( all_ready )); then
+        echo -e "\nAll pods are up:\n${pods}"
+        return 0
+      fi
+    elif [[ -n "${not_running_pods}" ]]; then
+      # At least one Pod is not running, just save the first one's name as the failed_pod.
+      failed_pod="$(echo "${not_running_pods}" | head -n 1 | cut -f1 -d' ')"
+    fi
+    echo -n "."
+    sleep 2
+  done
+  echo -e "\n\nERROR: timeout waiting for pods to come up\n${pods}"
+  if [[ -n "${failed_pod}" ]]; then
+    echo -e "\n\nFailed Pod (data in YAML format) - ${failed_pod}\n"
+    kubectl -n $1 get pods "${failed_pod}" -oyaml
+    echo -e "\n\nPod Logs\n"
+    kubectl -n $1 logs "${failed_pod}" --all-containers
+  fi
+  return 1
 }
