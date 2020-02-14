@@ -29,9 +29,10 @@
 source $(dirname $0)/e2e-common.sh
 
 function knative_setup() {
+  download_serving
   install_istio || fail_test "Istio installation failed"
   create_namespace
-  install_serving_operator
+  install_serving_operator_head
 }
 
 # Skip installing istio as an add-on

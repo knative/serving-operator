@@ -13,17 +13,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package e2e
+package upgrade
 
 import (
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"knative.dev/pkg/test/logstream"
-	"knative.dev/serving-operator/test"
+
+	"knative.dev/pkg/ptr"
+	ptest "knative.dev/pkg/test"
+	operatorTest "knative.dev/serving-operator/test"
 	"knative.dev/serving-operator/test/client"
 	"knative.dev/serving-operator/test/resources"
+	v1 "knative.dev/serving/pkg/apis/serving/v1"
+	serviceresourcenames "knative.dev/serving/pkg/reconciler/service/resources/names"
+	"knative.dev/serving/test"
+	"knative.dev/serving/test/e2e"
+	v1test "knative.dev/serving/test/v1"
+	v1a1test "knative.dev/serving/test/v1alpha1"
 )
 
 // TestKnativeServingPostUpgrade verifies the KnativeServing creation, deployment recreation, and KnativeServing deletion
@@ -33,13 +41,13 @@ func TestKnativeServingPostUpgrade(t *testing.T) {
 	defer cancel()
 	clients := client.Setup(t)
 
-	names := test.ResourceNames{
-		KnativeServing: test.ServingOperatorName,
-		Namespace:      test.ServingOperatorNamespace,
+	names := operatorTest.ResourceNames{
+		KnativeServing: operatorTest.ServingOperatorName,
+		Namespace:      operatorTest.ServingOperatorNamespace,
 	}
 
-	test.CleanupOnInterrupt(func() { test.TearDown(clients, names) })
-	defer test.TearDown(clients, names)
+	operatorTest.CleanupOnInterrupt(func() { operatorTest.TearDown(clients, names) })
+	defer operatorTest.TearDown(clients, names)
 
 	// Create a KnativeServing custom resource, if it does not exist
 	if _, err := resources.EnsureKnativeServingExists(clients.KnativeServing(), names); err != nil {
@@ -60,7 +68,12 @@ func TestKnativeServingPostUpgrade(t *testing.T) {
 		ksVerifyDeployment(t, clients, names, expectedDeployments)
 	})
 
-	// TODO: We will add one or sections here to run the tests tagged with postupgrade in knative serving.
+	//t.Run("verify services", func(t *testing.T) {
+	//	resources.AssertKSOperatorCRReadyStatus(t, clients, names)
+	//	testRunLatestServicePostUpgrade(t)
+	//	testRunLatestServicePostUpgradeFromScaleToZero(t)
+	//	testBYORevisionPostUpgrade(t)
+	//})
 
 	// Delete the KnativeServing to see if all resources will be removed after upgrade
 	t.Run("delete", func(t *testing.T) {
@@ -70,7 +83,7 @@ func TestKnativeServingPostUpgrade(t *testing.T) {
 }
 
 // ksVerifyDeployment verify whether the deployments have the correct number and names.
-func ksVerifyDeployment(t *testing.T, clients *test.Clients, names test.ResourceNames,
+func ksVerifyDeployment(t *testing.T, clients *operatorTest.Clients, names operatorTest.ResourceNames,
 	expectedDeployments []string) {
 	dpList, err := clients.KubeClient.Kube.AppsV1().Deployments(names.Namespace).List(metav1.ListOptions{})
 	assertEqual(t, err, nil)
@@ -94,4 +107,72 @@ func stringInList(a string, list []string) bool {
 		}
 	}
 	return false
+}
+
+func testRunLatestServicePostUpgrade(t *testing.T) {
+	updateService(serviceName, t)
+}
+
+func testRunLatestServicePostUpgradeFromScaleToZero(t *testing.T) {
+	updateService(scaleToZeroServiceName, t)
+}
+
+// testBYORevisionPostUpgrade attempts to update the RouteSpec of a Service using BYO Revision name. This
+// test is meant to catch new defaults that break the immutability of BYO Revision name.
+func testBYORevisionPostUpgrade(t *testing.T) {
+	clients := e2e.Setup(t)
+	names := test.ResourceNames{
+		Service: byoServiceName,
+	}
+
+	if _, err := v1test.UpdateServiceRouteSpec(t, clients, names, v1.RouteSpec{
+		Traffic: []v1.TrafficTarget{{
+			Tag:          "example-tag",
+			RevisionName: byoRevName,
+			Percent:      ptr.Int64(100),
+		}},
+	}); err != nil {
+		t.Fatalf("Failed to update Service: %v", err)
+	}
+}
+
+func updateService(serviceName string, t *testing.T) {
+	t.Helper()
+	clients := e2e.Setup(t)
+	names := test.ResourceNames{
+		Service: serviceName,
+	}
+
+	t.Logf("Getting service %q", names.Service)
+	svc, err := clients.ServingAlphaClient.Services.Get(names.Service, metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("Failed to get Service: %v", err)
+	}
+	names.Route = serviceresourcenames.Route(svc)
+	names.Config = serviceresourcenames.Configuration(svc)
+	names.Revision = svc.Status.LatestCreatedRevisionName
+
+	routeURL := svc.Status.URL.URL()
+
+	t.Log("Check that we can hit the old service and get the old response.")
+	assertServiceResourcesUpdated(t, clients, names, routeURL, test.PizzaPlanetText1)
+
+	t.Log("Updating the Service to use a different image")
+	newImage := ptest.ImagePath(test.PizzaPlanet2)
+	if _, err := v1a1test.PatchServiceImage(t, clients, svc, newImage); err != nil {
+		t.Fatalf("Patch update for Service %s with new image %s failed: %v", names.Service, newImage, err)
+	}
+
+	t.Log("Since the Service was updated a new Revision will be created and the Service will be updated")
+	revisionName, err := v1a1test.WaitForServiceLatestRevision(clients, names)
+	if err != nil {
+		t.Fatalf("Service %s was not updated with the Revision for image %s: %v", names.Service, test.PizzaPlanet2, err)
+	}
+	names.Revision = revisionName
+
+	t.Log("When the Service reports as Ready, everything should be ready.")
+	if err := v1a1test.WaitForServiceState(clients.ServingAlphaClient, names.Service, v1a1test.IsServiceReady, "ServiceIsReady"); err != nil {
+		t.Fatalf("The Service %s was not marked as Ready to serve traffic to Revision %s: %v", names.Service, names.Revision, err)
+	}
+	assertServiceResourcesUpdated(t, clients, names, routeURL, test.PizzaPlanetText2)
 }

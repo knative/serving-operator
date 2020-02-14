@@ -116,6 +116,14 @@
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:45c41cd27a8d986998680bfc86da0bbff5fa4f90d0f446c00636c8b099028ffe"
+  name = "github.com/blang/semver"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "ba2c2ddd89069b46a7011d4106f6868f17ee1705"
+  version = "v3.6.1"
+
+[[projects]]
   digest = "1:8f5acd4d4462b5136af644d25101f0968a7a94ee90fcb2059cec5b7cc42e0b20"
   name = "github.com/census-instrumentation/opencensus-proto"
   packages = [
@@ -156,6 +164,14 @@
   pruneopts = "NUT"
   revision = "bf22ed9311622d93e213ba31e4ae7a5771e5d379"
   version = "v4.6.0"
+
+[[projects]]
+  digest = "1:81466b4218bf6adddac2572a30ac733a9255919bc2f470b4827a317bd4ee1756"
+  name = "github.com/ghodss/yaml"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:b49dd34bdf52d28b69e41181bed939bdf48e1152ef54d21db643e3c50b3b33c0"
@@ -273,6 +289,13 @@
   revision = "6f77996f0c42f7b84e5a2b252227263f93432e9b"
 
 [[projects]]
+  digest = "1:10aa62acd56f635de190110a836aa261b3774e697b2b6a7af27d8263cf856d47"
+  name = "github.com/google/go-containerregistry"
+  packages = ["pkg/name"]
+  pruneopts = "NUT"
+  revision = "b02d448a3705facf11018efff34f1d2830be5724"
+
+[[projects]]
   digest = "1:3ec6c8e4b700377066dbb5ab3155c55f97109ab6147fee9423a68506d79bbafa"
   name = "github.com/google/gofuzz"
   packages = ["."]
@@ -322,6 +345,14 @@
   pruneopts = "NUT"
   revision = "ab0dd09aa10e2952b28e12ecd35681b20463ebab"
   version = "v0.3.1"
+
+[[projects]]
+  digest = "1:d5344bb08f1d8dc55f9a513ac4f971a9c8baeb73690b7cde56f4fe8a9143ef62"
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "c3e18be99d19e6b3e8f1559eea2c161a665c4b6b"
+  version = "v1.4.1"
 
 [[projects]]
   digest = "1:aad54f418843097fa40957329625da7662b2916b7d07e2fda181935273167ec1"
@@ -400,6 +431,14 @@
   pruneopts = "NUT"
   revision = "062c519a505b425bf0990e7f78e06568b2756b89"
   version = "v0.2.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:0e9bfc47ab9941ecc3344e580baca5deb4091177e84dd9773b48b38ec26b93d5"
+  name = "github.com/mattbaird/jsonpatch"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "81af80346b1a01caae0cbc27fd3c1ba5b11e189f"
 
 [[projects]]
   digest = "1:5985ef4caf91ece5d54817c11ea25f182697534f8ae6521eadcd628c142ac4b6"
@@ -492,14 +531,6 @@
   pruneopts = "NUT"
   revision = "6d489fc7f1d9cd890a250f3ea3431b1744b9623f"
   version = "v0.0.8"
-
-[[projects]]
-  digest = "1:7008ec21a0ce773bd21deefdb7d17fab8cb9f1ae0bc44026cdd2b658ab1582ca"
-  name = "github.com/rogpeppe/go-internal"
-  packages = ["semver"]
-  pruneopts = "NUT"
-  revision = "bc89b17ba21ce5b8a495fa55a94e3fe32ecf4ed8"
-  version = "v1.5.2"
 
 [[projects]]
   digest = "1:d0d418e1c02e6fc00259ef09d0d4f5135fc6aedac356ff0a11f4e5ef0c447270"
@@ -605,13 +636,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a53e759e143477fa880c68a055ee5b5cf0cf3c1d3207b5dd587d3c7d67a7cedf"
+  digest = "1:ecf6d2856abcee71624ec8dcb3c89c6664b8d88bff65e340798a0fc20434e70c"
   name = "golang.org/x/net"
   packages = [
     "context",
     "context/ctxhttp",
     "http/httpguts",
     "http2",
+    "http2/h2c",
     "http2/hpack",
     "idna",
     "internal/timeseries",
@@ -716,6 +748,14 @@
   ]
   pruneopts = "NUT"
   revision = "593de606220b6283bd14765aab1e244ea650cd84"
+
+[[projects]]
+  digest = "1:8392b5c29adedc5f85c66b48bb53b6c49dd91d8540f3cad5d43ef7277946718f"
+  name = "gomodules.xyz/jsonpatch"
+  packages = ["v2"]
+  pruneopts = "NUT"
+  revision = "e8422f09d27ee2c8cfb2c7f8089eb9eeb0764849"
+  version = "v2.0.1"
 
 [[projects]]
   digest = "1:658567ee8cf9149bcb84fbc019f4577be73aae97903e9bdcffc9a0abfa339ef5"
@@ -957,9 +997,21 @@
   version = "kubernetes-1.16.4"
 
 [[projects]]
-  digest = "1:c91252e3adf11b1845da569ca4a879e54a57384938777a56a7d32b5386c3b86a"
+  digest = "1:636417ff03ed51f0045e4a65b563a3cc338db010e910e33617872a70bc5a4983"
+  name = "k8s.io/apiextensions-apiserver"
+  packages = [
+    "pkg/apis/apiextensions",
+    "pkg/apis/apiextensions/v1beta1",
+  ]
+  pruneopts = "NUT"
+  revision = "bbf2aa1c9d0f69788f9cbd29ad5520574f91133c"
+  version = "kubernetes-1.16.4"
+
+[[projects]]
+  digest = "1:98949eb3a343926ea9d83cb97e60e1618dcc7492057014c8dc45b2fde423713e"
   name = "k8s.io/apimachinery"
   packages = [
+    "pkg/api/apitesting/fuzzer",
     "pkg/api/equality",
     "pkg/api/errors",
     "pkg/api/meta",
@@ -1012,7 +1064,7 @@
   version = "kubernetes-1.16.4"
 
 [[projects]]
-  digest = "1:291252304ba7620f830ca8040a0fc41182c5e48bc4d7928c97e5ff83bc636566"
+  digest = "1:db0d7ba21a4bffa411a4f3cfa8b8a6b4bcf401a6062d6dbf1b7c13191590c1bc"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -1192,6 +1244,7 @@
     "pkg/version",
     "plugin/pkg/client/auth/exec",
     "plugin/pkg/client/auth/gcp",
+    "plugin/pkg/client/auth/oidc",
     "rest",
     "rest/watch",
     "restmapper",
@@ -1291,11 +1344,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2d3f59daa4b479ff4e100a2e1d8fea6780040fdadc177869531fe4cc29407f55"
+  digest = "1:99dbf7ef753ca02399778c93a4ed4b689b28668317134ecd1fabeb07be70f354"
   name = "k8s.io/utils"
   packages = [
     "buffer",
     "integer",
+    "pointer",
     "trace",
   ]
   pruneopts = "NUT"
@@ -1313,11 +1367,16 @@
   revision = "853d6022845c703a59b5c26b125f2928219d10e5"
 
 [[projects]]
-  branch = "release-0.12"
-  digest = "1:048b68ed41f274d9f9c663076f987bb4be938273ba13bc68088910ad634a354b"
+  branch = "master"
+  digest = "1:4e57daf53aac8063751da14cd73fa59df4de487f2abec43cee61af8c03bdb87c"
   name = "knative.dev/pkg"
   packages = [
     "apis",
+    "apis/duck",
+    "apis/duck/v1",
+    "apis/duck/v1alpha1",
+    "apis/duck/v1beta1",
+    "apis/testing/fuzzer",
     "changeset",
     "client/injection/kube/client",
     "client/injection/kube/client/fake",
@@ -1339,10 +1398,13 @@
     "metrics",
     "metrics/metricskey",
     "metrics/metricstest",
+    "network",
     "profiling",
     "ptr",
+    "reconciler",
     "signals",
     "system",
+    "system/testing",
     "test",
     "test/helpers",
     "test/ingress",
@@ -1351,12 +1413,58 @@
     "test/monitoring",
     "test/spoof",
     "test/zipkin",
+    "tracker",
     "version",
     "webhook",
     "webhook/certificates/resources",
   ]
   pruneopts = "T"
-  revision = "b8dc5fbc6d2f4717a69d15382921a51f93ab4cbb"
+  revision = "0fcde3c27d8d5b21b4f4990b08c42b0fd96f4ac0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:eaa7bb94010037717fb8231827b6a05f287fa484a5d2e95da58e23df80add5c7"
+  name = "knative.dev/serving"
+  packages = [
+    "pkg/apis/autoscaling",
+    "pkg/apis/autoscaling/v1alpha1",
+    "pkg/apis/config",
+    "pkg/apis/networking",
+    "pkg/apis/networking/v1alpha1",
+    "pkg/apis/serving",
+    "pkg/apis/serving/v1",
+    "pkg/apis/serving/v1alpha1",
+    "pkg/apis/serving/v1beta1",
+    "pkg/autoscaler/config",
+    "pkg/client/clientset/versioned",
+    "pkg/client/clientset/versioned/scheme",
+    "pkg/client/clientset/versioned/typed/autoscaling/v1alpha1",
+    "pkg/client/clientset/versioned/typed/networking/v1alpha1",
+    "pkg/client/clientset/versioned/typed/serving/v1",
+    "pkg/client/clientset/versioned/typed/serving/v1alpha1",
+    "pkg/client/clientset/versioned/typed/serving/v1beta1",
+    "pkg/client/istio/clientset/versioned",
+    "pkg/client/istio/clientset/versioned/scheme",
+    "pkg/client/istio/clientset/versioned/typed/networking/v1alpha3",
+    "pkg/gc",
+    "pkg/network",
+    "pkg/pool",
+    "pkg/reconciler/revision/resources/names",
+    "pkg/reconciler/route/config",
+    "pkg/reconciler/route/domains",
+    "pkg/reconciler/route/resources/labels",
+    "pkg/reconciler/route/resources/names",
+    "pkg/reconciler/service/resources/names",
+    "pkg/resources",
+    "pkg/testing/v1",
+    "pkg/testing/v1alpha1",
+    "test",
+    "test/e2e",
+    "test/v1",
+    "test/v1alpha1",
+  ]
+  pruneopts = "NUT"
+  revision = "ce240ab0f053673d0e445917cdf59a103a5f5993"
 
 [[projects]]
   branch = "master"
@@ -1443,10 +1551,22 @@
     "knative.dev/pkg/logging/logkey",
     "knative.dev/pkg/metrics",
     "knative.dev/pkg/metrics/metricstest",
+    "knative.dev/pkg/ptr",
     "knative.dev/pkg/signals",
+    "knative.dev/pkg/system/testing",
     "knative.dev/pkg/test",
     "knative.dev/pkg/test/logging",
     "knative.dev/pkg/test/logstream",
+    "knative.dev/serving/pkg/apis/autoscaling",
+    "knative.dev/serving/pkg/apis/serving/v1",
+    "knative.dev/serving/pkg/autoscaler/config",
+    "knative.dev/serving/pkg/reconciler/revision/resources/names",
+    "knative.dev/serving/pkg/reconciler/service/resources/names",
+    "knative.dev/serving/pkg/testing/v1alpha1",
+    "knative.dev/serving/test",
+    "knative.dev/serving/test/e2e",
+    "knative.dev/serving/test/v1",
+    "knative.dev/serving/test/v1alpha1",
     "knative.dev/test-infra/scripts",
     "knative.dev/test-infra/tools/dep-collector",
   ]

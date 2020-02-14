@@ -33,21 +33,16 @@
 
 source $(dirname $0)/e2e-common.sh
 
-OPERATOR_DIR=$(dirname $0)/..
-KNATIVE_SERVING_DIR=${OPERATOR_DIR}/..
-
 function install_latest_operator_release() {
   header "Installing Knative Serving operator latest public release"
-  local full_url="https://github.com/knative/serving-operator/releases/download/${LATEST_SERVING_RELEASE_VERSION}/serving-operator.yaml"
+  local full_url="https://github.com/knative/serving-operator/releases/download/${LATEST_SERVING_OPERATOR_RELEASE_VERSION}/serving-operator.yaml"
 
   local release_yaml="$(mktemp)"
   wget "${full_url}" -O "${release_yaml}" \
       || fail_test "Unable to download latest Knative Serving Operator release."
-
+  download_serving
   install_istio || fail_test "Istio installation failed"
   kubectl apply -f "${release_yaml}" || fail_test "Knative Serving Operator latest release installation failed"
-  create_custom_resource
-  wait_until_pods_running ${TEST_NAMESPACE}
 }
 
 function create_custom_resource() {
@@ -74,20 +69,37 @@ EOF
 function knative_setup() {
   create_namespace
   install_latest_operator_release
+  create_custom_resource
+  wait_until_pods_running_label ${TEST_NAMESPACE} "-l serving.knative.dev/release=${LATEST_SERVING_RELEASE_VERSION}"
+  generate_latest_serving_manifest
 }
 
-function install_head() {
-  generate_latest_serving_manifest
-  install_serving_operator
+# Create test resources and images
+function test_setup() {
+  echo ">> Creating test resources (test/configuration/)"
+  #cd ${KNATIVE_SERVING_DIR}/serving
+  ko apply ${KO_FLAGS} -f test/configuration/ || return 1
+  if (( MESH )); then
+    kubectl label namespace serving-tests istio-injection=enabled
+    kubectl label namespace serving-tests-alt istio-injection=enabled
+    ko apply ${KO_FLAGS} -f test/configuration/mtls/ || return 1
+  fi
+
+  echo ">> Uploading test images for upgrade"
+  ${OPERATOR_DIR}/test/upload-test-images.sh
+
+  echo ">> Waiting for Ingress provider to be running..."
+  if [[ -n "${ISTIO_VERSION}" ]]; then
+    wait_until_pods_running istio-system || return 1
+    wait_until_service_has_external_ip istio-system istio-ingressgateway
+  fi
+
+  # Go back to the directory of operator
+  cd ${OPERATOR_DIR}
 }
 
 function generate_latest_serving_manifest() {
-  # Go the directory to download the source code of knative serving
-  cd ${KNATIVE_SERVING_DIR}
-
-  # Download the source code of knative serving
-  git clone https://github.com/knative/serving.git
-  cd serving
+  cd ${KNATIVE_SERVING_DIR}/serving
   COMMIT_ID=$(git rev-parse --verify HEAD)
   echo ">> The latest commit ID of Knative Serving is ${COMMIT_ID}."
   mkdir -p output
@@ -115,14 +127,50 @@ initialize $@ --skip-istio-addon
 
 TIMEOUT=20m
 
-install_head
+header "Running preupgrade tests under serving repo"
+
+#cd ${KNATIVE_SERVING_DIR}/serving
+go_test_e2e -tags=preupgrade -timeout=${TIMEOUT} ./test/upgrade \
+  --resolvabledomain="false" "--https" || fail_test
+
+# Remove this in case we failed to clean it up in an earlier test.
+rm -f /tmp/prober-signal
+
+cd ${OPERATOR_DIR}
+go_test_e2e -tags=probe -timeout=${TIMEOUT} ./test/upgrade \
+  --resolvabledomain="false" "--https" &
+PROBER_PID=$!
+echo "Prober PID is ${PROBER_PID}"
+
+install_serving_operator_head
+wait_until_pods_running_label ${TEST_NAMESPACE} "-l serving.knative.dev/release=v20200218-a8140d5d6"
 
 # If we got this far, the operator installed Knative Serving of the latest source code.
 header "Running tests for Knative Serving Operator"
 failed=0
 
-# Run the postupgrade tests
+# Run the postupgrade tests under the operator repo
 go_test_e2e -tags=postupgrade -timeout=${TIMEOUT} ./test/upgrade || failed=1
+
+header "Running tests for Knative Serving"
+# Run the postupgrade tests under the serving repo
+#cd ${KNATIVE_SERVING_DIR}/serving
+go_test_e2e -tags=postupgrade1 -timeout=${TIMEOUT} ./test/upgrade || failed=1
+
+cd ${OPERATOR_DIR}
+install_latest_operator_release
+wait_until_pods_running_label ${TEST_NAMESPACE} "-l serving.knative.dev/release=${LATEST_SERVING_RELEASE_VERSION}"
+
+header "Running postdowngrade tests"
+#cd ${KNATIVE_SERVING_DIR}/serving
+go_test_e2e -tags=postdowngrade -timeout=${TIMEOUT} ./test/upgrade \
+  --resolvabledomain="false" || fail_test
+
+echo "done" > /tmp/prober-signal
+
+cd ${OPERATOR_DIR}
+header "Waiting for prober test"
+wait ${PROBER_PID} || fail_test "Prober failed"
 
 # Require that tests succeeded.
 (( failed )) && fail_test

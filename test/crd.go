@@ -16,8 +16,18 @@ limitations under the License.
 
 package test
 
+import "net/url"
+
 // ResourceNames holds names of various resources.
 type ResourceNames struct {
 	KnativeServing string
 	Namespace      string
+
+	Config        string
+	Route         string
+	Revision      string
+	Service       string
+	TrafficTarget string
+	URL           *url.URL
+	Image         string
 }

@@ -54,7 +54,7 @@ required = [
 
 [[override]]
   name = "knative.dev/pkg"
-  branch = "release-0.12"
+  branch = "master"
 
 [[override]]
   name = "knative.dev/test-infra"
