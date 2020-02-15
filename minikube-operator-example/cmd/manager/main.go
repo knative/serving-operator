@@ -32,6 +32,6 @@ func main() {
 		log.Fatal("Error building kubeconfig", err)
 	}
 	ctx := signals.NewContext()
-	ctx = common.WithPlatforms(ctx, platform)
+	ctx = common.WithPlatforms(ctx, minikubePlatform)
 	sharedmain.MainWithConfig(ctx, "serving_operator", cfg, knativeserving.NewController)
 }

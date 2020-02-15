@@ -29,7 +29,7 @@ import (
 var (
 	log *zap.SugaredLogger
 	// Platform contains the Minikube-specific tranformer functions
-	platform = common.Platforms{Configure}
+	minikubePlatform = common.Platforms{Configure}
 )
 
 // Configure minikube if we're soaking in it
