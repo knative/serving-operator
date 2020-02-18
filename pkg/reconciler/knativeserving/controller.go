@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 
 	"github.com/go-logr/zapr"
-	mf "github.com/jcrossley3/manifestival"
+	mf "github.com/manifestival/manifestival"
 	"go.uber.org/zap"
 	"k8s.io/client-go/tools/cache"
 	deploymentinformer "knative.dev/pkg/client/injection/kube/informers/apps/v1/deployment"
