@@ -158,9 +158,12 @@
   version = "v4.6.0"
 
 [[projects]]
-  digest = "1:53becd66889185091b58ea3fc49294996f2179fb05a89702f4de7d15e581b509"
+  digest = "1:b49dd34bdf52d28b69e41181bed939bdf48e1152ef54d21db643e3c50b3b33c0"
   name = "github.com/go-logr/logr"
-  packages = ["."]
+  packages = [
+    ".",
+    "testing",
+  ]
   pruneopts = "NUT"
   revision = "9fb12b3b21c5415d16ac18dc5cd42c1cfdd40c4e"
   version = "v0.1.0"
@@ -379,15 +382,23 @@
   version = "v0.7.0"
 
 [[projects]]
-  branch = "client-go"
-  digest = "1:2643e5c61ae47443e8844998511a380db0aee817704128ddc6930ba21c2d3a07"
+  digest = "1:884250c3c0343f0c1533b7d9251fdb183a6ece6e896b69de6b254c60389c5bc9"
+  name = "github.com/manifestival/client-go-client"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "c29246a03e39f027084d68a6be8bbb7357095741"
+  version = "v0.1.0"
+
+[[projects]]
+  digest = "1:b9a54a63e2936b1d3dac7d39d0c11c092fa13bb34c3eb8a307317da5766941ee"
   name = "github.com/manifestival/manifestival"
   packages = [
     ".",
     "patch",
   ]
   pruneopts = "NUT"
-  revision = "cfc8488761512632803a70056a0284cb5b0ff0d1"
+  revision = "f5dd205675d3301a65eeb90aa4c7f793b8c0897f"
+  version = "v0.1.0"
 
 [[projects]]
   digest = "1:5985ef4caf91ece5d54817c11ea25f182697534f8ae6521eadcd628c142ac4b6"
@@ -422,12 +433,12 @@
   version = "v0.2.2"
 
 [[projects]]
-  digest = "1:4af5ef5028af0c996043a4ed5731c51a649fc3d27d700a2d88a47d51591ab993"
+  digest = "1:a9c110560d6c7ae97fe37ca11a1eb711c41cd154121b36bee7284289d8d21739"
   name = "github.com/operator-framework/operator-sdk"
   packages = ["pkg/restmapper"]
   pruneopts = "NUT"
-  revision = "78c472461e75e6c64589cfadf577a2004b8a26b3"
-  version = "v0.8.0"
+  revision = "e35ec7b722ba095e6438f63fafb9e7326870b486"
+  version = "v0.15.1"
 
 [[projects]]
   digest = "1:4047c378584616813d610c9f993bf90dd0d07aed8d94bd3bc299cd35ececdcba"
@@ -1371,6 +1382,7 @@
   input-imports = [
     "github.com/go-logr/zapr",
     "github.com/go-openapi/spec",
+    "github.com/manifestival/client-go-client",
     "github.com/manifestival/manifestival",
     "github.com/pkg/errors",
     "go.opencensus.io/stats",
