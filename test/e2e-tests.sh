@@ -30,6 +30,7 @@ source $(dirname $0)/e2e-common.sh
 
 function knative_setup() {
   install_istio || fail_test "Istio installation failed"
+  create_namespace
   install_serving_operator
 }
 

@@ -352,17 +352,6 @@
   version = "v0.3.8"
 
 [[projects]]
-  branch = "client-go"
-  digest = "1:e1795db5018a02477e3ae7cd61ff67c460748ca6597b0fc1fed45b62a7ab9e21"
-  name = "github.com/jcrossley3/manifestival"
-  packages = [
-    ".",
-    "patch",
-  ]
-  pruneopts = "NUT"
-  revision = "144622fb1ed6d5ea8f60aa29abfbbd56ad8306c1"
-
-[[projects]]
   digest = "1:1f2aebae7e7c856562355ec0198d8ca2fa222fb05e5b1b66632a1fce39631885"
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
@@ -388,6 +377,17 @@
   pruneopts = "NUT"
   revision = "1b2b06f5f209fea48ff5922d8bfb2b9ed5d8f00b"
   version = "v0.7.0"
+
+[[projects]]
+  branch = "client-go"
+  digest = "1:2643e5c61ae47443e8844998511a380db0aee817704128ddc6930ba21c2d3a07"
+  name = "github.com/manifestival/manifestival"
+  packages = [
+    ".",
+    "patch",
+  ]
+  pruneopts = "NUT"
+  revision = "cfc8488761512632803a70056a0284cb5b0ff0d1"
 
 [[projects]]
   digest = "1:5985ef4caf91ece5d54817c11ea25f182697534f8ae6521eadcd628c142ac4b6"
@@ -1371,7 +1371,7 @@
   input-imports = [
     "github.com/go-logr/zapr",
     "github.com/go-openapi/spec",
-    "github.com/jcrossley3/manifestival",
+    "github.com/manifestival/manifestival",
     "github.com/pkg/errors",
     "go.opencensus.io/stats",
     "go.opencensus.io/stats/view",
