@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package minikube
+package main
 
 import (
 	"go.uber.org/zap"
@@ -26,7 +26,11 @@ import (
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 )
 
-var log *zap.SugaredLogger
+var (
+	log *zap.SugaredLogger
+	// Platform contains the Minikube-specific tranformer functions
+	minikubePlatform = common.Platforms{Configure}
+)
 
 // Configure minikube if we're soaking in it
 func Configure(kubeClientSet kubernetes.Interface, slog *zap.SugaredLogger) (mf.Transformer, error) {

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minikube-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: minikube-operator
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        name: minikube-operator
+    spec:
+      serviceAccountName: minikube-operator
+      containers:
+        - name: minikube-operator
+          image: knative.dev/serving-operator/minikube-operator-example/cmd/manager
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "minikube-operator"
+            - name: SYSTEM_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: METRICS_DOMAIN
+              value: knative.dev/serving-operator
+            - name: CONFIG_LOGGING_NAME
+              value: config-logging
+            - name: CONFIG_OBSERVABILITY_NAME
+              value: config-observability
+          ports:
+            - name: metrics
+              containerPort: 9090

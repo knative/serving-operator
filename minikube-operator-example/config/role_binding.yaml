@@ -1,0 +1,24 @@
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: minikube-operator
+subjects:
+- kind: ServiceAccount
+  name: minikube-operator
+roleRef:
+  kind: Role
+  name: minikube-operator
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: minikube-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: minikube-operator
+subjects:
+- kind: ServiceAccount
+  name: minikube-operator
+  namespace: default

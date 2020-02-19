@@ -47,11 +47,6 @@ const (
 	deletionChange = "deletion"
 )
 
-var (
-	// Platform-specific behavior to affect the installation
-	platform common.Platforms
-)
-
 // Reconciler implements controller.Reconciler for Knativeserving resources.
 type Reconciler struct {
 	*reconciler.Base
@@ -59,6 +54,8 @@ type Reconciler struct {
 	knativeServingLister listers.KnativeServingLister
 	config               mf.Manifest
 	servings             map[string]int64
+	// Platform-specific behavior to affect the transform
+	platform             common.Platforms
 }
 
 // Check that our Reconciler implements controller.Reconciler
@@ -160,7 +157,7 @@ func (r *Reconciler) reconcile(ctx context.Context, ks *servingv1alpha1.KnativeS
 // Transform the resources
 func (r *Reconciler) transform(instance *servingv1alpha1.KnativeServing) (*mf.Manifest, error) {
 	r.Logger.Debug("Transforming manifest")
-	transforms, err := platform.Transformers(r.KubeClientSet, instance, r.Logger)
+	transforms, err := r.platform.Transformers(r.KubeClientSet, instance, r.Logger)
 	if err != nil {
 		return nil, err
 	}

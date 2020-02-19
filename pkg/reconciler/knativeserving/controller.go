@@ -31,6 +31,7 @@ import (
 	"knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	knativeServinginformer "knative.dev/serving-operator/pkg/client/injection/informers/serving/v1alpha1/knativeserving"
 	rbase "knative.dev/serving-operator/pkg/reconciler"
+	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 )
 
 const (
@@ -56,6 +57,7 @@ func NewController(
 		Base:                 rbase.NewBase(ctx, controllerAgentName, cmw),
 		knativeServingLister: knativeServingInformer.Lister(),
 		servings:             map[string]int64{},
+		platform:             common.GetPlatforms(ctx),
 	}
 
 	koDataDir := os.Getenv("KO_DATA_PATH")
