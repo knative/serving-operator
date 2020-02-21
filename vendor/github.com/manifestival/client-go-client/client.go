@@ -3,6 +3,7 @@ package client
 import (
 	mf "github.com/manifestival/manifestival"
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -38,38 +39,45 @@ type clientGoClient struct {
 // verify implementation
 var _ mf.Client = (*clientGoClient)(nil)
 
-func (c *clientGoClient) Create(obj *unstructured.Unstructured, options *metav1.CreateOptions) error {
+func (c *clientGoClient) Create(obj *unstructured.Unstructured, options ...mf.ApplyOption) error {
 	resource, err := c.resourceInterface(obj)
 	if err != nil {
 		return err
 	}
-	_, err = resource.Create(obj, *options)
+	opts := mf.ApplyWith(options)
+	_, err = resource.Create(obj, *opts.ForCreate)
 	return err
 }
 
-func (c *clientGoClient) Update(obj *unstructured.Unstructured, options *metav1.UpdateOptions) error {
+func (c *clientGoClient) Update(obj *unstructured.Unstructured, options ...mf.ApplyOption) error {
 	resource, err := c.resourceInterface(obj)
 	if err != nil {
 		return err
 	}
-	_, err = resource.Update(obj, *options)
+	opts := mf.ApplyWith(options)
+	_, err = resource.Update(obj, *opts.ForUpdate)
 	return err
 }
 
-func (c *clientGoClient) Delete(obj *unstructured.Unstructured, options *metav1.DeleteOptions) error {
+func (c *clientGoClient) Delete(obj *unstructured.Unstructured, options ...mf.DeleteOption) error {
 	resource, err := c.resourceInterface(obj)
 	if err != nil {
 		return err
 	}
-	return resource.Delete(obj.GetName(), options)
+	opts := mf.DeleteWith(options)
+	err = resource.Delete(obj.GetName(), opts.ForDelete)
+	if apierrors.IsNotFound(err) && opts.IgnoreNotFound {
+		return nil
+	}
+	return err
 }
 
-func (c *clientGoClient) Get(obj *unstructured.Unstructured, options *metav1.GetOptions) (*unstructured.Unstructured, error) {
+func (c *clientGoClient) Get(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 	resource, err := c.resourceInterface(obj)
 	if err != nil {
 		return nil, err
 	}
-	return resource.Get(obj.GetName(), *options)
+	return resource.Get(obj.GetName(), metav1.GetOptions{})
 }
 
 func (c *clientGoClient) resourceInterface(obj *unstructured.Unstructured) (dynamic.ResourceInterface, error) {

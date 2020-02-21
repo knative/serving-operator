@@ -25,20 +25,17 @@ import (
 
 func TestManifestVersionSame(t *testing.T) {
 	_, b, _, _ := runtime.Caller(0)
-	resources, err := mf.Parse(filepath.Join(filepath.Dir(b)+"/..", "cmd/manager/kodata/knative-serving/"), false)
+	manifest, err := mf.NewManifest(filepath.Join(filepath.Dir(b)+"/..", "cmd/manager/kodata/knative-serving/"))
 	if err != nil {
 		t.Fatal("Failed to load manifest", err)
 	}
 
 	// example: v0.10.1
 	expectedLabelValue := "v" + Version
+	label := "serving.knative.dev/release"
 
-	for _, resource := range resources {
-		v, found := resource.GetLabels()["serving.knative.dev/release"]
-		if !found {
-			// label is missing for this resource. we cannot do the check.
-			continue
-		}
+	for _, resource := range manifest.Filter(mf.ByLabel(label, "")).Resources() {
+		v := resource.GetLabels()[label]
 		if v != expectedLabelValue {
 			t.Errorf("Version info in manifest and operator don't match. got: %v, want: %v. Resource GVK: %v, Resource name: %v", v, expectedLabelValue,
 				resource.GroupVersionKind(), resource.GetName())

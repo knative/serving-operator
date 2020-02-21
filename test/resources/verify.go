@@ -209,7 +209,7 @@ func KSOperatorCRDelete(t *testing.T, clients *test.Clients, names test.Resource
 	if err := verifyNoKSOperatorCR(clients); err != nil {
 		t.Fatal(err)
 	}
-	for _, u := range m.Resources {
+	for _, u := range m.Resources() {
 		if u.GetKind() == "Namespace" {
 			// The namespace should be skipped, because when the CR is removed, the Manifest to be removed has
 			// been modified, since the namespace can be injected.
