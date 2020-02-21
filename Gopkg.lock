@@ -382,23 +382,24 @@
   version = "v0.7.0"
 
 [[projects]]
-  digest = "1:884250c3c0343f0c1533b7d9251fdb183a6ece6e896b69de6b254c60389c5bc9"
+  digest = "1:dd895309ca7dbb6f5ef345c76f4e1dfe23accbcdaacde852bfcdabba1f754e5b"
   name = "github.com/manifestival/client-go-client"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "c29246a03e39f027084d68a6be8bbb7357095741"
-  version = "v0.1.0"
+  revision = "c2f50cd3164d79466429c02e5599dfe61a40cc8e"
+  version = "v0.2.0"
 
 [[projects]]
-  digest = "1:b9a54a63e2936b1d3dac7d39d0c11c092fa13bb34c3eb8a307317da5766941ee"
+  digest = "1:a0cb66a2605af422373e94b7ce8f9904cf22616e16b74e8601cc529808ffc5a1"
   name = "github.com/manifestival/manifestival"
   packages = [
     ".",
     "patch",
+    "sources",
   ]
   pruneopts = "NUT"
-  revision = "f5dd205675d3301a65eeb90aa4c7f793b8c0897f"
-  version = "v0.1.0"
+  revision = "062c519a505b425bf0990e7f78e06568b2756b89"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:5985ef4caf91ece5d54817c11ea25f182697534f8ae6521eadcd628c142ac4b6"
