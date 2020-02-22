@@ -22,7 +22,6 @@ import (
 
 	mf "github.com/manifestival/client-go-client"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -210,13 +209,11 @@ func KSOperatorCRDelete(t *testing.T, clients *test.Clients, names test.Resource
 		t.Fatal(err)
 	}
 	for _, u := range m.Resources() {
-		if u.GetKind() == "Namespace" {
-			// The namespace should be skipped, because when the CR is removed, the Manifest to be removed has
-			// been modified, since the namespace can be injected.
+		if u.GetKind() == "Namespace" || u.GetKind() == "CustomResourceDefinition" {
+			// These won't be deleted
 			continue
 		}
-		gvrs, _ := meta.UnsafeGuessKindToResource(u.GroupVersionKind())
-		if _, err := clients.Dynamic.Resource(gvrs).Get(u.GetName(), metav1.GetOptions{}); !apierrs.IsNotFound(err) {
+		if _, err := m.Client.Get(&u); !apierrs.IsNotFound(err) {
 			t.Fatalf("The %s %s failed to be deleted: %v", u.GetKind(), u.GetName(), err)
 		}
 	}
