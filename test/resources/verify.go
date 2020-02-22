@@ -20,7 +20,8 @@ import (
 	"runtime"
 	"testing"
 
-	mf "github.com/manifestival/client-go-client"
+	mfc "github.com/manifestival/client-go-client"
+	mf "github.com/manifestival/manifestival"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -201,20 +202,27 @@ func KSOperatorCRDelete(t *testing.T, clients *test.Clients, names test.Resource
 		t.Fatal("Timed out waiting on KnativeServing to delete", err)
 	}
 	_, b, _, _ := runtime.Caller(0)
-	m, err := mf.NewManifest(filepath.Join((filepath.Dir(b)+"/.."), "config/"), clients.Config)
+	m, err := mfc.NewManifest(filepath.Join((filepath.Dir(b)+"/.."), "config/"), clients.Config)
 	if err != nil {
 		t.Fatal("Failed to load manifest", err)
 	}
 	if err := verifyNoKSOperatorCR(clients); err != nil {
 		t.Fatal(err)
 	}
-	for _, u := range m.Resources() {
-		if u.GetKind() == "Namespace" || u.GetKind() == "CustomResourceDefinition" {
-			// These won't be deleted
-			continue
-		}
+
+	// TODO: pred := mf.Any(mf.CRDs, mf.ByKind("Namespace"))
+	// Loop through both pred and mf.None(pred)
+
+	// verify all but the CRD's and the Namespace are gone
+	for _, u := range m.Filter(mf.NotCRDs, mf.Complement(mf.ByKind("Namespace"))).Resources() {
 		if _, err := m.Client.Get(&u); !apierrs.IsNotFound(err) {
 			t.Fatalf("The %s %s failed to be deleted: %v", u.GetKind(), u.GetName(), err)
+		}
+	}
+	// verify all the CRD's remain
+	for _, u := range m.Filter(mf.JustCRDs).Resources() {
+		if _, err := m.Client.Get(&u); apierrs.IsNotFound(err) {
+			t.Fatalf("The %s CRD was deleted", u.GetName())
 		}
 	}
 }
