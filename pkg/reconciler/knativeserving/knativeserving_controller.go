@@ -247,7 +247,7 @@ func (r *Reconciler) delete(instance *servingv1alpha1.KnativeServing) error {
 		return nil
 	}
 	if len(r.servings) == 0 {
-		if err := r.config.Delete(); err != nil {
+		if err := r.config.Filter(mf.NotCRDs).Delete(); err != nil {
 			return err
 		}
 	}
