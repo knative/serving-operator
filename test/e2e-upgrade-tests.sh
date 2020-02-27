@@ -33,9 +33,6 @@
 
 source $(dirname $0)/e2e-common.sh
 
-OPERATOR_DIR=$(dirname $0)/..
-KNATIVE_SERVING_DIR=${OPERATOR_DIR}/..
-
 function install_latest_operator_release() {
   header "Installing Knative Serving operator latest public release"
   local full_url="https://github.com/knative/serving-operator/releases/download/${LATEST_SERVING_RELEASE_VERSION}/serving-operator.yaml"
