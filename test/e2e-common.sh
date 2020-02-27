@@ -26,7 +26,7 @@ readonly ISTIO_VERSION="1.4.2"
 # Test without Istio mesh enabled
 readonly ISTIO_MESH=0
 # Namespace used for tests
-readonly TEST_NAMESPACE="operator-tests"
+readonly TEST_NAMESPACE="knative-serving"
 
 # Choose a correct istio-crds.yaml file.
 # - $1 specifies Istio version.
