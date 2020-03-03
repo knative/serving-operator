@@ -237,3 +237,11 @@ func verifyNoKSOperatorCR(clients *test.Clients) error {
 	}
 	return nil
 }
+
+// AssertKSOperatorDeploymentStatus verifies if the Knative deployments reach the READY status.
+func AssertKSOperatorDeploymentStatus(t *testing.T, clients *test.Clients, namespace string, expectedDeployments []string) {
+	if _, err := WaitForKnativeServingDeploymentState(clients, namespace, expectedDeployments,
+		IsKnativeServingDeploymentReady); err != nil {
+		t.Fatalf("Knative Serving deployments failed to meet the expected deployments: %v", err)
+	}
+}

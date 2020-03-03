@@ -17,16 +17,20 @@
 # This script provides helper methods to perform cluster actions.
 source $(dirname $0)/../vendor/knative.dev/test-infra/scripts/e2e-tests.sh
 
-# Latest serving release. This is intentionally hardcoded for now, but
-# will need the ability to test against the latest successful serving
-# CI runs in the future.
-readonly LATEST_SERVING_RELEASE_VERSION=$(git describe --match "v[0-9]*" --abbrev=0)
+# Latest serving operator release.
+readonly LATEST_SERVING_OPERATOR_RELEASE_VERSION=$(git tag | sort -V | tail -1)
+# Latest serving release. This can be different from LATEST_SERVING_OPERATOR_RELEASE_VERSION.
+LATEST_SERVING_RELEASE_VERSION="v0.12.1"
 # Istio version we test with
 readonly ISTIO_VERSION="1.4.2"
 # Test without Istio mesh enabled
 readonly ISTIO_MESH=0
 # Namespace used for tests
-readonly TEST_NAMESPACE="operator-tests"
+readonly TEST_NAMESPACE="knative-serving"
+
+OPERATOR_DIR=$(dirname $0)/..
+KNATIVE_SERVING_DIR=${OPERATOR_DIR}/..
+release_yaml="$(mktemp)"
 
 # Choose a correct istio-crds.yaml file.
 # - $1 specifies Istio version.
@@ -50,6 +54,24 @@ function istio_yaml() {
   echo "third_party/istio-${istio_version}/istio-${suffix}.yaml"
 }
 
+# Download the repository of Knative Serving. The purpose of this function is to download the source code of serving
+# and retrive the LATEST_SERVING_RELEASE_VERSION for further use.
+# Parameter: $1 - branch of the repository.
+function donwload_knative_serving() {
+  # Go the directory to download the source code of knative serving
+  cd ${KNATIVE_SERVING_DIR}
+  # Download the source code of knative serving
+  git clone https://github.com/knative/serving.git
+  cd serving
+  local branch=$1
+  if [ -n "${branch}" ] ; then
+    git fetch origin ${branch}:${branch}
+    git checkout ${branch}
+  fi
+  LATEST_SERVING_RELEASE_VERSION=$(git tag | sort -V | tail -1)
+  cd ${OPERATOR_DIR}
+}
+
 # Install Istio.
 function install_istio() {
   local base_url="https://raw.githubusercontent.com/knative/serving/${LATEST_SERVING_RELEASE_VERSION}"
@@ -59,7 +81,7 @@ function install_istio() {
   echo ">> Installing Istio"
   echo "Istio CRD YAML: ${INSTALL_ISTIO_CRD_YAML}"
   echo "Istio YAML: ${INSTALL_ISTIO_YAML}"
-    
+
   echo ">> Bringing up Istio"
   echo ">> Running Istio CRD installer"
   kubectl apply -f "${INSTALL_ISTIO_CRD_YAML}" || return 1
@@ -76,6 +98,7 @@ function create_namespace() {
 }
 
 function install_serving_operator() {
+  cd ${OPERATOR_DIR}
   header "Installing Knative Serving operator"
   # Deploy the operator
   ko apply -f config/
@@ -87,7 +110,7 @@ function knative_teardown() {
   echo ">> Uninstalling Knative serving"
   echo "Istio YAML: ${INSTALL_ISTIO_YAML}"
   echo ">> Bringing down Serving"
-  kubectl delete -n knative-serving knativeserving --all
+  kubectl delete -n $TEST_NAMESPACE KnativeServing --all
   echo ">> Bringing down Istio"
   kubectl delete --ignore-not-found=true -f "${INSTALL_ISTIO_YAML}" || return 1
   kubectl delete --ignore-not-found=true clusterrolebinding cluster-admin-binding
