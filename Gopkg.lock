@@ -116,6 +116,14 @@
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:45c41cd27a8d986998680bfc86da0bbff5fa4f90d0f446c00636c8b099028ffe"
+  name = "github.com/blang/semver"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "ba2c2ddd89069b46a7011d4106f6868f17ee1705"
+  version = "v3.6.1"
+
+[[projects]]
   digest = "1:8f5acd4d4462b5136af644d25101f0968a7a94ee90fcb2059cec5b7cc42e0b20"
   name = "github.com/census-instrumentation/opencensus-proto"
   packages = [
@@ -222,14 +230,6 @@
   pruneopts = "NUT"
   revision = "5628607bb4c51c3157aacc3a50f0ab707582b805"
   version = "v1.3.1"
-
-[[projects]]
-  branch = "master"
-  digest = "1:e2b86e41f3d669fc36b50d31d32d22c8ac656c75aa5ea89717ce7177e134ff2a"
-  name = "github.com/golang/glog"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
   branch = "master"
@@ -492,14 +492,6 @@
   pruneopts = "NUT"
   revision = "6d489fc7f1d9cd890a250f3ea3431b1744b9623f"
   version = "v0.0.8"
-
-[[projects]]
-  digest = "1:7008ec21a0ce773bd21deefdb7d17fab8cb9f1ae0bc44026cdd2b658ab1582ca"
-  name = "github.com/rogpeppe/go-internal"
-  packages = ["semver"]
-  pruneopts = "NUT"
-  revision = "bc89b17ba21ce5b8a495fa55a94e3fe32ecf4ed8"
-  version = "v1.5.2"
 
 [[projects]]
   digest = "1:d0d418e1c02e6fc00259ef09d0d4f5135fc6aedac356ff0a11f4e5ef0c447270"
@@ -957,7 +949,18 @@
   version = "kubernetes-1.16.4"
 
 [[projects]]
-  digest = "1:c91252e3adf11b1845da569ca4a879e54a57384938777a56a7d32b5386c3b86a"
+  digest = "1:636417ff03ed51f0045e4a65b563a3cc338db010e910e33617872a70bc5a4983"
+  name = "k8s.io/apiextensions-apiserver"
+  packages = [
+    "pkg/apis/apiextensions",
+    "pkg/apis/apiextensions/v1beta1",
+  ]
+  pruneopts = "NUT"
+  revision = "bbf2aa1c9d0f69788f9cbd29ad5520574f91133c"
+  version = "kubernetes-1.16.4"
+
+[[projects]]
+  digest = "1:8b6b6e5e908be9312cad8a22372f7b1aae88853a3c2541eefa25f6209eb367c6"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/equality",
@@ -998,6 +1001,7 @@
     "pkg/util/runtime",
     "pkg/util/sets",
     "pkg/util/strategicpatch",
+    "pkg/util/uuid",
     "pkg/util/validation",
     "pkg/util/validation/field",
     "pkg/util/wait",
@@ -1012,7 +1016,7 @@
   version = "kubernetes-1.16.4"
 
 [[projects]]
-  digest = "1:291252304ba7620f830ca8040a0fc41182c5e48bc4d7928c97e5ff83bc636566"
+  digest = "1:26e80f4304d08660126f77728697d68ef73bf6694d56683676c280a8f4b1f385"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -1203,6 +1207,8 @@
     "tools/clientcmd/api",
     "tools/clientcmd/api/latest",
     "tools/clientcmd/api/v1",
+    "tools/leaderelection",
+    "tools/leaderelection/resourcelock",
     "tools/metrics",
     "tools/pager",
     "tools/record",
@@ -1291,11 +1297,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2d3f59daa4b479ff4e100a2e1d8fea6780040fdadc177869531fe4cc29407f55"
+  digest = "1:99dbf7ef753ca02399778c93a4ed4b689b28668317134ecd1fabeb07be70f354"
   name = "k8s.io/utils"
   packages = [
     "buffer",
     "integer",
+    "pointer",
     "trace",
   ]
   pruneopts = "NUT"
@@ -1313,8 +1320,8 @@
   revision = "853d6022845c703a59b5c26b125f2928219d10e5"
 
 [[projects]]
-  branch = "release-0.12"
-  digest = "1:048b68ed41f274d9f9c663076f987bb4be938273ba13bc68088910ad634a354b"
+  branch = "release-0.13"
+  digest = "1:77db7d7e7364e6acb7fe627ddb377f94e5199b020be96aa0e8654cd864db2d7a"
   name = "knative.dev/pkg"
   packages = [
     "apis",
@@ -1334,6 +1341,7 @@
     "injection/sharedmain",
     "kmeta",
     "kmp",
+    "leaderelection",
     "logging",
     "logging/logkey",
     "metrics",
@@ -1341,6 +1349,7 @@
     "metrics/metricstest",
     "profiling",
     "ptr",
+    "reconciler",
     "signals",
     "system",
     "test",
@@ -1356,7 +1365,7 @@
     "webhook/certificates/resources",
   ]
   pruneopts = "T"
-  revision = "b8dc5fbc6d2f4717a69d15382921a51f93ab4cbb"
+  revision = "2006e107e39eb0e661e4437ba76b16465162689e"
 
 [[projects]]
   branch = "master"

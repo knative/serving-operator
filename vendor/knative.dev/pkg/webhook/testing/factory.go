@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	fakeapixclient "knative.dev/pkg/client/injection/apiextensions/client/fake"
 	fakekubeclient "knative.dev/pkg/client/injection/kube/client/fake"
 	fakedynamicclient "knative.dev/pkg/injection/clients/dynamicclient/fake"
 
@@ -50,7 +51,7 @@ type Ctor func(context.Context, *Listers, configmap.Watcher) controller.Reconcil
 // MakeFactory creates a reconciler factory with fake clients and controller created by `ctor`.
 func MakeFactory(ctor Ctor) rtesting.Factory {
 	return func(t *testing.T, r *rtesting.TableRow) (
-		controller.Reconciler, rtesting.ActionRecorderList, rtesting.EventList, *rtesting.FakeStatsReporter) {
+		controller.Reconciler, rtesting.ActionRecorderList, rtesting.EventList) {
 		ls := NewListers(r.Objects)
 
 		ctx := r.Ctx
@@ -61,6 +62,7 @@ func MakeFactory(ctor Ctor) rtesting.Factory {
 		ctx = logging.WithLogger(ctx, logger)
 
 		ctx, kubeClient := fakekubeclient.With(ctx, ls.GetKubeObjects()...)
+		ctx, apixClient := fakeapixclient.With(ctx, ls.GetApiExtensionsObjects()...)
 		ctx, dynamicClient := fakedynamicclient.With(ctx,
 			ls.NewScheme(), ToUnstructured(t, ls.NewScheme(), r.Objects)...)
 
@@ -74,11 +76,17 @@ func MakeFactory(ctor Ctor) rtesting.Factory {
 
 		eventRecorder := record.NewFakeRecorder(maxEventBufferSize)
 		ctx = controller.WithEventRecorder(ctx, eventRecorder)
-		statsReporter := &rtesting.FakeStatsReporter{}
 
 		// This is needed for the tests that use generated names and
 		// the object cannot be created beforehand.
 		kubeClient.PrependReactor("create", "*",
+			func(action ktesting.Action) (bool, runtime.Object, error) {
+				ca := action.(ktesting.CreateAction)
+				ls.IndexerFor(ca.GetObject()).Add(ca.GetObject())
+				return false, nil, nil
+			},
+		)
+		apixClient.PrependReactor("create", "*",
 			func(action ktesting.Action) (bool, runtime.Object, error) {
 				ca := action.(ktesting.CreateAction)
 				ls.IndexerFor(ca.GetObject()).Add(ca.GetObject())
@@ -93,13 +101,14 @@ func MakeFactory(ctor Ctor) rtesting.Factory {
 
 		for _, reactor := range r.WithReactors {
 			kubeClient.PrependReactor("*", "*", reactor)
+			apixClient.PrependReactor("*", "*", reactor)
 			dynamicClient.PrependReactor("*", "*", reactor)
 		}
 
-		actionRecorderList := rtesting.ActionRecorderList{dynamicClient, kubeClient}
+		actionRecorderList := rtesting.ActionRecorderList{dynamicClient, kubeClient, apixClient}
 		eventList := rtesting.EventList{Recorder: eventRecorder}
 
-		return c, actionRecorderList, eventList, statsReporter
+		return c, actionRecorderList, eventList
 	}
 }
 
