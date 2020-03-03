@@ -149,7 +149,6 @@ func WaitForKnativeServingDeploymentState(clients *test.Clients, namespace strin
 	return lastState, nil
 }
 
-
 // IsKnativeServingDeploymentReady will check the status conditions of the deployments and return true if the deployments meet the desired status.
 func IsKnativeServingDeploymentReady(dpList *v1.DeploymentList, expectedDeployments []string, err error) (bool, error) {
 	if err != nil {
