@@ -1360,14 +1360,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4ba0f80b3feed917d2c9a1aa79ea95836c3aef84589431cff77ffd01615a1150"
+  digest = "1:e7ea104eff9c91ce48f1730ab8b4098faa1ea519162ccbbbca68c205428f0e21"
   name = "knative.dev/test-infra"
   packages = [
     "scripts",
     "tools/dep-collector",
   ]
   pruneopts = "UT"
-  revision = "dfeb254e57938f9e30b179034e9833e196ec899f"
+  revision = "83fb33bf8fcfe5c0e021eb6c9bb8733a5b8423c0"
 
 [[projects]]
   digest = "1:8730e0150dfb2b7e173890c8b9868e7a273082ef8e39f4940e3506a481cf895c"
@@ -1396,7 +1396,6 @@
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/equality",
     "k8s.io/apimachinery/pkg/api/errors",
-    "k8s.io/apimachinery/pkg/api/meta",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
     "k8s.io/apimachinery/pkg/labels",
