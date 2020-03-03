@@ -9,3 +9,9 @@
 # Temporary output of build tools
 bazel-*
 *.out
+
+# Emacs files
+*~
+
+# Generated Test Code
+test/genclient

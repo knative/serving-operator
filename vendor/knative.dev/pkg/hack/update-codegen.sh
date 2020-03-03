@@ -60,9 +60,18 @@ ${CODEGEN_PKG}/generate-groups.sh "deepcopy" \
 
 # Depends on generate-groups.sh to install bin/deepcopy-gen
 ${GOPATH}/bin/deepcopy-gen --input-dirs \
-  knative.dev/pkg/apis,knative.dev/pkg/tracker,knative.dev/pkg/logging,knative.dev/pkg/metrics,knative.dev/pkg/testing,knative.dev/pkg/testing/duck \
+  $(echo \
+  knative.dev/pkg/apis \
+  knative.dev/pkg/tracker \
+  knative.dev/pkg/logging \
+  knative.dev/pkg/metrics \
+  knative.dev/pkg/testing \
+  knative.dev/pkg/testing/duck \
+  knative.dev/pkg/webhook/resourcesemantics/conversion/internal \
+  | sed "s/ /,/g") \
   -O zz_generated.deepcopy \
   --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt
 
 # Make sure our dependencies are up-to-date
 ${REPO_ROOT_DIR}/hack/update-deps.sh
+
