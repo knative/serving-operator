@@ -52,6 +52,12 @@ rules:
   - '*'
   verbs:
   - '*'
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - '*'
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
