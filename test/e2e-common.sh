@@ -22,7 +22,7 @@ readonly LATEST_SERVING_OPERATOR_RELEASE_VERSION=$(git tag | sort -V | tail -1)
 # Latest serving release. This can be different from LATEST_SERVING_OPERATOR_RELEASE_VERSION.
 LATEST_SERVING_RELEASE_VERSION="v0.12.1"
 # Istio version we test with
-readonly ISTIO_VERSION="1.4.2"
+readonly ISTIO_VERSION="1.4-latest"
 # Test without Istio mesh enabled
 readonly ISTIO_MESH=0
 # Namespace used for tests
@@ -36,7 +36,7 @@ release_yaml="$(mktemp)"
 # - $1 specifies Istio version.
 function istio_crds_yaml() {
   local istio_version="$1"
-  echo "third_party/istio-${istio_version}/istio-crds.yaml"
+  echo "third_party/${istio_version}/istio-crds.yaml"
 }
 
 # Choose a correct istio.yaml file.
@@ -51,7 +51,7 @@ function istio_yaml() {
   else
     suffix="ci-mesh"
   fi
-  echo "third_party/istio-${istio_version}/istio-${suffix}.yaml"
+  echo "third_party/${istio_version}/istio-${suffix}.yaml"
 }
 
 # Download the repository of Knative Serving. The purpose of this function is to download the source code of serving
@@ -75,8 +75,12 @@ function donwload_knative_serving() {
 # Install Istio.
 function install_istio() {
   local base_url="https://raw.githubusercontent.com/knative/serving/${LATEST_SERVING_RELEASE_VERSION}"
-  INSTALL_ISTIO_CRD_YAML="${base_url}/$(istio_crds_yaml $ISTIO_VERSION)"
-  INSTALL_ISTIO_YAML="${base_url}/$(istio_yaml $ISTIO_VERSION $ISTIO_MESH)"
+  local istio_version="istio-${ISTIO_VERSION}"
+  if [[ ${istio_version} == *-latest ]] ; then
+    istio_version=$(curl https://raw.githubusercontent.com/knative/serving/v0.13.0/third_party/${istio_version})
+  fi
+  INSTALL_ISTIO_CRD_YAML="${base_url}/$(istio_crds_yaml $istio_version)"
+  INSTALL_ISTIO_YAML="${base_url}/$(istio_yaml $istio_version $ISTIO_MESH)"
 
   echo ">> Installing Istio"
   echo "Istio CRD YAML: ${INSTALL_ISTIO_CRD_YAML}"
