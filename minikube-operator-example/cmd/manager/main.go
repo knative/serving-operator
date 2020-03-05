@@ -17,11 +17,11 @@ package main
 
 import (
 	"flag"
+	"log"
 
 	"knative.dev/pkg/injection/sharedmain"
 	"knative.dev/pkg/signals"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving"
-	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 )
 
 func main() {
@@ -32,6 +32,5 @@ func main() {
 		log.Fatal("Error building kubeconfig", err)
 	}
 	ctx := signals.NewContext()
-	ctx = common.WithPlatforms(ctx, minikubePlatform)
 	sharedmain.MainWithConfig(ctx, "serving_operator", cfg, knativeserving.NewController)
 }
