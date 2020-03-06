@@ -155,6 +155,18 @@ install_serving_operator
 header "Running tests for Knative Serving Operator"
 failed=0
 
+# Verify with the bash script to make sure there is no resource with the label of the previous release.
+list_resources="all,cm,crd,sa,ClusterRole,ClusterRoleBinding,Image,ValidatingWebhookConfiguration,\
+MutatingWebhookConfiguration,Secret,RoleBinding,APIService,Gateway"
+result="$(kubectl get ${list_resources} -l serving.knative.dev/release=${LATEST_SERVING_RELEASE_VERSION} --all-namespaces 2>/dev/null)"
+
+# If the ${result} is not empty, we fail the tests, because the resources from the previous release still exist.
+if [[ ! -z ${result} ]] ; then
+  header "The following obsolete resources still exist:"
+  echo "${result}"
+  fail_test "The resources with the label of previous release have not been removed."
+fi
+
 # Run the postupgrade tests under operator
 # Operator tests here will make sure that all the Knative deployments reach the desired states and operator CR is
 # in ready state.
