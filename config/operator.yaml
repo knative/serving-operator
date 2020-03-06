@@ -17,7 +17,7 @@ spec:
       serviceAccountName: knative-serving-operator
       containers:
         - name: knative-serving-operator
-          image: knative.dev/serving-operator/cmd/manager
+          image: ko://knative.dev/serving-operator/cmd/manager
           imagePullPolicy: IfNotPresent
           env:
             - name: POD_NAME
