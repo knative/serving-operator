@@ -55,7 +55,7 @@ readonly SERVING_OPERATOR_YAML=${YAML_OUTPUT_DIR}/serving-operator.yaml
 # Flags for all ko commands
 KO_YAML_FLAGS="-P"
 [[ "${KO_DOCKER_REPO}" != gcr.io/* ]] && KO_YAML_FLAGS=""
-readonly KO_YAML_FLAGS="${KO_YAML_FLAGS} ${KO_FLAGS}"
+readonly KO_YAML_FLAGS="${KO_YAML_FLAGS} ${KO_FLAGS} --strict"
 
 : ${KO_DOCKER_REPO:="ko.local"}
 export KO_DOCKER_REPO
