@@ -17,7 +17,7 @@ spec:
       serviceAccountName: minikube-operator
       containers:
         - name: minikube-operator
-          image: knative.dev/serving-operator/minikube-operator-example/cmd/manager
+          image: ko://knative.dev/serving-operator/minikube-operator-example/cmd/manager
           imagePullPolicy: IfNotPresent
           env:
             - name: POD_NAME
