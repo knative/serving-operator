@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	meta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -48,9 +49,8 @@ const (
 )
 
 var (
-	autoTlsLabels = map[string]string{
-		"networking.knative.dev/certificate-provider":          "cert-manager",
-		"networking.knative.dev/wildcard-certificate-provider": "nscert"}
+	istioLabels   = map[string]string{"networking.knative.dev/ingress-provider": "istio"}
+	autoTlsLabels = map[string]string{"networking.knative.dev/certificate-provider": "cert-manager", "networking.knative.dev/wildcard-certificate-provider": "nscert"}
 )
 
 // Reconciler implements controller.Reconciler for Knativeserving resources.
@@ -176,19 +176,37 @@ func (r *Reconciler) transform(instance *servingv1alpha1.KnativeServing) (mf.Man
 	return r.config.Transform(transforms...)
 }
 
-// Transform the resources
+// Filter the resources
 func (r *Reconciler) filter(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) (mf.Manifest, error) {
 	r.Logger.Debug("Filtering manifest")
-	if !isAutoTLSEnabled(manifest, instance) {
-		r.Logger.Debug("Removing autoTLS extentions")
-		return manifest.Filter(byNoLabels(autoTlsLabels)), manifest.Filter(byLabels(autoTlsLabels)).Filter(mf.NotCRDs).Delete()
+	labels := map[string]string{}
+	if !isIngressIstio(manifest, instance) {
+		r.Logger.Debug("Removing istio extention resources")
+		for k, v := range istioLabels {
+			labels[k] = v
+		}
 	}
-	return *manifest, nil
+	if !isAutoTLSEnabled(manifest, instance) {
+		r.Logger.Debug("Removing autoTLS extention resources")
+		for k, v := range autoTlsLabels {
+			labels[k] = v
+		}
+	}
+	if len(labels) == 0 {
+		return *manifest, nil
+	}
+	// TODO: manifestival's Delete() prints error logs but never returns error actually, so this IsNoMatchError does not make sense.
+	// But leave this code here to show we cannot control "no matches for kind" erorr atm.
+	if err := manifest.Filter(byLabels(labels)).Filter(mf.NotCRDs).Delete(); err != nil && !meta.IsNoMatchError(err) {
+		return *manifest, err
+	}
+	return manifest.Filter(byNoLabels(labels)), nil
 }
 
 // Update the status subresource
 func (r *Reconciler) updateStatus(instance *servingv1alpha1.KnativeServing) error {
 	afterUpdate, err := r.KnativeServingClientSet.OperatorV1alpha1().KnativeServings(instance.Namespace).UpdateStatus(instance)
+
 	if err != nil {
 		return err
 	}
@@ -212,7 +230,6 @@ func (r *Reconciler) initStatus(_ *mf.Manifest, instance *servingv1alpha1.Knativ
 // Apply the manifest resources
 func (r *Reconciler) install(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) error {
 	r.Logger.Debug("Installing manifest")
-
 	if err := manifest.Apply(); err != nil {
 		instance.Status.MarkInstallFailed(err.Error())
 		return err
@@ -222,7 +239,7 @@ func (r *Reconciler) install(manifest *mf.Manifest, instance *servingv1alpha1.Kn
 	return nil
 }
 
-// byLabels returns resources that does not contain any of the key-label pairs.
+// byLabels returns true when the resource contains any of the specified key-label pairs.
 func byLabels(labels map[string]string) mf.Predicate {
 	return func(u *unstructured.Unstructured) bool {
 		for key, value := range labels {
@@ -234,7 +251,7 @@ func byLabels(labels map[string]string) mf.Predicate {
 	}
 }
 
-// byNLabels returns resources that contains any of the key-label pairs.
+// byNoLabels returns true when the resource does not contain any of the specified key-label pairs.
 func byNoLabels(labels map[string]string) mf.Predicate {
 	return func(u *unstructured.Unstructured) bool {
 		for key, value := range labels {
@@ -246,9 +263,17 @@ func byNoLabels(labels map[string]string) mf.Predicate {
 	}
 }
 
-// Check for all deployments available
+// isAutoTLSEnabled returns true when autoTLS is Enabled.
 func isAutoTLSEnabled(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) bool {
 	if autoTLS := instance.Spec.Config["network"]["autoTLS"]; autoTLS == "Enabled" {
+		return true
+	}
+	return false
+}
+
+// isIngressIstio returns true when ingress.class is istio.ingress.networking.knative.dev or default(empty).
+func isIngressIstio(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) bool {
+	if ingress := instance.Spec.Config["network"]["ingress.class"]; ingress == "istio.ingress.networking.knative.dev" || ingress == "" {
 		return true
 	}
 	return false
