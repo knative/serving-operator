@@ -47,6 +47,12 @@ const (
 	deletionChange = "deletion"
 )
 
+var (
+	autoTlsLabels = map[string]string{
+		"networking.knative.dev/certificate-provider":          "cert-manager",
+		"networking.knative.dev/wildcard-certificate-provider": "nscert"}
+)
+
 // Reconciler implements controller.Reconciler for Knativeserving resources.
 type Reconciler struct {
 	*reconciler.Base
@@ -145,6 +151,12 @@ func (r *Reconciler) reconcile(ctx context.Context, ks *servingv1alpha1.KnativeS
 		return err
 	}
 
+	manifest, err = r.filter(&manifest, ks)
+	if err != nil {
+		ks.Status.MarkInstallFailed(err.Error())
+		return err
+	}
+
 	for _, stage := range stages {
 		if err := stage(&manifest, ks); err != nil {
 			return err
@@ -164,10 +176,19 @@ func (r *Reconciler) transform(instance *servingv1alpha1.KnativeServing) (mf.Man
 	return r.config.Transform(transforms...)
 }
 
+// Transform the resources
+func (r *Reconciler) filter(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) (mf.Manifest, error) {
+	r.Logger.Debug("Filtering manifest")
+	if !isAutoTLSEnabled(manifest, instance) {
+		r.Logger.Debug("Removing autoTLS extentions")
+		return manifest.Filter(byNoLabels(autoTlsLabels)), manifest.Filter(byLabels(autoTlsLabels)).Filter(mf.NotCRDs).Delete()
+	}
+	return *manifest, nil
+}
+
 // Update the status subresource
 func (r *Reconciler) updateStatus(instance *servingv1alpha1.KnativeServing) error {
 	afterUpdate, err := r.KnativeServingClientSet.OperatorV1alpha1().KnativeServings(instance.Namespace).UpdateStatus(instance)
-
 	if err != nil {
 		return err
 	}
@@ -191,6 +212,7 @@ func (r *Reconciler) initStatus(_ *mf.Manifest, instance *servingv1alpha1.Knativ
 // Apply the manifest resources
 func (r *Reconciler) install(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) error {
 	r.Logger.Debug("Installing manifest")
+
 	if err := manifest.Apply(); err != nil {
 		instance.Status.MarkInstallFailed(err.Error())
 		return err
@@ -198,6 +220,38 @@ func (r *Reconciler) install(manifest *mf.Manifest, instance *servingv1alpha1.Kn
 	instance.Status.MarkInstallSucceeded()
 	instance.Status.Version = version.Version
 	return nil
+}
+
+// byLabels returns resources that does not contain any of the key-label pairs.
+func byLabels(labels map[string]string) mf.Predicate {
+	return func(u *unstructured.Unstructured) bool {
+		for key, value := range labels {
+			if v := u.GetLabels()[key]; v == value {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+// byNLabels returns resources that contains any of the key-label pairs.
+func byNoLabels(labels map[string]string) mf.Predicate {
+	return func(u *unstructured.Unstructured) bool {
+		for key, value := range labels {
+			if v := u.GetLabels()[key]; v == value {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+// Check for all deployments available
+func isAutoTLSEnabled(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) bool {
+	if autoTLS := instance.Spec.Config["network"]["autoTLS"]; autoTLS == "Enabled" {
+		return true
+	}
+	return false
 }
 
 // Check for all deployments available
