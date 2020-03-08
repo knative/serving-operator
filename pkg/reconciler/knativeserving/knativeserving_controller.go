@@ -50,7 +50,7 @@ const (
 
 var (
 	istioLabels   = map[string]string{"networking.knative.dev/ingress-provider": "istio"}
-	autoTlsLabels = map[string]string{"networking.knative.dev/certificate-provider": "cert-manager", "networking.knative.dev/wildcard-certificate-provider": "nscert"}
+	autoTLSLabels = map[string]string{"networking.knative.dev/certificate-provider": "cert-manager", "networking.knative.dev/wildcard-certificate-provider": "nscert"}
 )
 
 // Reconciler implements controller.Reconciler for Knativeserving resources.
@@ -188,7 +188,7 @@ func (r *Reconciler) filter(manifest *mf.Manifest, instance *servingv1alpha1.Kna
 	}
 	if !isAutoTLSEnabled(manifest, instance) {
 		r.Logger.Debug("Removing autoTLS extention resources")
-		for k, v := range autoTlsLabels {
+		for k, v := range autoTLSLabels {
 			labels[k] = v
 		}
 	}
