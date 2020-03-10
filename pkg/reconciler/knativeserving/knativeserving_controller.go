@@ -198,7 +198,7 @@ func (r *Reconciler) filter(manifest *mf.Manifest, instance *servingv1alpha1.Kna
 	if err := manifest.Filter(byLabels(labels)).Filter(mf.NotCRDs).Delete(); err != nil && !meta.IsNoMatchError(err) {
 		return *manifest, err
 	}
-	return manifest.Filter(byNoLabels(labels)), nil
+	return manifest.Filter(mf.Complement(byLabels(labels))), nil
 }
 
 // Update the status subresource
@@ -249,18 +249,6 @@ func byLabels(labels map[string]string) mf.Predicate {
 	}
 }
 
-// byNoLabels returns true when the resource does not contain any of the specified key-label pairs.
-func byNoLabels(labels map[string]string) mf.Predicate {
-	return func(u *unstructured.Unstructured) bool {
-		for key, value := range labels {
-			if v := u.GetLabels()[key]; v == value {
-				return false
-			}
-		}
-		return true
-	}
-}
-
 // isAutoTLSEnabled returns true when autoTLS is Enabled.
 func isAutoTLSEnabled(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) bool {
 	if autoTLS := instance.Spec.Config["network"]["autoTLS"]; autoTLS == "Enabled" {
@@ -272,6 +260,7 @@ func isAutoTLSEnabled(manifest *mf.Manifest, instance *servingv1alpha1.KnativeSe
 // isIngressIstio returns true when ingress.class is istio.ingress.networking.knative.dev or default(empty).
 func isIngressIstio(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) bool {
 	if _, ok := instance.Spec.Config["network"]; !ok {
+		// No config means default so istio is used.
 		return true
 	}
 	if ingress := instance.Spec.Config["network"]["ingress.class"]; ingress == "istio.ingress.networking.knative.dev" || ingress == "" {
