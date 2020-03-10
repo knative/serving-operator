@@ -195,8 +195,6 @@ func (r *Reconciler) filter(manifest *mf.Manifest, instance *servingv1alpha1.Kna
 	if len(labels) == 0 {
 		return *manifest, nil
 	}
-	// TODO: manifestival's Delete() prints error logs but never returns error actually, so this IsNoMatchError does not make sense.
-	// But leave this code here to show we cannot control "no matches for kind" erorr atm.
 	if err := manifest.Filter(byLabels(labels)).Filter(mf.NotCRDs).Delete(); err != nil && !meta.IsNoMatchError(err) {
 		return *manifest, err
 	}
