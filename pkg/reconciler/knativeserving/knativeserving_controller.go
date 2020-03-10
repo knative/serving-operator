@@ -273,6 +273,9 @@ func isAutoTLSEnabled(manifest *mf.Manifest, instance *servingv1alpha1.KnativeSe
 
 // isIngressIstio returns true when ingress.class is istio.ingress.networking.knative.dev or default(empty).
 func isIngressIstio(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) bool {
+	if _, ok := instance.Spec.Config["network"]; !ok {
+		return true
+	}
 	if ingress := instance.Spec.Config["network"]["ingress.class"]; ingress == "istio.ingress.networking.knative.dev" || ingress == "" {
 		return true
 	}
