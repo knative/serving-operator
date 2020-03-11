@@ -80,7 +80,6 @@ function knative_setup() {
 
 # Create test resources and images
 function test_setup() {
-  generate_latest_serving_manifest
   echo ">> Creating test resources (test/config/) in Knative Serving repository"
   cd ${KNATIVE_SERVING_DIR}/serving
   ko apply ${KO_FLAGS} -f test/config/ || return 1
@@ -155,18 +154,6 @@ install_serving_operator
 header "Running tests for Knative Serving Operator"
 failed=0
 
-# Verify with the bash script to make sure there is no resource with the label of the previous release.
-list_resources="all,cm,crd,sa,ClusterRole,ClusterRoleBinding,Image,ValidatingWebhookConfiguration,\
-MutatingWebhookConfiguration,Secret,RoleBinding,APIService,Gateway"
-result="$(kubectl get ${list_resources} -l serving.knative.dev/release=${LATEST_SERVING_RELEASE_VERSION} --all-namespaces 2>/dev/null)"
-
-# If the ${result} is not empty, we fail the tests, because the resources from the previous release still exist.
-if [[ ! -z ${result} ]] ; then
-  header "The following obsolete resources still exist:"
-  echo "${result}"
-  fail_test "The resources with the label of previous release have not been removed."
-fi
-
 # Run the postupgrade tests under operator
 # Operator tests here will make sure that all the Knative deployments reach the desired states and operator CR is
 # in ready state.
@@ -178,6 +165,18 @@ header "Running tests under Knative Serving"
 # Run the postupgrade tests under serving
 cd ${KNATIVE_SERVING_DIR}/serving
 go_test_e2e -tags=postupgrade -timeout=${TIMEOUT} ./test/upgrade || failed=1
+
+# Verify with the bash script to make sure there is no resource with the label of the previous release.
+list_resources="deployment,pod,service,apiservice,cm,crd,sa,ClusterRole,ClusterRoleBinding,Image,ValidatingWebhookConfiguration,\
+MutatingWebhookConfiguration,Secret,RoleBinding,APIService,Gateway"
+result="$(kubectl get ${list_resources} -l serving.knative.dev/release=${LATEST_SERVING_RELEASE_VERSION} --all-namespaces 2>/dev/null)"
+
+# If the ${result} is not empty, we fail the tests, because the resources from the previous release still exist.
+if [[ ! -z ${result} ]] ; then
+  header "The following obsolete resources still exist:"
+  echo "${result}"
+  fail_test "The resources with the label of previous release have not been removed."
+fi
 
 install_previous_serving_release
 wait_until_pods_running ${TEST_NAMESPACE}
