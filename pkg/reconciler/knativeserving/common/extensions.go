@@ -42,8 +42,7 @@ func (platforms Platforms) Transformers(kubeClientSet kubernetes.Interface, inst
 		CustomCertsTransform(instance, log),
 		HighAvailabilityTransform(instance, log),
 	}
-	for i := range platforms {
-		fn := platforms[i]
+	for _, fn := range platforms {
 		transformer, err := fn(kubeClientSet, log)
 		if err != nil {
 			return result, err
