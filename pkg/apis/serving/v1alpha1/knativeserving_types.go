@@ -105,6 +105,10 @@ type KnativeServingSpec struct {
 	// Allows specification of HA control plane
 	// +optional
 	HighAvailability *HighAvailability `json:"high-availability,omitempty"`
+
+	// Override resource requirements; keyed by deployment name
+	// +optional
+	Resources map[string][]corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // KnativeServingStatus defines the observed state of KnativeServing

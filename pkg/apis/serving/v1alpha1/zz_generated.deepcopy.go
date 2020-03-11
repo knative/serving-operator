@@ -171,6 +171,23 @@ func (in *KnativeServingSpec) DeepCopyInto(out *KnativeServingSpec) {
 		*out = new(HighAvailability)
 		**out = **in
 	}
+	if in.Resources != nil {
+		in, out := &in.Resources, &out.Resources
+		*out = make(map[string][]v1.ResourceRequirements, len(*in))
+		for key, val := range *in {
+			var outVal []v1.ResourceRequirements
+			if val == nil {
+				(*out)[key] = nil
+			} else {
+				in, out := &val, &outVal
+				*out = make([]v1.ResourceRequirements, len(*in))
+				for i := range *in {
+					(*in)[i].DeepCopyInto(&(*out)[i])
+				}
+			}
+			(*out)[key] = outVal
+		}
+	}
 	return
 }
 
