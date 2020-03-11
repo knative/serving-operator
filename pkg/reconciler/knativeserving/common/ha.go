@@ -60,16 +60,13 @@ func HighAvailabilityTransform(instance *servingv1alpha1.KnativeServing, log *za
 			if err := unstructured.SetNestedStringMap(u.Object, data, "data"); err != nil {
 				return err
 			}
-			log.Infof("Updated configmap/config-leader-election: %v", u.Object)
 		}
 
 		// Transform deployments that support HA.
 		if u.GetKind() == "Deployment" && deploymentNames.Has(u.GetName()) {
-			log.Infof("mutating leader elected deployment %v", u.GetName())
 			if err := unstructured.SetNestedField(u.Object, int64(instance.Spec.HighAvailability.Replicas), "spec", "replicas"); err != nil {
 				return err
 			}
-			log.Infof("updated deployment/%v: %v", u.GetName(), u.Object)
 		}
 
 		return nil
