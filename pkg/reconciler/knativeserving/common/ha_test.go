@@ -88,7 +88,7 @@ func TestHighAvailabilityTransform(t *testing.T) {
 		},
 	}
 
-	for i, _ := range cases {
+	for i := range cases {
 		tc := cases[i]
 
 		instance := &servingv1alpha1.KnativeServing{
