@@ -104,7 +104,7 @@ type KnativeServingSpec struct {
 
 	// Allows specification of HA control plane
 	// +optional
-	HighAvailability *HighAvailability `json:"highAvailability,omitempty"`
+	HighAvailability *HighAvailability `json:"high-availability,omitempty"`
 }
 
 // KnativeServingStatus defines the observed state of KnativeServing
