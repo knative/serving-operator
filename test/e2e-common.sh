@@ -68,7 +68,6 @@ function donwload_knative_serving() {
     git fetch origin ${branch}:${branch}
     git checkout ${branch}
   fi
-  LATEST_SERVING_RELEASE_VERSION=$(git tag | sort -V | tail -1)
   cd ${OPERATOR_DIR}
 }
 
@@ -77,7 +76,7 @@ function install_istio() {
   local base_url="https://raw.githubusercontent.com/knative/serving/${LATEST_SERVING_RELEASE_VERSION}"
   local istio_version="istio-${ISTIO_VERSION}"
   if [[ ${istio_version} == *-latest ]] ; then
-    istio_version=$(curl https://raw.githubusercontent.com/knative/serving/v0.13.0/third_party/${istio_version})
+    istio_version=$(curl https://raw.githubusercontent.com/knative/serving/${LATEST_SERVING_RELEASE_VERSION}/third_party/${istio_version})
   fi
   INSTALL_ISTIO_CRD_YAML="${base_url}/$(istio_crds_yaml $istio_version)"
   INSTALL_ISTIO_YAML="${base_url}/$(istio_yaml $istio_version $ISTIO_MESH)"
