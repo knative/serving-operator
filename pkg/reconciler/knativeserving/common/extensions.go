@@ -37,11 +37,13 @@ func (platforms Platforms) Transformers(kubeClientSet kubernetes.Interface, inst
 		mf.InjectOwner(instance),
 		mf.InjectNamespace(instance.GetNamespace()),
 		ConfigMapTransform(instance, log),
+		HighAvailabilityTransform(instance, log),
 		ImageTransform(instance, log),
 		GatewayTransform(instance, log),
 		CustomCertsTransform(instance, log),
 	}
-	for _, fn := range platforms {
+	for i := range platforms {
+		fn := platforms[i]
 		transformer, err := fn(kubeClientSet, log)
 		if err != nil {
 			return result, err
