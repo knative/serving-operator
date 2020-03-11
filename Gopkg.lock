@@ -390,7 +390,7 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:a0cb66a2605af422373e94b7ce8f9904cf22616e16b74e8601cc529808ffc5a1"
+  digest = "1:f0a1e0d10140e36b250ba2c897d0729512ddb2407117c322569728092a67115f"
   name = "github.com/manifestival/manifestival"
   packages = [
     ".",
@@ -398,8 +398,8 @@
     "sources",
   ]
   pruneopts = "NUT"
-  revision = "062c519a505b425bf0990e7f78e06568b2756b89"
-  version = "v0.2.0"
+  revision = "e9d39ec5979318ff82b1047fedafee339575c1b2"
+  version = "v0.4.0"
 
 [[projects]]
   digest = "1:5985ef4caf91ece5d54817c11ea25f182697534f8ae6521eadcd628c142ac4b6"
