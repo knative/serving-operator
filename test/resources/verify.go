@@ -210,17 +210,14 @@ func KSOperatorCRDelete(t *testing.T, clients *test.Clients, names test.Resource
 		t.Fatal(err)
 	}
 
-	// TODO: pred := mf.Any(mf.CRDs, mf.ByKind("Namespace"))
-	// Loop through both pred and mf.None(pred)
-
 	// verify all but the CRD's and the Namespace are gone
-	for _, u := range m.Filter(mf.NotCRDs, mf.Complement(mf.ByKind("Namespace"))).Resources() {
+	for _, u := range m.Filter(mf.NoCRDs, mf.None(mf.ByKind("Namespace"))).Resources() {
 		if _, err := m.Client.Get(&u); !apierrs.IsNotFound(err) {
 			t.Fatalf("The %s %s failed to be deleted: %v", u.GetKind(), u.GetName(), err)
 		}
 	}
 	// verify all the CRD's remain
-	for _, u := range m.Filter(mf.JustCRDs).Resources() {
+	for _, u := range m.Filter(mf.CRDs).Resources() {
 		if _, err := m.Client.Get(&u); apierrs.IsNotFound(err) {
 			t.Fatalf("The %s CRD was deleted", u.GetName())
 		}
