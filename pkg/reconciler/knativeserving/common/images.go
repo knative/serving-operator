@@ -95,7 +95,7 @@ func updateDaemonSet(instance *servingv1alpha1.KnativeServing, u *unstructured.U
 
 func updateRegistry(spec *corev1.PodSpec, instance *servingv1alpha1.KnativeServing, log *zap.SugaredLogger, name string) {
 	registry := instance.Spec.Registry
-	log.Debugw("Updating ", "name", name, "registry", registry)
+	log.Debugw("Updating", "name", name, "registry", registry)
 
 	updateImage(spec, &registry, log, name)
 	spec.ImagePullSecrets = addImagePullSecrets(
