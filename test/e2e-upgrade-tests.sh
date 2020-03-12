@@ -39,7 +39,7 @@ function install_previous_operator_release() {
   wget "${full_url}" -O "${release_yaml}" \
       || fail_test "Unable to download latest Knative Serving Operator release."
 
-  donwload_knative_serving ${PULL_BASE_REF}
+  donwload_knative_serving ${SERVING_REPO_BRANCH}
   install_istio || fail_test "Istio installation failed"
   install_previous_serving_release
 }
@@ -80,6 +80,9 @@ function knative_setup() {
 
 # Create test resources and images
 function test_setup() {
+  if (( GENERATE_SERVING_YAML )); then
+    generate_latest_serving_manifest ${SERVING_REPO_BRANCH}
+  fi
   echo ">> Creating test resources (test/config/) in Knative Serving repository"
   cd ${KNATIVE_SERVING_DIR}/serving
   ko apply ${KO_FLAGS} -f test/config/ || return 1
@@ -103,6 +106,8 @@ function generate_latest_serving_manifest() {
   cd ${KNATIVE_SERVING_DIR}/serving
   mkdir -p output
   local branch=$1
+  export YAML_OUTPUT_DIR=${KNATIVE_SERVING_DIR}/serving/output
+  SERVING_YAML=${YAML_OUTPUT_DIR}/serving.yaml
   if [[ -n "${branch}" ]]; then
     git checkout ${branch}
     COMMIT_ID=$(git rev-parse --verify HEAD)
@@ -113,7 +118,6 @@ function generate_latest_serving_manifest() {
   else
     echo ">> Download the latest nightly build of Knative Serving."
     # Download the latest manifest
-    SERVING_YAML=${KNATIVE_SERVING_DIR}/serving/output/serving.yaml
     wget -O ${SERVING_YAML} https://storage.googleapis.com/knative-nightly/serving/latest/serving.yaml
   fi
 
