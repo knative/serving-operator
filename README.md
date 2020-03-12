@@ -100,13 +100,12 @@ The following are all equivalent:
 ```
 kubectl get knativeservings.operator.knative.dev -oyaml
 kubectl get knativeserving -oyaml
-kubectl get ks -oyaml
 ```
 
 To uninstall Knative Serving, simply delete the `KnativeServing` resource.
 
 ```
-kubectl delete ks --all
+kubectl delete knativeserving --all
 ```
 
 ## Development
