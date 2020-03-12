@@ -39,7 +39,7 @@ function install_previous_operator_release() {
   wget "${full_url}" -O "${release_yaml}" \
       || fail_test "Unable to download latest Knative Serving Operator release."
 
-  donwload_knative_serving release-0.13
+  donwload_knative_serving ${PULL_BASE_REF}
   install_istio || fail_test "Istio installation failed"
   install_previous_serving_release
 }

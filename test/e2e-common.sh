@@ -20,7 +20,7 @@ source $(dirname $0)/../vendor/knative.dev/test-infra/scripts/e2e-tests.sh
 # Latest serving operator release.
 readonly LATEST_SERVING_OPERATOR_RELEASE_VERSION=$(git tag | sort -V | tail -1)
 # Latest serving release. This can be different from LATEST_SERVING_OPERATOR_RELEASE_VERSION.
-LATEST_SERVING_RELEASE_VERSION="v0.12.1"
+LATEST_SERVING_RELEASE_VERSION="v0.13.0"
 # Istio version we test with
 readonly ISTIO_VERSION="1.4-latest"
 # Test without Istio mesh enabled
