@@ -255,7 +255,7 @@ func (r *Reconciler) delete(instance *servingv1alpha1.KnativeServing) error {
 			return err
 		}
 		// Delete Roles last, as they may be granting us permissions that are necessary.
-	        if err := r.config.Filter(RbacResources).Delete(); err != nil {
+		if err := r.config.Filter(RbacResources).Delete(); err != nil {
 			return err
 		}
 	}
