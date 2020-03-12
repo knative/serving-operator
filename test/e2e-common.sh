@@ -58,6 +58,7 @@ function istio_yaml() {
 # and retrive the LATEST_SERVING_RELEASE_VERSION for further use.
 # Parameter: $1 - branch of the repository.
 function donwload_knative_serving() {
+  set
   # Go the directory to download the source code of knative serving
   cd ${KNATIVE_SERVING_DIR}
   # Download the source code of knative serving

@@ -8,6 +8,7 @@
 Knative Serving Operator is a project aiming to deploy and manage Knative
 Serving in an automated way.
 
+
 The following steps will install
 [Knative Serving](https://github.com/knative/serving) and configure it
 appropriately for your cluster in the `knative-serving` namespace. Please make

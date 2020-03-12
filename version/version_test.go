@@ -34,6 +34,7 @@ func TestManifestVersionSame(t *testing.T) {
 	expectedLabelValue := "v" + Version
 	label := "serving.knative.dev/release"
 
+
 	for _, resource := range manifest.Filter(mf.ByLabel(label, "")).Resources() {
 		v := resource.GetLabels()[label]
 		if v != expectedLabelValue {
