@@ -19,14 +19,19 @@ source $(dirname $0)/../vendor/knative.dev/test-infra/scripts/e2e-tests.sh
 
 # Latest serving operator release.
 readonly LATEST_SERVING_OPERATOR_RELEASE_VERSION=$(git tag | sort -V | tail -1)
-# Latest serving release. This can be different from LATEST_SERVING_OPERATOR_RELEASE_VERSION.
-LATEST_SERVING_RELEASE_VERSION="v0.12.1"
+# Latest serving release, installed by the operator at LATEST_SERVING_OPERATOR_RELEASE_VERSION. This can be
+# different from LATEST_SERVING_OPERATOR_RELEASE_VERSION.
+LATEST_SERVING_RELEASE_VERSION="v0.13.0"
+# This is the branch name of serving repo, where we run the upgrade tests.
+SERVING_REPO_BRANCH=${PULL_BASE_REF}
 # Istio version we test with
 readonly ISTIO_VERSION="1.4-latest"
 # Test without Istio mesh enabled
 readonly ISTIO_MESH=0
 # Namespace used for tests
 readonly TEST_NAMESPACE="knative-serving"
+# Boolean used to indicate whether to generate serving YAML based on the latest code in the branch SERVING_REPO_BRANCH.
+GENERATE_SERVING_YAML=1
 
 OPERATOR_DIR=$(dirname $0)/..
 KNATIVE_SERVING_DIR=${OPERATOR_DIR}/..
