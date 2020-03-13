@@ -246,11 +246,16 @@ func (r *Reconciler) delete(instance *servingv1alpha1.KnativeServing) error {
 	if len(instance.GetFinalizers()) == 0 || instance.GetFinalizers()[0] != finalizerName {
 		return nil
 	}
+	var RBAC = mf.Any(mf.ByKind("Role"), mf.ByKind("ClusterRole"), mf.ByKind("RoleBinding"), mf.ByKind("ClusterRoleBinding"))
 	if len(r.servings) == 0 {
 		if err := r.config.Filter(mf.ByKind("Deployment")).Delete(); err != nil {
 			return err
 		}
-		if err := r.config.Filter(mf.NoCRDs).Delete(); err != nil {
+		if err := r.config.Filter(mf.NoCRDs, mf.None(RBAC)).Delete(); err != nil {
+			return err
+		}
+		// Delete Roles last, as they may be useful for human operators to clean up.
+		if err := r.config.Filter(RBAC).Delete(); err != nil {
 			return err
 		}
 	}
