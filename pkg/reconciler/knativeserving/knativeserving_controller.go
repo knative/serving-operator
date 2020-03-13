@@ -251,7 +251,7 @@ func (r *Reconciler) delete(instance *servingv1alpha1.KnativeServing) error {
 		if err := r.config.Filter(mf.ByKind("Deployment")).Delete(); err != nil {
 			return err
 		}
-		if err := r.config.Filter(mf.All(mf.NoCRDs, mf.None(RBAC))).Delete(); err != nil {
+		if err := r.config.Filter(mf.NoCRDs, mf.None(RBAC)).Delete(); err != nil {
 			return err
 		}
 		// Delete Roles last, as they may be useful for human operators to clean up.
