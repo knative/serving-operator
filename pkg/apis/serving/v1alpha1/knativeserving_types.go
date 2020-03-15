@@ -106,9 +106,9 @@ type KnativeServingSpec struct {
 	// +optional
 	HighAvailability *HighAvailability `json:"high-availability,omitempty"`
 
-	// Override resource requirements; keyed by deployment name
+	// Override resource requirements; keyed by container name
 	// +optional
-	Resources map[string][]corev1.ResourceRequirements `json:"resources,omitempty"`
+	Resources map[string]corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // KnativeServingStatus defines the observed state of KnativeServing

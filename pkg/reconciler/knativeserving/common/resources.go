@@ -20,7 +20,6 @@ import (
 	mf "github.com/manifestival/manifestival"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -37,13 +36,8 @@ func ResourceRequirementsTransform(instance *servingv1alpha1.KnativeServing, log
 				return err
 			}
 			containers := deployment.Spec.Template.Spec.Containers
-			overrides := instance.Spec.Resources[u.GetName()]
 			for i := range containers {
-				if len(overrides) > i {
-					containers[i].Resources = overrides[i]
-				} else {
-					containers[i].Resources = v1.ResourceRequirements{}
-				}
+				containers[i].Resources = instance.Spec.Resources[containers[i].Name]
 			}
 			if err := scheme.Scheme.Convert(deployment, u, nil); err != nil {
 				return err

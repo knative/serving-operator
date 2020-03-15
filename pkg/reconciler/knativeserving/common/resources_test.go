@@ -22,7 +22,6 @@ import (
 
 	mf "github.com/manifestival/manifestival"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	servingv1alpha1 "knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	"sigs.k8s.io/yaml"
@@ -36,7 +35,7 @@ var testdata = []byte(`
   spec:
     resources:
       activator:
-      - requests:
+        requests:
           cpu: 330m
           memory: 69Mi
         limits:
@@ -49,13 +48,14 @@ var testdata = []byte(`
   spec:
     resources:
       webhook:
-      - requests:
+        requests:
           cpu: 22m
           memory: 22Mi
         limits:
           cpu: 220m
           memory: 220Mi
-      - requests:
+      another:
+        requests:
           cpu: 33m
           memory: 42Mi
         limits:
@@ -68,14 +68,14 @@ var testdata = []byte(`
   spec:
     resources:
       autoscaler:
-      - requests:
+        requests:
           cpu: 33m
           memory: 42Mi
         limits:
           cpu: 330m
           memory: 420Mi
       controller:
-      - requests:
+        requests:
           cpu: 999m
           memory: 999Mi
         limits:
@@ -113,11 +113,7 @@ func runResourceRequirementsTransformTest(t *testing.T, ks *servingv1alpha1.Knat
 		}
 		containers := deployment.Spec.Template.Spec.Containers
 		for i := range containers {
-			expected := v1.ResourceRequirements{}
-			resources, ok := ks.Spec.Resources[deployment.Name]
-			if ok {
-				expected = resources[i]
-			}
+			expected := ks.Spec.Resources[containers[i].Name]
 			if !reflect.DeepEqual(containers[i].Resources, expected) {
 				t.Errorf("Expected %v, Got %v", expected, containers[i].Resources)
 			}
