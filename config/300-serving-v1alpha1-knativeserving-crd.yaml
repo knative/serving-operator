@@ -129,10 +129,13 @@ spec:
                   minimum: 1
             resources:
               description: A mapping of deployment name to resource requirements
-              type: object
-              additionalProperties:
+              type: array
+              items:
                 type: object
                 properties:
+                  container:
+                    description: The name of the container
+                    type: string
                   requests:
                     type: object
                     properties:

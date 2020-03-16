@@ -20,6 +20,7 @@ import (
 	mf "github.com/manifestival/manifestival"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -37,7 +38,10 @@ func ResourceRequirementsTransform(instance *servingv1alpha1.KnativeServing, log
 			}
 			containers := deployment.Spec.Template.Spec.Containers
 			for i := range containers {
-				containers[i].Resources = instance.Spec.Resources[containers[i].Name]
+				if override := find(instance, containers[i].Name); override != nil {
+					merge(&override.Limits, &containers[i].Resources.Limits)
+					merge(&override.Requests, &containers[i].Resources.Requests)
+				}
 			}
 			if err := scheme.Scheme.Convert(deployment, u, nil); err != nil {
 				return err
@@ -47,4 +51,23 @@ func ResourceRequirementsTransform(instance *servingv1alpha1.KnativeServing, log
 		}
 		return nil
 	}
+}
+
+func merge(src, tgt *v1.ResourceList) {
+	if len(*tgt) > 0 {
+		for k, v := range *src {
+			(*tgt)[k] = v
+		}
+	} else {
+		*tgt = *src
+	}
+}
+
+func find(instance *servingv1alpha1.KnativeServing, name string) *servingv1alpha1.ResourceRequirementsOverride {
+	for _, override := range instance.Spec.Resources {
+		if override.Container == name {
+			return &override
+		}
+	}
+	return nil
 }
