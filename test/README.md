@@ -9,13 +9,12 @@ This directory contains tests and testing docs for `Serving Operator`:
 
 Before running the integration, please make sure you have installed
 `Serving Operator` by following the instruction [here](../README.md), and do not
-install custom resource for operator or knative-serving installed in your
-cluster.
+install custom resource for operator or knative-serving in your cluster.
 
-Create a namespace called `knative-serving` if it is missing.
+Create a namespace called `operator-tests` if it is missing.
 
 ```bash
-kubectl create namespace knative-serving
+kubectl create namespace operator-tests
 ```
 
 To run all integration tests:

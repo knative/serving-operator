@@ -29,7 +29,7 @@ readonly ISTIO_VERSION="1.4-latest"
 # Test without Istio mesh enabled
 readonly ISTIO_MESH=0
 # Namespace used for tests
-readonly TEST_NAMESPACE="knative-serving"
+readonly TEST_NAMESPACE="operator-tests"
 # Boolean used to indicate whether to generate serving YAML based on the latest code in the branch SERVING_REPO_BRANCH.
 GENERATE_SERVING_YAML=1
 

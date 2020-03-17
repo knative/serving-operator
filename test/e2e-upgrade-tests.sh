@@ -83,9 +83,9 @@ function test_setup() {
   if (( GENERATE_SERVING_YAML )); then
     generate_latest_serving_manifest ${SERVING_REPO_BRANCH}
   fi
-  echo ">> Creating test resources (test/config/) in Knative Serving repository"
-  cd ${KNATIVE_SERVING_DIR}/serving
-  ko apply ${KO_FLAGS} -f test/config/ || return 1
+  echo ">> Creating test resources (test/configuration/) in Knative Serving repository"
+  # cd ${KNATIVE_SERVING_DIR}/serving
+  ko apply ${KO_FLAGS} -f test/configuration/ || return 1
 
   echo ">> Uploading test images..."
   # We only need to build and publish two images among all the test images
