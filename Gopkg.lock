@@ -711,6 +711,14 @@
   revision = "593de606220b6283bd14765aab1e244ea650cd84"
 
 [[projects]]
+  digest = "1:79c5b7c79609e7e2d0c5a6509cc5894bb8ee9c2ca6e741214f8aa4317beeea59"
+  name = "gomodules.xyz/jsonpatch"
+  packages = ["v2"]
+  pruneopts = "NUT"
+  revision = "1c2a0262323edc27502942d9727c95646b1c3cbe"
+  version = "v2.1.0"
+
+[[projects]]
   digest = "1:658567ee8cf9149bcb84fbc019f4577be73aae97903e9bdcffc9a0abfa339ef5"
   name = "google.golang.org/api"
   packages = [
@@ -1326,6 +1334,8 @@
   name = "knative.dev/pkg"
   packages = [
     "apis",
+    "apis/duck",
+    "apis/duck/v1",
     "changeset",
     "client/injection/kube/client",
     "client/injection/kube/client/fake",
@@ -1362,6 +1372,7 @@
     "test/monitoring",
     "test/spoof",
     "test/zipkin",
+    "tracker",
     "version",
     "webhook",
     "webhook/certificates/resources",
@@ -1440,6 +1451,7 @@
     "k8s.io/kube-openapi/pkg/common",
     "knative.dev/caching/pkg/apis/caching/v1alpha1",
     "knative.dev/pkg/apis",
+    "knative.dev/pkg/apis/duck/v1",
     "knative.dev/pkg/client/injection/kube/client",
     "knative.dev/pkg/client/injection/kube/client/fake",
     "knative.dev/pkg/client/injection/kube/informers/apps/v1/deployment",
@@ -1454,6 +1466,7 @@
     "knative.dev/pkg/logging/logkey",
     "knative.dev/pkg/metrics",
     "knative.dev/pkg/metrics/metricstest",
+    "knative.dev/pkg/reconciler",
     "knative.dev/pkg/signals",
     "knative.dev/pkg/test",
     "knative.dev/pkg/test/logging",

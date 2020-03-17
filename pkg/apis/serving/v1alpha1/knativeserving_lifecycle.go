@@ -31,16 +31,6 @@ func (ks *KnativeServing) GroupVersionKind() schema.GroupVersionKind {
 	return SchemeGroupVersion.WithKind(Kind)
 }
 
-// GetConditions implements apis.ConditionsAccessor
-func (is *KnativeServingStatus) GetConditions() apis.Conditions {
-	return is.Conditions
-}
-
-// SetConditions implements apis.ConditionsAccessor
-func (is *KnativeServingStatus) SetConditions(c apis.Conditions) {
-	is.Conditions = c
-}
-
 func (is *KnativeServingStatus) IsReady() bool {
 	return conditions.Manage(is).IsHappy()
 }
