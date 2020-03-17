@@ -38,6 +38,7 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
+      type: object
       description: Schema for the knativeservings API
       properties:
         apiVersion:
