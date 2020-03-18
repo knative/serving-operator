@@ -212,7 +212,7 @@ func KSOperatorCRDelete(t *testing.T, clients *test.Clients, names test.Resource
 
 	// verify all but the CRD's and the Namespace are gone
 	for _, u := range m.Filter(mf.NoCRDs, mf.None(mf.ByKind("Namespace"))).Resources() {
-		if _, err := m.Client.Get(&u); !apierrs.IsNotFound(err) {
+		if _, err := m.Client.Get(&u); err != nil && !apierrs.IsNotFound(err) {
 			t.Fatalf("The %s %s failed to be deleted: %v", u.GetKind(), u.GetName(), err)
 		}
 	}
