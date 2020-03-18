@@ -33,6 +33,7 @@ spec:
     listKind: KnativeServingList
     plural: knativeservings
     singular: knativeserving
+  preserveUnknownFields: false
   scope: Namespaced
   subresources:
     status: {}
