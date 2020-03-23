@@ -41,6 +41,7 @@ func (platforms Platforms) Transformers(kubeClientSet kubernetes.Interface, inst
 		GatewayTransform(instance, log),
 		CustomCertsTransform(instance, log),
 		HighAvailabilityTransform(instance, log),
+		ResourceRequirementsTransform(instance, log),
 	}
 	for _, fn := range platforms {
 		transformer, err := fn(kubeClientSet, log)
