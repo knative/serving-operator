@@ -2,5 +2,5 @@ package version
 
 var (
 	// Version is the version that will be applied to the KnativeServing resource.
-	Version = "0.13.0"
+	Version = "20200319-2f826455d"
 )
