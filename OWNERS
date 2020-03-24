@@ -3,7 +3,6 @@
 approvers:
 - houshengbo
 - jcrossley3
-- k4leung4
 - trshafer
 - evankanderson  # TOC member as backup
 - mattmoor       # TOC member as backup
@@ -11,6 +10,5 @@ approvers:
 reviewers:
 - houshengbo
 - jcrossley3
-- k4leung4
 - trshafer
 - yu2003w
