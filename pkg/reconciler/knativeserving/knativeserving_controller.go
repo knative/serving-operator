@@ -207,7 +207,7 @@ func (r *Reconciler) install(manifest *mf.Manifest, instance *servingv1alpha1.Kn
 		instance.Status.MarkInstallFailed(err.Error())
 		return err
 	}
-	if err := manifest.Filter(mf.None(mf.Any(role, rolebinding))).Apply(); err != nil {
+	if err := manifest.Apply(); err != nil {
 		instance.Status.MarkInstallFailed(err.Error())
 		return err
 	}
