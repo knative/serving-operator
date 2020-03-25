@@ -48,7 +48,7 @@ const (
 )
 
 var (
-	role mf.Predicate = mf.Any(mf.ByKind("ClusterRole"), mf.ByKind("Role"))
+	role        mf.Predicate = mf.Any(mf.ByKind("ClusterRole"), mf.ByKind("Role"))
 	rolebinding mf.Predicate = mf.Any(mf.ByKind("ClusterRoleBinding"), mf.ByKind("RoleBinding"))
 )
 
