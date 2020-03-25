@@ -47,6 +47,11 @@ const (
 	deletionChange = "deletion"
 )
 
+var (
+	role mf.Predicate = mf.Any(mf.ByKind("ClusterRole"), mf.ByKind("Role"))
+	rolebinding mf.Predicate = mf.Any(mf.ByKind("ClusterRoleBinding"), mf.ByKind("RoleBinding"))
+)
+
 // Reconciler implements controller.Reconciler for Knativeserving resources.
 type Reconciler struct {
 	*reconciler.Base
@@ -191,7 +196,18 @@ func (r *Reconciler) initStatus(_ *mf.Manifest, instance *servingv1alpha1.Knativ
 // Apply the manifest resources
 func (r *Reconciler) install(manifest *mf.Manifest, instance *servingv1alpha1.KnativeServing) error {
 	r.Logger.Debug("Installing manifest")
-	if err := manifest.Apply(); err != nil {
+	// The Operator needs a higher level of permissions if it 'bind's non-existent roles.
+	// To avoid this, we strictly order the manifest application as (Cluster)Roles, then
+	// (Cluster)RoleBindings, then the rest of the manifest.
+	if err := manifest.Filter(role).Apply(); err != nil {
+		instance.Status.MarkInstallFailed(err.Error())
+		return err
+	}
+	if err := manifest.Filter(rolebinding).Apply(); err != nil {
+		instance.Status.MarkInstallFailed(err.Error())
+		return err
+	}
+	if err := manifest.Filter(mf.None(mf.Any(role, rolebinding))).Apply(); err != nil {
 		instance.Status.MarkInstallFailed(err.Error())
 		return err
 	}
