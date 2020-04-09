@@ -19,7 +19,10 @@ import (
 	"os"
 	"path/filepath"
 
+	kubeclient "knative.dev/pkg/client/injection/kube/client"
 	"knative.dev/pkg/injection/sharedmain"
+	"knative.dev/pkg/logging"
+	servingclient "knative.dev/serving-operator/pkg/client/injection/client"
 
 	"github.com/go-logr/zapr"
 	mfc "github.com/manifestival/client-go-client"
@@ -30,13 +33,13 @@ import (
 	"knative.dev/pkg/controller"
 	"knative.dev/serving-operator/pkg/apis/serving/v1alpha1"
 	knativeServinginformer "knative.dev/serving-operator/pkg/client/injection/informers/serving/v1alpha1/knativeserving"
-	rbase "knative.dev/serving-operator/pkg/reconciler"
+	knsreconciler "knative.dev/serving-operator/pkg/client/injection/reconciler/serving/v1alpha1/knativeserving"
+	"knative.dev/serving-operator/pkg/reconciler"
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving/common"
 )
 
 const (
 	controllerAgentName = "knativeserving-controller"
-	reconcilerName      = "KnativeServing"
 )
 
 var (
@@ -52,33 +55,41 @@ func NewController(
 ) *controller.Impl {
 	knativeServingInformer := knativeServinginformer.Get(ctx)
 	deploymentInformer := deploymentinformer.Get(ctx)
+	logger := logging.FromContext(ctx)
+
+	statsReporter, err := reconciler.NewStatsReporter(controllerAgentName)
+	if err != nil {
+		logger.Fatal(err)
+	}
 
 	c := &Reconciler{
-		Base:                 rbase.NewBase(ctx, controllerAgentName, cmw),
-		knativeServingLister: knativeServingInformer.Lister(),
-		servings:             map[string]int64{},
-		platform:             common.GetPlatforms(ctx),
+		kubeClientSet:           kubeclient.Get(ctx),
+		knativeServingClientSet: servingclient.Get(ctx),
+		statsReporter:           statsReporter,
+		knativeServingLister:    knativeServingInformer.Lister(),
+		servings:                map[string]int64{},
+		platform:                common.GetPlatforms(ctx),
 	}
 
 	koDataDir := os.Getenv("KO_DATA_PATH")
 
 	cfg, err := sharedmain.GetConfig(*MasterURL, *Kubeconfig)
 	if err != nil {
-		c.Logger.Error(err, "Error building kubeconfig")
+		logger.Error(err, "Error building kubeconfig")
 	}
 
 	config, err := mfc.NewManifest(filepath.Join(koDataDir, "knative-serving/"),
 		cfg,
-		mf.UseLogger(zapr.NewLogger(c.Logger.Desugar()).WithName("manifestival")))
+		mf.UseLogger(zapr.NewLogger(logger.Desugar()).WithName("manifestival")))
 	if err != nil {
-		c.Logger.Error(err, "Error creating the Manifest for knative-serving")
+		logger.Error(err, "Error creating the Manifest for knative-serving")
 		os.Exit(1)
 	}
 
 	c.config = config
-	impl := controller.NewImpl(c, c.Logger, reconcilerName)
+	impl := knsreconciler.NewImpl(ctx, c)
 
-	c.Logger.Info("Setting up event handlers for %s", reconcilerName)
+	logger.Info("Setting up event handlers")
 
 	knativeServingInformer.Informer().AddEventHandler(controller.HandleAll(impl.Enqueue))
 
