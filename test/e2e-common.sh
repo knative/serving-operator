@@ -31,7 +31,7 @@ readonly ISTIO_MESH=0
 # Namespace used for tests
 readonly TEST_NAMESPACE="knative-serving"
 # Boolean used to indicate whether to generate serving YAML based on the latest code in the branch SERVING_REPO_BRANCH.
-GENERATE_SERVING_YAML=1
+GENERATE_SERVING_YAML=0
 
 OPERATOR_DIR=$(dirname $0)/..
 KNATIVE_SERVING_DIR=${OPERATOR_DIR}/..
