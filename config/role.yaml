@@ -154,6 +154,7 @@ rules:
   - delete
   - get
   - list
+  - update
   - watch
 - apiGroups:
   - apiregistration.k8s.io
