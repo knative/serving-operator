@@ -24,13 +24,17 @@ import (
 	"knative.dev/serving-operator/pkg/reconciler/knativeserving"
 )
 
+var (
+	masterURL  = flag.String("master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
+	kubeconfig = flag.String("kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
+)
+
 func main() {
 	flag.Parse()
 
-	cfg, err := sharedmain.GetConfig(*knativeserving.MasterURL, *knativeserving.Kubeconfig)
+	cfg, err := sharedmain.GetConfig(*masterURL, *kubeconfig)
 	if err != nil {
 		log.Fatal("Error building kubeconfig", err)
 	}
-	ctx := signals.NewContext()
-	sharedmain.MainWithConfig(ctx, "serving_operator", cfg, knativeserving.NewController)
+	sharedmain.MainWithConfig(signals.NewContext(), "serving-operator", cfg, knativeserving.NewControllerWithConfig(cfg))
 }
