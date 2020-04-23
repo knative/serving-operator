@@ -113,8 +113,6 @@ github.com/cespare/xxhash/v2 v2.1.0/go.mod h1:dgIUBU3pDso/gPgZ1osOZ0iQf77oPR28Tj
 github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5/go.mod h1:/iP1qXHoty45bqomnu2LM+VVyAEdWN+vtSHGlQgyxbw=
 github.com/checkpoint-restore/go-criu v0.0.0-20190109184317-bdb7599cd87b/go.mod h1:TrMrLQfeENAPYPRsJuq3jsqdlRh3lvi6trTZJG8+tho=
 github.com/cheekybits/genny v0.0.0-20170328200008-9127e812e1e9/go.mod h1:+tQajlRqAUrPI7DOSpB0XAqZYtQakVtB7wXkRAgjxjQ=
-github.com/chizhg/test-infra v0.0.0-20200407061027-5d652a9e9a1a h1:1GjwGoXnwfrRI4g9NXj0jv+9Il4UrOQOSzg9AcnLjbE=
-github.com/chizhg/test-infra v0.0.0-20200407061027-5d652a9e9a1a/go.mod h1:1O+M9MzQyGIpD9+qu1TDhU6gmNRd74fdLFx/bNGVfkc=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
@@ -1087,6 +1085,8 @@ knative.dev/caching v0.0.0-20200122154023-853d6022845c h1:VE57hREQ+6ZHDCeOM+TzPx
 knative.dev/caching v0.0.0-20200122154023-853d6022845c/go.mod h1:dHXFU6CGlLlbzaWc32g80cR92iuBSpsslDNBWI8C7eg=
 knative.dev/pkg v0.0.0-20200410152005-2a1db869228c h1:+Ob3pOC0WuNFxKv2UdMGkC0FGSbWC24FvJleJ8+Lp1A=
 knative.dev/pkg v0.0.0-20200410152005-2a1db869228c/go.mod h1:pgODObA1dTyhNoFxPZTTjNWfx6F0aKsKzn+vaT9XO/Q=
+knative.dev/test-infra v0.0.0-20200423234049-f645de8d9a50 h1:Vv+SVBIKmFLBEYl6NhrH3yd1teJo3huKBWtdqMk9WlQ=
+knative.dev/test-infra v0.0.0-20200423234049-f645de8d9a50/go.mod h1:xcdUkMJrLlBswIZqL5zCuBFOC22WIPMQoVX1L35i0vQ=
 modernc.org/cc v1.0.0/go.mod h1:1Sk4//wdnYJiUIxnW8ddKpaOJCF37yAdqYnkxUpaYxw=
 modernc.org/golex v1.0.0/go.mod h1:b/QX9oBD/LhixY6NDh+IdGv17hgB+51fET1i2kPSmvk=
 modernc.org/mathutil v1.0.0/go.mod h1:wU0vUrJsVWBZ4P6e7xtFJEhFSNsfRLJ8H458uRjg03k=

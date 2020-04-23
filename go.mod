@@ -44,7 +44,7 @@ require (
 	k8s.io/utils v0.0.0-20200122174043-1e243dd1a584 // indirect
 	knative.dev/caching v0.0.0-20200122154023-853d6022845c
 	knative.dev/pkg v0.0.0-20200410152005-2a1db869228c
-	knative.dev/test-infra v0.0.0-00010101000000-000000000000
+	knative.dev/test-infra v0.0.0-20200423234049-f645de8d9a50
 	sigs.k8s.io/yaml v1.1.0
 )
 
@@ -73,5 +73,3 @@ replace (
 )
 
 replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309 // Required by Helm
-
-replace knative.dev/test-infra => github.com/chizhg/test-infra v0.0.0-20200407061027-5d652a9e9a1a
