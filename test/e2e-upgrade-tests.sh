@@ -140,6 +140,9 @@ TIMEOUT=20m
 
 header "Running preupgrade tests"
 
+# TODO: remove once serving is switched to Go modules
+export GO111MODULE="auto"
+
 cd ${KNATIVE_SERVING_DIR}/serving
 go_test_e2e -tags=preupgrade -timeout=${TIMEOUT} ./test/upgrade \
   --resolvabledomain="false" "--https" || fail_test
