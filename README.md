@@ -31,7 +31,7 @@ To install a released version of the operator go and download the latest
 (`kubectl apply -f serving-operator.yaml`), or directly run:
 
 ```
-kubectl apply -f https://github.com/knative/serving-operator/releases/download/v0.10.0/serving-operator.yaml
+kubectl apply -f https://github.com/knative/serving-operator/releases/download/<version>/serving-operator.yaml
 ```
 
 2. Install the
